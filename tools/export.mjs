@@ -19,6 +19,7 @@ const out = [];
 out.push("# 프론트엔드 면접 문항집");
 out.push("");
 out.push("> **TL;DR** — 주니어·미들·시니어 프론트엔드 면접 문항 " + Q.length + "개. 문항마다 핵심 답, 면접관이 볼 좋은/약한 신호, 후속 질문, 그리고 답을 검증할 공식 문서 레퍼런스가 붙어 있다.");
+out.push("> **출처 주의** — 출제 이력 기록이 아니다. 공개 정리글에서 반복 등장하는 **주제**를 기준으로 고른 문항이고, 문항 문장과 답은 직접 썼다. [출처](#출처) 참고.");
 out.push("> 필터·검색·셀프 퀴즈가 되는 웹 페이지: **https://david-myeonghan.github.io/frontend-interview-kit/**");
 out.push("");
 out.push("- 문항 " + Q.length + "개 · 영역 " + Object.keys(CATS).length + "개");
@@ -67,7 +68,9 @@ for (const [key, label] of Object.entries(CATS)) {
 }
 out.push("## 출처");
 out.push("");
-out.push("문항 선정은 2026년 채용 시장의 실제 질문 목록을 교차 확인해 뽑았고, 답과 판별 기준은 각 문항의 레퍼런스에 달린 공식 문서를 근거로 썼다 (MDN · web.dev · react.dev · TypeScript 핸드북 · OWASP · W3C ARIA APG/WCAG · TanStack Query · Testing Library · Playwright · webpack · Node.js · Nx · Martin Fowler · Sentry).");
+out.push("**이 문항집은 출제 이력 기록이 아니다.** 공개된 면접 질문 정리글에서 반복해 등장하는 주제를 교차 확인해 문항을 골랐고, 문항 문장과 답·판별 기준은 직접 썼다. 어느 회사가 어떤 표현으로 출제했는지는 대조하지 않았다.");
+out.push("");
+out.push("아래 링크는 **주제 선정에 참고한 글**이다. 그중 면접 회고 글만 작성자 본인이 받은 질문이라고 밝힌 1차 자료이고, 나머지는 큐레이션 글이다. 각 문항에 달린 **레퍼런스**는 성격이 다르다 — 답 내용이 공식 문서와 맞는지 검증한 링크이며 출제 근거가 아니다 (MDN · web.dev · react.dev · TypeScript 핸드북 · OWASP · W3C ARIA APG/WCAG · TanStack Query · Testing Library · Playwright · webpack · Node.js · Nx · Martin Fowler · Sentry).");
 out.push("");
 for (const [t, u] of [
   ["Frontend Developer Interview Questions in 2026 — OnlyFrontendJobs", "https://www.onlyfrontendjobs.com/blog/frontend-developer-interview-questions-2026"],
@@ -76,6 +79,10 @@ for (const [t, u] of [
   ["30 Senior Frontend Engineer Interview Questions for 2026 — Verve AI", "https://www.vervecopilot.com/blog/senior-frontend-engineer-interview-questions"],
   ["카카오 출신 개발자가 정리한 프론트엔드 기술 면접 질문 TOP 20 — zero-base", "https://zero-base.co.kr/event/media_insight_contents_FE_frontend_tech_Interview"],
   ["프론트엔드 기술 면접 질문 (한국어 모음집)", "https://frontend-interview-question.vercel.app/"],
+  ["3년차 프론트엔드 면접 질문 회고 (velog) — 본인이 받은 질문이라 밝힌 1차 자료", "https://velog.io/@qnrjs42/23.10-24.01-3%EB%85%84%EC%B0%A8-%ED%94%84%EB%A1%A0%ED%8A%B8%EC%97%94%EB%93%9C-%EB%A9%B4%EC%A0%91-%EB%95%8C-%EB%B0%9B%EC%95%98%EB%8D%98-%EC%A7%88%EB%AC%B8%EA%B3%BC-%EB%8A%90%EB%82%80-%EC%A0%90-react"],
+  ["프론트엔드 기술 면접 질문 리스트 (velog)", "https://velog.io/@doheek2/%ED%94%84%EB%A1%A0%ED%8A%B8%EC%97%94%EB%93%9C-%EA%B8%B0%EC%88%A0-%EB%A9%B4%EC%A0%91-%EC%A7%88%EB%AC%B8-%EB%A6%AC%EC%8A%A4%ED%8A%B8"],
+  ["프론트엔드 기술 면접 질문 정리 — hyunwoo.dev", "https://www.chahyunwoo.dev/blog/frontend-technical-interview"],
+  ["프론트엔드 면접 질문 리스트 (Browser) — dev and dev", "https://joontae-kim.github.io/2020/10/26/interview-question-fe/"],
   ["How the Core Web Vitals metrics thresholds were defined — web.dev", "https://web.dev/articles/defining-core-web-vitals-thresholds"],
 ]) out.push("- [" + t + "](" + u + ")");
 out.push("");
