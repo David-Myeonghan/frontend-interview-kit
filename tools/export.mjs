@@ -18,13 +18,14 @@ const count = (l) => Q.filter((q) => q.l === l).length;
 const out = [];
 out.push("# 프론트엔드 면접 문항집");
 out.push("");
-out.push("> **TL;DR** — 주니어·미들·시니어 프론트엔드 면접 문항 " + Q.length + "개. 문항마다 핵심 답, 면접관이 볼 좋은/약한 신호, 후속 질문, 그리고 답을 검증할 공식 문서 레퍼런스가 붙어 있다.");
+out.push("> **TL;DR** — 주니어·미들·시니어 프론트엔드 면접 문항 " + Q.length + "개. 문항마다 핵심 답, 면접관이 볼 좋은/약한 신호, 면접관이 파고드는 꼬리질문 2~3단계와 단계별 기대 답, 그리고 답을 검증할 공식 문서 레퍼런스가 붙어 있다.");
 out.push("> **출처 주의** — 출제 이력 기록이 아니다. 공개 정리글에서 반복 등장하는 **주제**를 기준으로 고른 문항이고, 문항 문장과 답은 직접 썼다. [출처](#출처) 참고.");
 out.push("> 필터·검색·셀프 퀴즈가 되는 웹 페이지: **https://david-myeonghan.github.io/frontend-interview-kit/**");
 out.push("");
 out.push("- 문항 " + Q.length + "개 · 영역 " + Object.keys(CATS).length + "개");
 out.push("- 레벨 분포: 주니어 " + count("jr") + " / 미들 " + count("mid") + " / 시니어 " + count("sr") + " / 공통 " + count("all"));
 out.push("- 레퍼런스 링크 " + new Set(Q.flatMap((q) => q.r.map((r) => r[1]))).size + "개 (전부 HTTP 200 확인)");
+out.push("- 꼬리질문 " + Q.reduce((a, q) => a + (q.p ? q.p.length : 0), 0) + "단계 — 문항마다 면접관이 파고드는 질문과 단계별 기대 답");
 out.push("");
 out.push("## 쓰는 법");
 out.push("");
@@ -61,7 +62,15 @@ for (const [key, label] of Object.entries(CATS)) {
     out.push("");
     out.push("- ✅ **좋은 신호** — " + md(it.good));
     out.push("- ⚠️ **약한 신호** — " + md(it.weak));
-    out.push("- ↪️ **후속 질문** — " + md(it.next));
+    if (it.p && it.p.length) {
+      out.push("- ↪️ **꼬리질문** — 면접관이 파고드는 순서");
+      it.p.forEach(([pq, pe], i) => {
+        out.push("  " + (i + 1) + ". " + md(pq));
+        out.push("     - 기대 답: " + md(pe));
+      });
+    } else {
+      out.push("- ↪️ **후속 질문** — " + md(it.next));
+    }
     out.push("- 📖 **레퍼런스** — " + it.r.map(([t, u]) => "[" + t + "](" + u + ")").join(" · "));
     out.push("");
   }
