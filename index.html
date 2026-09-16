@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="주니어·미들·시니어 프론트엔드 면접 문항 76개. 핵심 답, 좋은/약한 신호, 후속 질문, 공식 문서 레퍼런스.">
+<style>
+  :root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  body{margin:0}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+<title>프론트엔드 면접 문항집</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --paper:#f2f4f7; --surface:#ffffff; --surface-2:#e9edf3;
+    --ink:#131a24; --muted:#5a6675; --line:#d8dee7;
+    --accent:#1f4d7a; --accent-soft:#e3ecf5; --accent-ink:#ffffff;
+    --good:#2b6b4f; --good-soft:#e4f0e9;
+    --weak:#8b5a14; --weak-soft:#f7ecda;
+    --serif:"Noto Serif KR",ui-serif,Georgia,serif;
+    --sans:"IBM Plex Sans KR","Apple SD Gothic Neo",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0f141a; --surface:#161d25; --surface-2:#1d2630;
+      --ink:#e7ecf2; --muted:#9aa7b5; --line:#2a343f;
+      --accent:#7fb3e0; --accent-soft:#1b2e40; --accent-ink:#0f141a;
+      --good:#7cc3a1; --good-soft:#15291f;
+      --weak:#d9ac63; --weak-soft:#2a2113;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0f141a; --surface:#161d25; --surface-2:#1d2630;
+    --ink:#e7ecf2; --muted:#9aa7b5; --line:#2a343f;
+    --accent:#7fb3e0; --accent-soft:#1b2e40; --accent-ink:#0f141a;
+    --good:#7cc3a1; --good-soft:#15291f;
+    --weak:#d9ac63; --weak-soft:#2a2113;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding-inline:20px;padding-block:0}
+  a{color:var(--accent)}
+  header.masthead{padding-block:40px 24px;border-bottom:1px solid var(--line)}
+  h1{font-family:var(--serif);font-weight:700;font-size:clamp(28px,5vw,40px);line-height:1.2;margin:0 0 10px;text-wrap:balance;letter-spacing:-.01em}
+  .lede{margin:0;color:var(--muted);max-width:62ch}
+  .stats{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .stats b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+  .howto{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
+  .howto section{background:var(--surface);border:1px solid var(--line);padding:14px 16px}
+  .howto h2{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;font-weight:500}
+  .howto p{margin:0;font-size:13.5px;color:var(--muted)}
+  .toolbar{position:sticky;top:env(safe-area-inset-top, 0px);z-index:10;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-bottom:8px}
+  .toolbar .wrap{padding-block:12px;display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .seg{display:flex;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-family:var(--sans);font-size:13px;padding:7px 13px;cursor:pointer;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:0}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+  input[type="search"]{flex:1 1 200px;min-width:0;font-family:var(--sans);font-size:13px;padding:7px 11px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+  .switch{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips button{appearance:none;font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;padding:4px 9px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;border-radius:2px}
+  .chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  :where(button,input,summary,a):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .cat{margin-block:34px 0}
+  .cat > h2{font-family:var(--serif);font-size:20px;font-weight:500;margin:0 0 2px;display:flex;align-items:baseline;gap:10px}
+  .cat > h2 .n{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .cat > .rule{height:2px;background:var(--ink);margin-bottom:4px}
+  article{padding-block:20px;border-bottom:1px solid var(--line)}
+  .meta{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .lv{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 7px;text-transform:uppercase}
+  .lv-jr{border:1px solid var(--accent);color:var(--accent)}
+  .lv-mid{background:var(--accent-soft);color:var(--accent);border:1px solid transparent}
+  .lv-sr{background:var(--accent);color:var(--accent-ink)}
+  .lv-all{border:1px dashed var(--muted);color:var(--muted)}
+  h3{font-family:var(--serif);font-weight:500;font-size:17.5px;line-height:1.45;margin:0;text-wrap:balance}
+  .reveal{appearance:none;display:none;margin-top:10px;font-family:var(--mono);font-size:11.5px;padding:4px 10px;border:1px solid var(--line);background:var(--surface);color:var(--accent);cursor:pointer}
+  .quiz .reveal{display:inline-block}
+  .quiz article[data-revealed] .reveal{display:none}
+  .quiz article:not([data-revealed]) .answer{display:none}
+  .answer{margin-top:12px;display:flex;flex-direction:column;gap:12px}
+  .core{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px}
+  .core li{font-size:14.5px}
+  .core li::marker{color:var(--accent)}
+  .signals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .sig{padding:10px 12px;font-size:13.5px}
+  .sig .t{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+  .sig-good{background:var(--good-soft);color:var(--ink)}
+  .sig-good .t{color:var(--good)}
+  .sig-weak{background:var(--weak-soft);color:var(--ink)}
+  .sig-weak .t{color:var(--weak)}
+  .next{font-size:13.5px;color:var(--muted);padding-left:12px;border-left:2px solid var(--line)}
+  .next b,.refs b{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-right:6px}
+  .refs{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+  .refs a{text-decoration-thickness:1px;text-underline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--surface-2);padding:1px 4px}
+  .empty{padding-block:60px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+  .sources{margin-block:40px 0;padding:18px 20px;background:var(--surface);border:1px solid var(--line)}
+  .sources h2{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin:0 0 10px;font-weight:500}
+  .sources p{margin:0 0 10px;font-size:13.5px;color:var(--muted)}
+  .sources ul{margin:0;padding-left:1.2em;font-size:13.5px;display:flex;flex-direction:column;gap:3px}
+  footer{padding-block:28px 48px;margin-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+  @media (max-width:560px){
+    .howto,.signals{grid-template-columns:1fr}
+    .wrap{padding-inline:16px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="masthead"><div class="wrap">
+  <h1>프론트엔드 면접 문항집</h1>
+  <p class="lede">주니어부터 시니어까지 실제로 갈리는 문항만 모았다. 각 문항에 <b>핵심 답</b>, 면접관이 볼 <b>좋은 신호 / 약한 신호</b>, 한 단계 파고드는 <b>후속 질문</b>, 그리고 답을 검증할 <b>공식 문서 레퍼런스</b>가 붙어 있다.</p>
+  <div class="stats" id="stats"></div>
+  <div class="howto">
+    <section>
+      <h2>지원자로 쓸 때</h2>
+      <p>상단 <b>셀프 퀴즈</b>를 켜면 답이 가려진다. 소리 내어 답한 뒤 열어서 핵심 항목을 몇 개 짚었는지 센다. 약한 신호에 내 대답이 들어가면 그 문항의 레퍼런스부터 읽어라.</p>
+    </section>
+    <section>
+      <h2>면접관으로 쓸 때</h2>
+      <p>레벨당 6~8문항이면 60분이 찬다. 영역을 3~4개로 좁히고 후속 질문으로 깊이를 재라. 정답 여부보다 <b>모르는 것을 어떻게 다루는지</b>가 신호다.</p>
+    </section>
+  </div>
+</div></header>
+
+<div class="toolbar"><div class="wrap">
+  <div class="row">
+    <div class="seg" id="levels" role="group" aria-label="경력 레벨"></div>
+    <input type="search" id="q" placeholder="키워드 검색 — 이벤트 루프, CORS, 하이드레이션…" aria-label="문항 검색">
+    <label class="switch" for="quiz"><input type="checkbox" id="quiz"> 셀프 퀴즈</label>
+  </div>
+  <div class="chips" id="cats" role="group" aria-label="영역"></div>
+</div></div>
+
+<main class="wrap" id="list"></main>
+
+<section class="sources wrap">
+  <h2>이 문항집을 만든 출처</h2>
+  <p>문항 선정은 2026년 채용 시장의 실제 질문 목록을 교차 확인해 뽑았고(아래 1군), 답과 판별 기준은 각 문항의 레퍼런스에 달린 공식 문서를 근거로 썼다(MDN·web.dev·react.dev·TypeScript 핸드북·OWASP·W3C ARIA APG·TanStack Query·Testing Library).</p>
+  <ul>
+    <li><a href="https://www.onlyfrontendjobs.com/blog/frontend-developer-interview-questions-2026">Frontend Developer Interview Questions in 2026 — OnlyFrontendJobs</a></li>
+    <li><a href="https://www.kore1.com/frontend-developer-interview-questions/">Frontend Developer Interview Questions 2026 — KORE1</a></li>
+    <li><a href="https://www.codewithseb.com/blog/deep-javascript-interview-guide-for-2025%E2%80%932026">Deep JavaScript Interview Guide for 2025–2026 — Code With Seb</a></li>
+    <li><a href="https://www.vervecopilot.com/blog/senior-frontend-engineer-interview-questions">30 Senior Frontend Engineer Interview Questions for 2026 — Verve AI</a></li>
+    <li><a href="https://zero-base.co.kr/event/media_insight_contents_FE_frontend_tech_Interview">카카오 출신 개발자가 정리한 프론트엔드 기술 면접 질문 TOP 20 — zero-base</a></li>
+    <li><a href="https://frontend-interview-question.vercel.app/">프론트엔드 기술 면접 질문 (한국어 모음집)</a></li>
+    <li><a href="https://velog.io/@hi-rachel/%ED%94%84%EB%A1%A0%ED%8A%B8%EC%97%94%EB%93%9C-%EB%A9%B4%EC%A0%91-%EC%A4%80%EB%B9%84-%EB%A6%AC%EC%95%A1%ED%8A%B8%EC%9D%98-%EC%A4%91%EC%9A%94%ED%95%9C-%EB%AA%A8%EB%93%A0-%EA%B2%83">프론트엔드 면접 준비 — React 질문 목록 (velog)</a></li>
+    <li><a href="https://velog.io/@qnrjs42/23.10-24.01-3%EB%85%84%EC%B0%A8-%ED%94%84%EB%A1%A0%ED%8A%B8%EC%97%94%EB%93%9C-%EB%A9%B4%EC%A0%91-%EB%95%8C-%EB%B0%9B%EC%95%98%EB%8D%98-%EC%A7%88%EB%AC%B8%EA%B3%BC-%EB%8A%90%EB%82%80-%EC%A0%90-react">3년차 프론트엔드 면접 실제 질문 회고 (velog)</a></li>
+  </ul>
+</section>
+
+<footer class="wrap">문항은 고정된 정답표가 아니다. 지원자가 다른 결론에 이르렀다면 근거와 측정 방법을 물어라 — 그게 실무에서 필요한 능력이다. 레퍼런스 링크는 모두 응답 코드 200으로 확인했다(2026-09-16).</footer>
+
+<script>
+const CATS = {
+  js:"JS 코어", render:"브라우저·렌더링", css:"CSS·레이아웃", net:"네트워크·HTTP",
+  sec:"보안", react:"React", state:"상태·데이터", ts:"TypeScript", perf:"성능",
+  test:"테스트", build:"빌드·툴링", a11y:"접근성", arch:"아키텍처·협업"
+};
+const LV = { jr:"주니어", mid:"미들", sr:"시니어", all:"공통" };
+const M = "https://developer.mozilla.org/en-US/docs/";
+const R = "https://react.dev/";
+const W = "https://web.dev/articles/";
+const O = "https://cheatsheetseries.owasp.org/cheatsheets/";
+const T = "https://www.typescriptlang.org/docs/handbook/";
+const TQ = "https://tanstack.com/query/latest/docs/framework/react/guides/";
+const Q = [
+// ---------- JS 코어 ----------
+{c:"js",l:"jr",q:"클로저가 무엇이고 실무에서 어디에 쓰나?",
+ core:["함수가 선언된 렉시컬 스코프의 변수를 계속 참조하는 것. 호출이 끝나도 그 변수는 살아 있다.","디바운스·스로틀의 타이머 보관, once 플래그, 모듈 내부 상태 은닉, 커스텀 훅의 내부 값.","루프에서 <code>var</code>로 캡처하면 마지막 값 하나만 남고 <code>let</code>은 반복마다 새 바인딩을 만든다."],
+ good:"디바운스나 이벤트 핸들러 같은 자기 코드로 설명하고, 변수 수명이 늘어난다는 점을 짚는다.",
+ weak:"\"함수 안의 함수\"라고만 말하고 스코프·수명 이야기가 없다.",
+ next:"클로저 때문에 메모리가 안 풀리는 상황을 만들어 보라.",
+ r:[["MDN Closures",M+"Web/JavaScript/Guide/Closures"]]},
+{c:"js",l:"jr",q:"<code>==</code>와 <code>===</code>의 차이, <code>==</code>를 써도 되는 경우가 있나?",
+ core:["<code>==</code>는 양쪽 타입을 강제 변환한 뒤 비교한다. <code>'' == 0</code>, <code>'0' == 0</code>이 모두 true.","<code>null == undefined</code>만 true이고 다른 값과는 false여서, <code>x == null</code>은 둘을 한 번에 검사하는 관용구로 통한다.","그 외에는 <code>===</code>로 고정하고 필요한 변환은 명시적으로 한다."],
+ good:"변환 규칙의 예측 불가능성을 예시로 들고 <code>x == null</code> 예외를 이유와 함께 안다.",
+ weak:"\"타입까지 비교한다\"로 끝. 어떤 변환이 일어나는지 예를 못 든다.",
+ next:"<code>NaN</code>은 어떻게 비교하나?",
+ r:[["MDN Equality comparisons",M+"Web/JavaScript/Guide/Equality_comparisons_and_sameness"]]},
+{c:"js",l:"jr",q:"<code>var</code>, <code>let</code>, <code>const</code>를 호이스팅과 TDZ로 설명해 보라.",
+ core:["<code>var</code>는 함수 스코프이고 선언이 끌어올려져 <code>undefined</code>로 초기화된다.","<code>let/const</code>는 블록 스코프이며 선언 전 구간이 TDZ라 접근하면 <code>ReferenceError</code>.","<code>const</code>는 바인딩 재할당만 막는다. 객체 내부 값은 바뀐다."],
+ good:"TDZ에서 에러가 나는 이유를 말하고 <code>const</code> 객체 변경 가능성을 구분한다.",
+ weak:"<code>const</code>를 불변(immutable)과 같은 것으로 설명한다.",
+ next:"함수 선언과 함수 표현식의 호이스팅 차이는?",
+ r:[["MDN let",M+"Web/JavaScript/Reference/Statements/let"]]},
+{c:"js",l:"mid",q:"<code>setTimeout(fn,0)</code>, <code>Promise.resolve().then(fn)</code>, <code>queueMicrotask(fn)</code>의 실행 순서와 이유는?",
+ core:["콜 스택이 비면 마이크로태스크 큐를 <b>전부</b> 비우고, 그다음 렌더 기회, 그다음 매크로태스크 하나를 처리한다.","따라서 then과 queueMicrotask가 등록 순서대로 먼저, setTimeout이 마지막.","<code>await</code> 뒤 코드도 마이크로태스크다. 마이크로태스크가 자기를 계속 생성하면 렌더가 굶어 화면이 멈춘다."],
+ good:"순서를 맞히고 큐 구조로 설명하며, 마이크로태스크 기아 같은 실제 증상까지 연결한다.",
+ weak:"\"비동기는 나중에 실행된다\" 수준. 두 큐의 우선순위를 모른다.",
+ next:"<code>requestAnimationFrame</code>은 이 순서의 어디에 들어가나?",
+ r:[["MDN Execution model (event loop)",M+"Web/JavaScript/Reference/Execution_model"]]},
+{c:"js",l:"mid",q:"<code>this</code>는 어떻게 결정되나? 콜백으로 넘기면 왜 깨지나?",
+ core:["호출 형태가 결정한다: 일반 호출(undefined/전역), 메서드 호출(점 앞 객체), <code>new</code>(새 인스턴스), <code>call/apply/bind</code>(명시).","화살표 함수는 호출과 무관하게 정의 시점의 <code>this</code>를 가져온다.","메서드를 참조만 떼어 콜백으로 넘기면 점 앞 객체가 사라져 바인딩이 유실된다 → <code>bind</code> 또는 클래스 필드 화살표."],
+ good:"네 규칙을 우선순위로 정리하고, 화살표를 쓰면 안 되는 경우(프로토타입 메서드, <code>currentTarget</code> 접근)도 안다.",
+ weak:"\"화살표 쓰면 해결\"로 끝내고 왜 그런지 설명하지 못한다.",
+ next:"클래스 필드 화살표와 생성자 bind의 차이(인스턴스별 함수 생성)는?",
+ r:[["MDN this",M+"Web/JavaScript/Reference/Operators/this"]]},
+{c:"js",l:"mid",q:"얕은 복사와 깊은 복사, 실무에서는 무엇을 쓰나?",
+ core:["spread와 <code>Object.assign</code>은 1단만 복사한다. 중첩 객체는 참조 공유.","깊은 복사는 <code>structuredClone</code>이 표준(함수·DOM 노드·클래스 인스턴스는 불가). <code>JSON.parse(JSON.stringify())</code>는 <code>Date</code>·<code>undefined</code>·<code>NaN</code>·순환 참조에서 손실이 난다.","상태 관리에서는 전체 복사보다 바뀐 경로만 새 객체로 만드는 불변 갱신이 기본. 참조 비교로 리렌더를 가를 수 있다."],
+ good:"복사 방식별 손실을 구체적으로 알고, 불변 갱신이 렌더 최적화와 이어진다는 점까지 말한다.",
+ weak:"항상 JSON 왕복으로 깊은 복사한다고 답하고 손실 사례를 모른다.",
+ next:"거대한 상태를 매번 복사하면 생기는 비용은 어떻게 줄이나?",
+ r:[["MDN structuredClone",M+"Web/API/Window/structuredClone"],["MDN Object.assign",M+"Web/JavaScript/Reference/Global_Objects/Object/assign"]]},
+{c:"js",l:"mid",q:"<code>Promise.all / allSettled / race / any</code>를 각각 언제 쓰나?",
+ core:["<code>all</code>: 전부 성공해야 의미 있을 때. 하나가 reject되면 즉시 실패하지만 나머지 요청이 취소되지는 않는다.","<code>allSettled</code>: 부분 실패를 허용하는 화면(대시보드 위젯 여러 개).","<code>race</code>: 타임아웃 경쟁. <code>any</code>: 첫 성공만 필요할 때(미러 서버).","취소는 Promise가 아니라 <code>AbortController</code>의 책임이다."],
+ good:"부분 실패 UX를 기준으로 골라내고, reject 후 남은 요청 처리와 취소 수단을 구분한다.",
+ weak:"이름별 동작만 암기해 말하고 어떤 화면에 쓸지 예를 못 든다.",
+ next:"요청 3개 중 2개가 실패한 화면을 어떻게 보여줄 건가?",
+ r:[["MDN Promise.all",M+"Web/JavaScript/Reference/Global_Objects/Promise/all"],["MDN Promise.allSettled",M+"Web/JavaScript/Reference/Global_Objects/Promise/allSettled"],["MDN AbortController",M+"Web/API/AbortController"]]},
+{c:"js",l:"mid",q:"async 함수의 에러가 조용히 사라지는 경우를 아는가?",
+ core:["<code>await</code> 없이 호출하면 거부가 처리되지 않고 unhandled rejection으로 흐른다.","<code>forEach</code>에 async 콜백을 넣으면 반환된 Promise가 버려진다 → <code>for...of</code> 또는 <code>Promise.all(map())</code>.","<code>setTimeout</code> 콜백 내부 throw는 바깥 try/catch가 못 잡는다.","전역 <code>unhandledrejection</code>·<code>error</code> 핸들러로 수집해 에러 트래킹에 보낸다."],
+ good:"직접 겪은 누락 사례를 들고 전역 핸들러·로깅까지 연결한다.",
+ weak:"try/catch만 있으면 된다고 답한다.",
+ next:"이벤트 핸들러 안에서 실패한 요청을 사용자에게 어떻게 알리나?",
+ r:[["MDN unhandledrejection",M+"Web/API/Window/unhandledrejection_event"],["MDN Array.forEach 주의",M+"Web/JavaScript/Reference/Global_Objects/Array/forEach"]]},
+{c:"js",l:"sr",q:"<code>WeakMap</code>이나 <code>WeakRef</code>를 실제로 써야 했던 상황이 있나?",
+ core:["객체를 키로 부가 정보를 붙이되 그 객체의 수명을 늘리고 싶지 않을 때(DOM 노드별 메타데이터, 인스턴스별 캐시).","강한 참조 Map에 DOM을 담으면 노드가 제거돼도 회수되지 않는다(detached DOM 누수).","<code>WeakRef</code>/<code>FinalizationRegistry</code>는 회수 시점을 보장하지 않으므로 정리 로직의 유일한 수단으로 쓰면 안 된다."],
+ good:"누수 관측 경험과 함께 말하고 파이널라이저의 비결정성을 스스로 경고한다.",
+ weak:"\"가비지 컬렉션되는 Map\"이라는 정의만 말한다.",
+ next:"detached DOM 누수를 DevTools에서 어떻게 확인했나?",
+ r:[["MDN WeakMap",M+"Web/JavaScript/Reference/Global_Objects/WeakMap"],["Chrome DevTools 메모리 문제",  "https://developer.chrome.com/docs/devtools/memory-problems"]]},
+
+// ---------- 브라우저·렌더링 ----------
+{c:"render",l:"mid",q:"브라우저가 HTML을 받아 화면을 그리기까지의 단계를 설명하라.",
+ core:["파싱으로 DOM, CSS로 CSSOM → 스타일 계산 → 레이아웃 → 페인트 → 컴포지트.","<code>&lt;script&gt;</code>는 파서를 멈춘다. <code>defer</code>는 문서 파싱 후 순서대로, <code>async</code>는 받는 즉시 순서 없이 실행.","CSS는 렌더 블로킹이라 위치·용량이 첫 페인트를 좌우한다. 웹폰트는 텍스트 표시 시점을 미룬다."],
+ good:"단계를 순서대로 말하고 각 단계의 병목을 짚는다.",
+ weak:"단계 이름만 외워 나열하고 스크립트·CSS의 블로킹을 모른다.",
+ next:"첫 화면을 빠르게 하려면 이 파이프라인의 어디를 건드리겠나?",
+ r:[["MDN Critical rendering path",M+"Web/Performance/Guides/Critical_rendering_path"],["MDN script defer/async",M+"Web/HTML/Reference/Elements/script"]]},
+{c:"render",l:"mid",q:"reflow와 repaint의 차이, 무엇이 더 비싸고 무엇이 유발하나?",
+ core:["레이아웃(reflow)은 크기·위치 재계산이라 가장 비싸다. 페인트는 픽셀 채우기, 컴포지트는 레이어 합성.","<code>width/top/font-size</code>는 레이아웃, <code>color/background</code>는 페인트, <code>transform/opacity</code>는 컴포지트만 건드린다.","레이아웃 값을 읽고(<code>offsetHeight</code>) 바로 쓰는 것을 반복하면 프레임마다 강제 동기 레이아웃이 발생한다(layout thrashing) → 읽기와 쓰기를 분리한다."],
+ good:"애니메이션을 transform/opacity로 옮긴 경험, thrashing을 프로파일러로 확인한 경험을 말한다.",
+ weak:"두 용어의 사전적 정의만 말하고 어떤 속성이 무엇을 유발하는지 모른다.",
+ next:"<code>will-change</code>를 남용하면 어떤 대가가 있나?",
+ r:[["web.dev 렌더링 성능",W+"rendering-performance"],["web.dev layout thrashing",W+"avoid-large-complex-layouts-and-layout-thrashing"]]},
+{c:"render",l:"jr",q:"이벤트 버블링·캡처링과 이벤트 위임을 설명하라.",
+ core:["캡처(위→아래) → 타깃 → 버블(아래→위) 3단계. <code>addEventListener</code>의 세 번째 인자로 캡처 단계에 등록.","위임은 상위 노드 하나에서 <code>event.target</code>으로 판별하는 방식. 동적으로 늘어나는 목록에 유리하고 리스너 수를 줄인다.","<code>stopPropagation</code>은 외부 클릭 닫기·분석 수집 같은 다른 기능을 조용히 깨뜨린다. 스크롤·터치 리스너는 <code>passive:true</code>."],
+ good:"위임의 이점을 리스너 수·동적 노드로 설명하고 stopPropagation의 부작용을 안다.",
+ weak:"버블링 방향만 말하고 위임을 코드로 설명하지 못한다.",
+ next:"<code>target</code>과 <code>currentTarget</code>이 다른 경우는?",
+ r:[["MDN 이벤트 버블링과 캡처",M+"Learn_web_development/Core/Scripting/Event_bubbling"]]},
+{c:"render",l:"mid",q:"프론트엔드 메모리 누수의 흔한 원인 네 가지와 확인 방법은?",
+ core:["해제하지 않은 이벤트 리스너·타이머·구독(SPA 라우팅 전환 시 특히).","무한히 커지는 전역 캐시·배열.","큰 객체나 DOM 노드를 붙잡은 클로저 → detached DOM.","확인은 DevTools Memory의 힙 스냅샷 2회 비교(동작 전/후), Detached 노드 검색, 성능 탭의 JS heap 우상향 추세."],
+ good:"측정 절차를 먼저 말하고 원인을 추정이 아닌 스냅샷으로 좁혀 본 경험이 있다.",
+ weak:"\"클로저 때문\"이라고만 하고 확인 방법이 없다.",
+ next:"장시간 켜 두는 앱에서 누수를 회귀 없이 감시할 방법은?",
+ r:[["Chrome DevTools 메모리 문제 진단","https://developer.chrome.com/docs/devtools/memory-problems"]]},
+{c:"render",l:"mid",q:"<code>requestAnimationFrame</code>과 <code>setTimeout</code>의 차이는?",
+ core:["rAF는 다음 프레임 직전에 호출돼 화면 주기와 동기화된다. 배경 탭에서는 멈춘다.","setTimeout은 최소 지연·타이머 드리프트가 있고 프레임과 어긋나 끊김을 만든다.","프레임 예산은 60fps에서 약 16ms. 긴 작업은 쪼개 프레임을 넘기지 않게 한다."],
+ good:"프레임 예산 수치를 알고 애니메이션과 폴링을 구분해 도구를 고른다.",
+ weak:"둘 다 비동기 타이머라고만 답한다.",
+ next:"120Hz 화면에서는 무엇이 달라지나?",
+ r:[["MDN requestAnimationFrame",M+"Web/API/Window/requestAnimationFrame"]]},
+{c:"render",l:"sr",q:"메인 스레드를 막는 무거운 연산을 어떻게 옮기나?",
+ core:["Web Worker로 이전. 구조화 복제 비용이 있으므로 큰 버퍼는 transferable(<code>ArrayBuffer</code>)로 넘긴다.","계산 자체가 무거우면 WebAssembly, GPU 활용 가능한 작업은 WebGL/WebGPU.","옮길 수 없으면 청크로 쪼개고 <code>scheduler.yield</code>로 입력에 양보해 INP를 지킨다. 50ms 넘는 작업은 Long Task로 계측된다."],
+ good:"복제 비용과 워커 경계 설계(메시지 프로토콜·취소)를 함께 말한다.",
+ weak:"\"워커 쓰면 된다\"로 끝나고 데이터 전달 비용을 고려하지 않는다.",
+ next:"워커 도입 후 오히려 느려졌다면 어디를 보겠나?",
+ r:[["MDN Web Workers",M+"Web/API/Web_Workers_API/Using_web_workers"],["web.dev 긴 작업 쪼개기",W+"optimize-long-tasks"],["MDN scheduler.yield",M+"Web/API/Scheduler/yield"]]},
+
+// ---------- CSS·레이아웃 ----------
+{c:"css",l:"jr",q:"박스 모델과 <code>box-sizing</code>을 설명하라.",
+ core:["기본 <code>content-box</code>는 width가 콘텐츠만 의미해 padding·border가 더해진다.","<code>border-box</code>로 리셋하면 지정한 width가 최종 너비가 되어 레이아웃 계산이 예측 가능해진다.","수직 마진은 인접 요소 간 병합된다(margin collapse). flex·grid 컨테이너 안에서는 병합되지 않는다."],
+ good:"border-box 리셋 이유를 계산 예측성으로 설명하고 마진 병합까지 안다.",
+ weak:"용어만 말하고 왜 리셋하는지 모른다.",
+ next:"마진 병합을 막는 방법 두 가지는?",
+ r:[["MDN box-sizing",M+"Web/CSS/box-sizing"],["MDN 마진 병합",M+"Web/CSS/CSS_box_model/Mastering_margin_collapsing"]]},
+{c:"css",l:"mid",q:"<code>z-index</code>를 올렸는데 요소가 위로 안 올라온다. 무엇을 보나?",
+ core:["쌓임 맥락(stacking context)을 먼저 본다. <code>position</code>+z-index, <code>transform</code>, <code>opacity&lt;1</code>, <code>filter</code>, <code>will-change</code>, <code>contain</code> 등이 새 맥락을 만든다.","자식은 부모 맥락을 벗어날 수 없다. 부모가 낮으면 자식 z-index 9999도 무의미.","해결은 DOM 위치를 바꾸거나 포털로 최상위에 렌더, 그리고 레이어 값을 토큰으로 관리."],
+ good:"맥락 생성 조건을 알고 포털 같은 구조적 해법을 제시한다.",
+ weak:"값을 더 올려 본다고 답한다.",
+ next:"드롭다운이 <code>overflow:hidden</code> 부모에 잘린다면?",
+ r:[["MDN 쌓임 맥락",M+"Web/CSS/CSS_positioned_layout/Stacking_context"]]},
+{c:"css",l:"mid",q:"flex와 grid를 어떤 기준으로 고르나?",
+ core:["flex는 한 축의 콘텐츠 흐름·정렬, grid는 두 축의 명시적 트랙 배치.","flex 아이템이 안 줄어드는 대표 원인은 <code>min-width:auto</code>. <code>min-width:0</code>이나 <code>overflow:hidden</code>이 필요하다.","grid는 겹침 레이어, <code>grid-template-areas</code> 재배치, <code>minmax</code>+<code>auto-fit</code>으로 열 수 자동 조절에 강하다."],
+ good:"1축/2축 기준을 대고 실제로 겪은 축소·넘침 문제를 원인까지 설명한다.",
+ weak:"\"grid가 더 좋다\" 같은 선호만 말한다.",
+ next:"400px 화면에서 카드 3열을 어떻게 접겠나?",
+ r:[["MDN flexbox 기본",M+"Web/CSS/CSS_flexible_box_layout/Basic_concepts_of_flexbox"],["MDN grid 기본",M+"Web/CSS/CSS_grid_layout/Basic_concepts_of_grid_layout"]]},
+{c:"css",l:"mid",q:"<code>position: sticky</code>가 동작하지 않는 흔한 원인은?",
+ core:["조상 중 하나에 <code>overflow: hidden/auto/scroll</code>이 있어 스크롤 컨테이너가 바뀐 경우.","임계 방향 값(<code>top</code> 등)을 지정하지 않은 경우.","부모 높이가 콘텐츠와 같아 고정될 여유 구간이 없는 경우.","표 헤더는 <code>thead th</code>에 걸고 <code>border-collapse</code> 영향을 확인한다."],
+ good:"조상 overflow를 1순위로 의심하고 DevTools로 확인하는 절차를 말한다.",
+ weak:"브라우저 버그로 돌린다.",
+ next:"모바일 상단 바가 겹칠 때 safe-area는 어떻게 처리하나?",
+ r:[["MDN position",M+"Web/CSS/position"]]},
+{c:"css",l:"jr",q:"요소를 가로·세로 중앙에 두는 방법을 여러 개 말해 보라.",
+ core:["부모에 <code>display:flex; place-items:center</code> 또는 grid + <code>place-content:center</code>.","<code>position:absolute; inset:0; margin:auto</code>, 또는 <code>top:50%; left:50%; translate:-50% -50%</code>(크기를 몰라도 된다).","텍스트 한 줄은 <code>line-height</code>로도 되지만 다중 행에서 깨진다."],
+ good:"부모 높이를 모르는 경우, 스크롤이 생기는 경우 등 제약별로 고른다.",
+ weak:"한 가지만 알고 왜 다른 상황에서 깨지는지 모른다.",
+ next:"뷰포트 높이를 <code>100vh</code>로 잡으면 모바일에서 왜 잘리나?",
+ r:[["MDN grid 정렬",M+"Web/CSS/CSS_grid_layout/Basic_concepts_of_grid_layout"]]},
+{c:"css",l:"sr",q:"디자인 토큰과 CSS 커스텀 프로퍼티로 다크 모드를 설계한다면?",
+ core:["토큰 전량을 기본 <code>:root</code>에 선언하고 다크에서는 <b>토큰만</b> 재정의한다.","컴포넌트는 리터럴 색을 쓰지 않고 토큰만 참조한다. 미디어 쿼리 안에만 정의된 색은 조건이 어긋난 상태에서 미정의가 되어 대비 사고를 만든다.","사용자의 명시적 토글과 시스템 설정 두 축을 모두 다루려면 속성 선택자와 <code>prefers-color-scheme</code>을 겹쳐 우선순위를 정한다.","의미 색(성공·경고·위험)은 브랜드 액센트와 분리하고 대비는 WCAG 기준으로 검증한다."],
+ good:"토큰 계층(원시→의미→컴포넌트)을 구분하고 대비 검증·QA 방법까지 말한다.",
+ weak:"클래스 <code>.dark</code>를 붙여 색을 각 컴포넌트에서 덮는다고 답한다.",
+ next:"이미 색이 하드코딩된 레거시를 어떻게 토큰으로 옮기겠나?",
+ r:[["MDN 커스텀 프로퍼티",M+"Web/CSS/Using_CSS_custom_properties"],["MDN prefers-color-scheme",M+"Web/CSS/@media/prefers-color-scheme"],["WCAG 명도 대비","https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html"]]},
+
+// ---------- 네트워크·HTTP ----------
+{c:"net",l:"mid",q:"정적 자산과 HTML의 캐시 헤더를 어떻게 설정하나?",
+ core:["콘텐츠 해시가 붙은 JS/CSS/이미지: <code>Cache-Control: public, max-age=31536000, immutable</code>.","HTML 엔트리: <code>no-cache</code>로 매번 검증. 그래야 새 배포가 즉시 반영된다.","<code>ETag</code>/<code>Last-Modified</code>로 조건부 요청 → 304. <code>stale-while-revalidate</code>로 체감 지연 제거.","브라우저 캐시와 CDN 캐시를 구분하고(<code>s-maxage</code>) 배포 시 무효화 대상을 정한다."],
+ good:"해시 파일명과 HTML 정책을 짝으로 설명하고 배포 후 구버전이 남는 사고를 예로 든다.",
+ weak:"모든 응답에 긴 max-age를 준다고 답한다.",
+ next:"배포 직후 사용자가 구버전 청크를 요청해 실패하면 어떻게 처리하나?",
+ r:[["MDN HTTP 캐싱",M+"Web/HTTP/Guides/Caching"],["MDN Cache-Control",M+"Web/HTTP/Reference/Headers/Cache-Control"],["MDN ETag",M+"Web/HTTP/Reference/Headers/ETag"]]},
+{c:"net",l:"mid",q:"CORS preflight는 언제 발생하고 어떻게 줄이나?",
+ core:["단순 요청(GET/HEAD/POST + 허용된 헤더 + 특정 <code>Content-Type</code>)을 벗어나면 <code>OPTIONS</code>가 먼저 간다. 커스텀 헤더 하나, <code>application/json</code>도 트리거.","줄이려면 <code>Access-Control-Max-Age</code>로 캐시, 불필요한 커스텀 헤더 제거, 같은 오리진 프록시.","<code>credentials: include</code>면 <code>Access-Control-Allow-Origin: *</code>가 불가하고 정확한 오리진과 <code>Allow-Credentials</code>가 필요하다.","CORS는 브라우저 규칙이다. 서버가 막는 게 아니라서 curl은 통과한다."],
+ good:"브라우저만의 규칙이라는 점을 분명히 하고, 실패 응답과 CORS 오류를 구분해 디버깅한 경험이 있다.",
+ weak:"프록시로 우회했다는 말만 하고 발생 조건을 설명하지 못한다.",
+ next:"같은 요청이 curl은 되는데 브라우저만 실패하면 무엇부터 보나?",
+ r:[["MDN CORS",M+"Web/HTTP/Guides/CORS"]]},
+{c:"net",l:"mid",q:"액세스 토큰을 <code>localStorage</code>에 저장해도 되나?",
+ core:["XSS가 한 번이라도 성립하면 즉시 탈취된다. 스크립트가 읽을 수 있기 때문.","기본 대안은 <code>HttpOnly; Secure; SameSite</code> 쿠키 + CSRF 대비. 또는 토큰을 메모리에만 두고 새로고침 시 리프레시로 복구.","액세스 토큰은 짧게, 리프레시는 회전(rotation)과 재사용 감지. 로그아웃 시 서버 측 무효화 경로가 있어야 한다."],
+ good:"위협 모델(XSS vs CSRF)을 나눠 설명하고 팀이 고른 절충과 이유를 말한다.",
+ weak:"\"localStorage가 편해서 쓴다\" 또는 \"쿠키는 무조건 안전\"이라고 답한다.",
+ next:"여러 탭에서 토큰 갱신이 동시에 일어나면?",
+ r:[["OWASP 세션 관리 치트시트",O+"Session_Management_Cheat_Sheet.html"],["MDN Set-Cookie",M+"Web/HTTP/Reference/Headers/Set-Cookie"]]},
+{c:"net",l:"sr",q:"실시간 기능에 polling, SSE, WebSocket 중 무엇을 고르나?",
+ core:["저빈도 갱신·단순 인프라: 폴링(또는 조건부 요청). 구현·운영 비용이 가장 낮다.","서버→클라 단방향 스트림: SSE. 일반 HTTP를 타서 프록시·자동 재연결이 쉽다. LLM 토큰 스트리밍이 대표 사례.","양방향 저지연: WebSocket. 대신 프록시·로드밸런서 설정, 스케일아웃(팬아웃), 하트비트·재연결·백오프를 직접 설계해야 한다.","공통 과제는 재연결 중 유실 보정(서버 시퀀스·재동기 요청)이다."],
+ good:"기능 요구가 아니라 운영 비용과 유실 보정을 근거로 든다.",
+ weak:"WebSocket이 항상 최신이고 좋다고 답한다.",
+ next:"연결이 30초 끊겼다가 붙으면 화면 상태를 어떻게 맞추나?",
+ r:[["MDN Server-sent events",M+"Web/API/Server-sent_events/Using_server-sent_events"],["MDN WebSockets API",M+"Web/API/WebSockets_API"]]},
+{c:"net",l:"jr",q:"쿠키의 <code>SameSite</code> 세 값은 어떤 차이가 있나?",
+ core:["<code>Strict</code>: 크로스 사이트 요청에 전혀 안 붙는다(외부 링크로 진입하면 로그아웃처럼 보인다).","<code>Lax</code>: 최상위 내비게이션 GET에만 붙는다. 다수 브라우저의 기본값.","<code>None</code>: 항상 붙지만 <code>Secure</code> 필수. 서드파티 컨텍스트(임베드·결제 위젯)에서 필요.","<code>Domain</code>/<code>Path</code>와 서브도메인 공유 범위도 함께 본다."],
+ good:"세 값의 사용자 체감 차이를 예로 들고 Secure 요건을 안다.",
+ weak:"이름만 나열한다.",
+ next:"iframe 안에서 로그인 상태가 유지되지 않는 원인은?",
+ r:[["web.dev SameSite 쿠키 설명",W+"samesite-cookies-explained"],["MDN Set-Cookie",M+"Web/HTTP/Reference/Headers/Set-Cookie"]]},
+
+// ---------- 보안 ----------
+{c:"sec",l:"mid",q:"XSS의 종류와 실질적인 방어를 설명하라.",
+ core:["저장형(서버에 남아 모든 사용자에게), 반사형(요청 파라미터가 그대로 출력), DOM 기반(클라이언트가 위험한 싱크에 직접 넣음).","방어의 본질은 출력 컨텍스트별 인코딩이다. HTML 본문·속성·URL·인라인 JS가 각각 다른 처리를 요구한다.","프레임워크 기본 이스케이프를 유지하고 <code>innerHTML</code>·<code>dangerouslySetInnerHTML</code>은 금지하거나 sanitizer를 거친다.","사용자 입력 URL은 스킴 검증(<code>javascript:</code> 차단). CSP는 2차 방어선."],
+ good:"위험 싱크 목록을 알고, 입력 필터링이 아니라 출력 인코딩이 본질이라고 말한다.",
+ weak:"\"입력값을 필터링한다\"로 끝낸다.",
+ next:"마크다운 렌더링 기능을 안전하게 만들려면?",
+ r:[["OWASP XSS 방어 치트시트",O+"Cross_Site_Scripting_Prevention_Cheat_Sheet.html"],["OWASP DOM XSS 치트시트",O+"DOM_based_XSS_Prevention_Cheat_Sheet.html"]]},
+{c:"sec",l:"sr",q:"CSP를 실제로 도입하는 순서와 함정은?",
+ core:["<code>Content-Security-Policy-Report-Only</code>로 시작해 위반 리포트를 수집한다.","인라인 스크립트·스타일을 nonce/hash로 대체하고 서드파티 출처를 목록화한다. <code>unsafe-inline</code>이 남으면 효과가 크게 준다.","외부 자원(폰트·이미지·XHR 대상)까지 지시어별로 빠짐없이 열거해야 한다. 누락은 무성 실패로 나타난다.","리포트 엔드포인트와 대시보드를 먼저 준비하고 단계적으로 강제 전환한다."],
+ good:"report-only 단계와 무성 실패의 관측 문제를 짚고 서드파티 협상 비용을 언급한다.",
+ weak:"헤더 한 줄 추가하면 된다고 답한다.",
+ next:"CSP 도입 후 특정 위젯이 조용히 멈췄다면 어떻게 찾나?",
+ r:[["MDN CSP",M+"Web/HTTP/Guides/CSP"],["web.dev strict CSP",W+"csp"]]},
+{c:"sec",l:"mid",q:"<code>SameSite=Lax</code>가 기본인 시대에 CSRF 방어가 여전히 필요한가?",
+ core:["필요하다. 최상위 POST 내비게이션, 서브도메인 공격, 구형 클라이언트, 쿠키 이외 인증 경로가 남는다.","이중 제출 쿠키나 서버 저장 CSRF 토큰, 그리고 <code>Origin</code>/<code>Sec-Fetch-Site</code> 검증을 조합한다.","상태를 바꾸는 요청을 GET으로 두지 않는 것이 기본 전제."],
+ good:"SameSite를 완전한 방어로 보지 않고 남는 경로를 구체적으로 든다.",
+ weak:"\"요즘은 브라우저가 막아 준다\"로 끝낸다.",
+ next:"공용 API에 CORS와 CSRF 방어를 함께 두면 무엇이 충돌하나?",
+ r:[["OWASP CSRF 방어 치트시트",O+"Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"]]},
+{c:"sec",l:"sr",q:"서드파티 스크립트와 의존성을 어떤 기준으로 통제하나?",
+ core:["서드파티 태그는 같은 오리진 권한으로 실행된다. 토큰·DOM·입력값 전부 접근 가능.","통제 수단: CSP 출처 화이트리스트, SRI, 샌드박스 iframe 격리, 태그 매니저 승인 절차.","의존성은 lockfile 고정, 자동 업데이트 PR + CI 검증, 빌드 스크립트 실행 최소화, 번들 증가 감시.","HTML5 보안 치트시트의 <code>target=_blank</code>·<code>postMessage</code>·스토리지 항목도 점검 목록."],
+ good:"공급망 위험을 브라우저 권한 모델로 설명하고 승인 절차 같은 조직적 장치를 든다.",
+ weak:"\"신뢰할 수 있는 라이브러리만 쓴다\"로 끝낸다.",
+ next:"광고·분석 스크립트가 INP를 악화시킨다면 어떻게 협상하나?",
+ r:[["OWASP HTML5 보안 치트시트",O+"HTML5_Security_Cheat_Sheet.html"],["MDN CSP",M+"Web/HTTP/Guides/CSP"]]},
+
+// ---------- React ----------
+{c:"react",l:"jr",q:"컴포넌트는 언제 리렌더되나?",
+ core:["자기 state 변경, 부모의 리렌더, 구독한 context 값 변경, <code>key</code> 변경(이 경우 언마운트 후 재마운트).","props가 같더라도 부모가 렌더되면 자식 함수는 다시 호출된다. <code>memo</code>로 끊을 수 있다.","렌더(가상 트리 계산)와 커밋(실제 DOM 변경)은 다르다. 리렌더가 곧 DOM 조작은 아니다."],
+ good:"렌더와 커밋을 구분하고 리렌더 자체가 항상 성능 문제는 아니라고 말한다.",
+ weak:"state가 바뀔 때만 리렌더된다고 답한다.",
+ next:"불필요한 리렌더를 어떻게 확인하나?",
+ r:[["react.dev Render and Commit",R+"learn/render-and-commit"],["react.dev memo",R+"reference/react/memo"]]},
+{c:"react",l:"jr",q:"리스트 <code>key</code>에 배열 인덱스를 쓰면 무엇이 깨지나?",
+ core:["항목을 삭제·정렬·앞에 삽입하면 인덱스가 다른 항목을 가리켜 입력값·포커스·애니메이션 상태가 어긋난다.","최악은 잘못된 재사용으로 사용자 입력이 다른 행에 붙는 것.","안정적인 서버 id를 쓰고, 없으면 생성 시점에 부여한 로컬 id를 쓴다. 정적 목록에선 인덱스도 무해하다."],
+ good:"어떤 조작에서 깨지는지 시나리오로 말하고 인덱스가 괜찮은 조건도 구분한다.",
+ weak:"\"key는 유일해야 한다\"만 반복한다.",
+ next:"<code>key</code>를 일부러 바꿔 상태를 초기화하는 기법은 언제 쓰나?",
+ r:[["react.dev 리스트 렌더링",R+"learn/rendering-lists"],["react.dev 상태 보존·초기화",R+"learn/preserving-and-resetting-state"]]},
+{c:"react",l:"mid",q:"<code>useEffect</code> 의존성 배열을 비우면 어떤 문제가 생기고 클린업은 언제 필요한가?",
+ core:["빈 배열은 최초 값에 고정된 클로저를 남긴다(stale closure). 이후 변경된 state·props를 못 본다.","구독·타이머·이벤트 리스너·<code>AbortController</code>는 반드시 클린업. 없으면 중복 구독·누수, 언마운트 후 setState.","StrictMode의 개발 이중 실행이 멱등하지 않은 이펙트를 드러낸다.","파생 값 계산이나 이벤트 대응은 이펙트가 아니라 렌더 중 계산이나 핸들러가 맞다."],
+ good:"이펙트가 필요 없는 경우를 스스로 구분하고, 린트 경고를 억제하는 대신 구조를 바꾼다.",
+ weak:"의존성 경고를 <code>eslint-disable</code>로 끄는 것이 관행이라고 답한다.",
+ next:"요청이 겹칠 때 오래된 응답이 나중에 도착하면 어떻게 막나?",
+ r:[["react.dev You Might Not Need an Effect",R+"learn/you-might-not-need-an-effect"],["react.dev useEffect",R+"reference/react/useEffect"]]},
+{c:"react",l:"mid",q:"<code>useMemo</code>/<code>useCallback</code>은 언제 쓰고 언제 빼나?",
+ core:["써야 할 때: 실제로 비싼 계산, 그리고 참조 동일성이 소비자에게 의미 있을 때(<code>memo</code> 자식의 props, 훅의 의존성).","기본은 쓰지 않는 것. 비교 비용·메모리·코드 복잡도가 붙고 의존성이 틀리면 버그가 된다.","순서는 측정 먼저. 프로파일러에서 렌더 시간과 원인을 확인하고 지점을 고른다."],
+ good:"측정 후 적용 원칙을 말하고 참조 동일성이 필요한 지점을 구체적으로 든다.",
+ weak:"모든 함수와 값을 감싸는 것이 최적화라고 답한다.",
+ next:"React Compiler가 있다면 이 판단이 어떻게 달라지나?",
+ r:[["react.dev useMemo",R+"reference/react/useMemo"],["react.dev useCallback",R+"reference/react/useCallback"]]},
+{c:"react",l:"mid",q:"Context에 전역 상태를 넣었더니 앱 전체가 리렌더된다. 어떻게 푸나?",
+ core:["Provider value가 매 렌더 새 객체면 모든 소비자가 리렌더된다 → 값 메모이제이션.","자주 바뀌는 값과 거의 안 바뀌는 값을 분리해 Context를 쪼갠다(상태/디스패치 분리).","부분 구독이 필요하면 selector 기반 스토어로 옮긴다. 새 참조를 반환하는 selector는 무한 루프를 만들 수 있어 얕은 비교를 함께 쓴다.","memo 경계를 두어 트리 전파를 끊는다."],
+ good:"Context의 구조적 한계(부분 구독 불가)를 알고 도구를 바꿀 근거를 댄다.",
+ weak:"Context를 모든 상태의 기본 저장소로 쓰면서 성능 문제를 <code>memo</code> 남발로 덮는다.",
+ next:"스토어로 옮긴 뒤에도 느리다면 어디를 보나?",
+ r:[["react.dev Reducer와 Context 확장",R+"learn/scaling-up-with-reducer-and-context"]]},
+{c:"react",l:"mid",q:"서버 상태와 클라이언트 상태를 왜 나누나?",
+ core:["서버 데이터는 사본이다. 캐시 수명·재검증·무효화·경합이 본질 문제이고 이를 전용 도구가 다룬다.","서버 응답을 전역 스토어에 복사하면 두 개의 진실이 생겨 동기화 코드가 계속 늘어난다.","UI 상태(열림/선택/입력 중)는 가장 가까운 곳에, 공유·복원이 필요한 상태는 URL에."],
+ good:"동기화 비용을 이유로 들고 URL을 상태 저장소로 쓰는 판단 기준을 말한다.",
+ weak:"전역 스토어 하나에 다 넣는 것이 일관성이라고 답한다.",
+ next:"목록을 수정한 뒤 상세 화면이 옛 값을 보이면 무엇을 고치나?",
+ r:[["TanStack Query 쿼리 키",TQ+"query-keys"],["react.dev 상태 관리",R+"learn/managing-state"]]},
+{c:"react",l:"sr",q:"상태를 어디에 둘지 결정하는 기준이 있나?",
+ core:["사용 범위를 최소로: 로컬 → 리프팅 → 컨텍스트/스토어 순으로만 올린다.","공유·새로고침 복원·딥링크가 필요하면 URL(쿼리스트링·경로).","서버 데이터는 캐시 계층. 사용자 편의(마지막 탭·접힘)는 로컬 스토리지, 단 없어도 화면이 정상 동작해야 한다.","기기 간 유지·감사 필요는 서버 저장. 기준은 '누가 읽고, 얼마나 오래 살아야 하나'다."],
+ good:"수명과 독자 기준으로 계층을 나누고 잘못 둔 상태를 옮긴 경험을 든다.",
+ weak:"습관적으로 전역 또는 습관적으로 로컬이라 답하고 기준이 없다.",
+ next:"필터 조건을 URL에 넣었을 때 생기는 부작용은?",
+ r:[["react.dev 상태 관리",R+"learn/managing-state"]]},
+{c:"react",l:"sr",q:"SSR 하이드레이션 미스매치는 왜 생기고 어떻게 다루나?",
+ core:["서버와 클라이언트가 다른 결과를 만들 때: <code>Date.now()</code>·랜덤·로케일·<code>window</code> 의존·저장소 값·A/B 분기.","경고를 억제하는 대신 클라이언트 전용 부분을 마운트 이후 렌더로 분리하거나 서버에서 값을 내려 준다.","미스매치는 트리 재생성으로 이어질 수 있어 성능·깜빡임 문제로 나타난다.","스트리밍·Suspense 경계를 잘라 실패 범위와 첫 페인트를 제어한다."],
+ good:"원인 목록을 알고 억제 플래그 남용을 경계하며 경계 설계까지 말한다.",
+ weak:"<code>suppressHydrationWarning</code>으로 해결한다고 답한다.",
+ next:"로그인 상태에 따라 헤더가 다르면 어떻게 서버 렌더하나?",
+ r:[["react.dev hydrateRoot",R+"reference/react-dom/client/hydrateRoot"]]},
+{c:"react",l:"mid",q:"StrictMode가 개발에서 이펙트를 두 번 실행하는 이유는?",
+ core:["마운트→언마운트→재마운트에 견디는지 검증하기 위한 의도된 동작. 프로덕션에는 없다.","클린업이 없거나 멱등하지 않은 이펙트(중복 구독, 카운터 증가, 중복 전송)가 여기서 드러난다.","끄는 것이 아니라 이펙트를 고치는 것이 답."],
+ good:"드러난 결함을 고친 경험을 말한다.",
+ weak:"버그로 보고 StrictMode를 제거한다.",
+ next:"분석 이벤트가 두 번 전송된다면 어떻게 고치나?",
+ r:[["react.dev StrictMode",R+"reference/react/StrictMode"]]},
+{c:"react",l:"mid",q:"<code>ref</code>를 쓰는 것이 정당한 경우는?",
+ core:["포커스·스크롤·측정·미디어 제어, 서드파티 라이브러리 인스턴스 보관, 렌더에 반영되지 않아야 하는 최신값 보관.","화면에 나타나야 하는 값은 state. ref로 우회하면 UI와 데이터가 어긋난다.","렌더 중 ref를 읽고 쓰는 것은 금지. 레이아웃 측정은 커밋 이후."],
+ good:"state와 ref의 경계를 '렌더에 반영되어야 하는가'로 가른다.",
+ weak:"리렌더를 피하려고 상태를 ref에 넣는다.",
+ next:"자식 DOM을 부모가 제어해야 한다면 어떤 API를 쓰나?",
+ r:[["react.dev ref로 값 참조",R+"learn/referencing-values-with-refs"]]},
+{c:"react",l:"sr",q:"React 19에서 폼 제출과 낙관적 UI를 어떤 API로 구성하나?",
+ core:["Actions: <code>&lt;form action={fn}&gt;</code>와 <code>useActionState</code>로 제출 중 상태·에러를 프레임워크가 관리한다.","<code>useOptimistic</code>으로 요청 진행 중 임시 값을 보여 주고, 실패 시 자동으로 되돌린다.","<code>use()</code>로 Promise·Context를 렌더에서 읽고 Suspense 경계와 붙인다.","PropTypes는 폐기됐다. 컴포넌트 계약은 TypeScript로 표현하는 것이 표준."],
+ good:"수동 <code>isSubmitting</code> 상태를 왜 줄일 수 있는지 설명하고 실패 롤백까지 다룬다.",
+ weak:"버전 이름만 알고 어떤 문제를 대체하는지 말하지 못한다.",
+ next:"서버 컴포넌트 경계에서 이벤트 핸들러를 어디에 둬야 하나?",
+ r:[["react.dev React 19 릴리스",R+"blog/2024/12/05/react-19"],["react.dev useOptimistic",R+"reference/react/useOptimistic"],["react.dev use()",R+"reference/react/use"],["react.dev form",R+"reference/react-dom/components/form"]]},
+{c:"react",l:"sr",q:"서버 컴포넌트와 클라이언트 컴포넌트의 경계를 어떻게 잡나?",
+ core:["기본은 서버. 상태·이벤트·브라우저 API가 필요한 잎(leaf)만 클라이언트로 내린다.","경계를 넘는 props는 직렬화 가능해야 한다. 함수·클래스 인스턴스는 못 넘긴다.","데이터 페칭을 서버로 올리면 클라이언트 번들과 워터폴이 줄지만, 상호작용 많은 화면은 오히려 경계가 늘어 복잡해진다.","선택 근거는 번들 크기·지연·팀의 운영 역량이다."],
+ good:"직렬화 제약과 워터폴을 함께 말하고 도입하지 않을 근거도 댄다.",
+ weak:"\"최신이니까 전부 서버 컴포넌트로\"라고 답한다.",
+ next:"서버 컴포넌트에서 인증 실패를 어떻게 화면에 전달하나?",
+ r:[["react.dev 서버 컴포넌트",R+"reference/rsc/server-components"]]},
+
+// ---------- 상태·데이터 ----------
+{c:"state",l:"mid",q:"낙관적 업데이트를 안전하게 만드는 조건은?",
+ core:["적용 전 스냅샷을 잡아 실패 시 롤백하고 사용자에게 실패를 알린다.","서버 응답으로 최종 재조정(서버가 부여한 id·시각·정렬키).","연속 조작의 경합: 마지막 요청만 반영하거나 순차 큐로 직렬화. 재시도는 서버가 멱등해야 안전하다.","되돌릴 수 없는 작업(결제·삭제)에는 쓰지 않는다."],
+ good:"롤백·재조정·경합·멱등 네 가지를 모두 말하고 쓰지 않을 경우도 구분한다.",
+ weak:"UI를 먼저 바꾸고 요청을 보낸다는 설명에서 멈춘다.",
+ next:"오프라인에서 쌓인 변경을 복귀 후 어떻게 반영하나?",
+ r:[["TanStack Query 낙관적 업데이트",TQ+"optimistic-updates"],["react.dev useOptimistic",R+"reference/react/useOptimistic"]]},
+{c:"state",l:"sr",q:"서버 데이터 캐시 무효화를 어떻게 설계했나?",
+ core:["키 설계가 먼저다. 엔티티 + 파라미터(필터·페이지)를 계층 키로 두어 부분 무효화가 가능하게 한다.","변경 후 전량 무효화는 단순하지만 대량 리페치를 부른다. 응답으로 캐시를 직접 갱신(write-through)하고 필요한 범위만 무효화.","창 포커스·재연결·주기 재검증 정책, 목록↔상세 간 일관성 규칙을 정한다.","결정 근거는 요청 수와 화면 일관성의 균형이며 실측으로 조정한다."],
+ good:"키 계층과 write-through를 구분해 쓰고 무효화 비용을 수치로 관찰한 경험이 있다.",
+ weak:"\"수정 후 전부 invalidate\"만 답한다.",
+ next:"여러 탭이 열려 있을 때 캐시를 어떻게 맞추나?",
+ r:[["TanStack Query 무효화",TQ+"query-invalidation"],["TanStack Query 쿼리 키",TQ+"query-keys"]]},
+{c:"state",l:"mid",q:"무한 스크롤 목록에서 항목 하나를 수정하면 캐시를 어떻게 다루나?",
+ core:["페이지 단위 캐시라면 해당 페이지 안의 항목만 갱신하거나, 엔티티를 정규화해 단일 소스로 둔다.","정렬 기준이 바뀌는 수정은 커서가 흔들려 중복·누락이 생긴다 → 서버 커서 기준 재동기 또는 목록 리셋.","삭제는 오프셋 페이징에서 항목 밀림을 유발한다(커서 페이징 선호)."],
+ good:"커서와 오프셋 페이징의 차이를 알고 중복·누락 시나리오를 예로 든다.",
+ weak:"목록 전체를 다시 불러오면 된다고만 답한다.",
+ next:"스크롤 위치를 유지하면서 목록을 갱신하려면?",
+ r:[["TanStack Query 무한 쿼리",TQ+"infinite-queries"]]},
+
+// ---------- TypeScript ----------
+{c:"ts",l:"jr",q:"<code>any</code> 대신 <code>unknown</code>을 쓰라는 이유는?",
+ core:["<code>unknown</code>은 사용 전 좁히기를 강제한다. 검사 없이는 어떤 연산도 허용되지 않는다.","<code>any</code>는 전파된다. 한 지점에서 끄면 그 값이 닿는 모든 곳의 검사가 사라진다.","외부 입력(JSON·이벤트·서드파티)은 <code>unknown</code>으로 받아 타입 가드나 스키마로 좁힌다."],
+ good:"전파 문제를 설명하고 좁히는 수단을 함께 든다.",
+ weak:"둘이 비슷하다고 답한다.",
+ next:"타입 가드 함수는 어떻게 쓰나?",
+ r:[["TS 핸드북 Everyday Types",T+"2/everyday-types.html"],["TS 핸드북 Narrowing",T+"2/narrowing.html"]]},
+{c:"ts",l:"mid",q:"<code>as</code> 단언이 위험한 이유와 대안은?",
+ core:["단언은 런타임 검증이 아니다. 컴파일러가 잡아 줄 회귀를 침묵시킨다.","대안: 타입 가드, 판별 유니온, 제네릭, 스키마 파싱, 그리고 <code>satisfies</code>로 초과·누락 검사를 유지.","<code>as const</code>는 리터럴 보존 목적이라 성격이 다르다.","테스트 스텁에서 부분 객체가 필요하면 부분 타입 + 조립으로 풀고 통째 단언을 피한다."],
+ good:"어떤 회귀가 숨는지 사례로 말하고 <code>satisfies</code>를 구분해 쓴다.",
+ weak:"타입 에러가 나면 일단 <code>as</code>로 막는다고 답한다.",
+ next:"API 응답 타입이 실제와 다르다면 어디서 막아야 하나?",
+ r:[["TS 4.9 satisfies",T+"release-notes/typescript-4-9.html"],["TS 핸드북 Narrowing",T+"2/narrowing.html"]]},
+{c:"ts",l:"mid",q:"구조적 타이핑이 만드는 함정은?",
+ core:["모양이 같으면 호환된다. 서로 다른 의미의 문자열 id가 교차 대입돼도 컴파일은 통과한다.","초과 속성 검사는 객체 리터럴에만 적용돼, 변수를 거치면 여분 속성이 조용히 통과한다.","구분이 필요하면 branded/nominal 타입(태그 필드나 심볼)으로 식별자를 분리한다."],
+ good:"id 혼동 같은 실제 사고를 들고 branded 타입을 도입한 경험이 있다.",
+ weak:"덕 타이핑이라는 용어만 말한다.",
+ next:"단위나 좌표계가 다른 숫자를 타입으로 어떻게 막나?",
+ r:[["TS 타입 호환성",T+"type-compatibility.html"],["Nominal typing 패턴","https://basarat.gitbook.io/typescript/main-1/nominaltyping"]]},
+{c:"ts",l:"sr",q:"런타임 경계에서 타입을 어떻게 보장하나?",
+ core:["경계(네트워크·스토리지·postMessage·URL 파라미터)에서 한 번 파싱하고, 내부는 파싱된 타입만 신뢰한다.","스키마 정의를 단일 출처로 두고 타입을 파생한다. 생성된 타입을 다시 별칭으로 재수출하면 원본과 어긋난다.","파싱 실패 처리(폴백·에러 보고)를 설계해야 한다. 성능을 이유로 검증을 수동 체크로 대체하면 누락 회귀가 생긴다.","서버 스펙(OpenAPI)에서 클라이언트 타입을 생성해 계약을 CI로 검증한다."],
+ good:"경계 1회 파싱 원칙과 실패 경로를 말하고 검증 제거로 사고를 본 경험을 든다.",
+ weak:"타입이 있으니 런타임 검증은 필요 없다고 답한다.",
+ next:"스키마 검증 비용이 실제로 문제라면 어떻게 줄이나?",
+ r:[["Zod 스키마 검증","https://zod.dev/"],["TS 제네릭",T+"2/generics.html"]]},
+
+// ---------- 성능 ----------
+{c:"perf",l:"mid",q:"Core Web Vitals 세 지표와 합격선은?",
+ core:["LCP 2.5초 이하, INP 200ms 이하, CLS 0.1 이하.","판정은 실사용자(field) 데이터의 75퍼센타일이며 모바일·데스크톱을 나눠 본다.","실험실(Lighthouse) 점수와 필드 값은 다르다. 개선 판단은 필드 분포로 한다."],
+ good:"수치와 75퍼센타일 기준을 정확히 말하고 lab/field 차이를 구분한다.",
+ weak:"Lighthouse 점수 90점 같은 지표만 말한다.",
+ next:"필드 데이터는 어떻게 수집했나?",
+ r:[["web.dev Web Vitals",W+"vitals"],["web.dev 임계값 정의","https://web.dev/articles/defining-core-web-vitals-thresholds"],["web.dev lab vs field","https://web.dev/articles/lab-and-field-data-differences"]]},
+{c:"perf",l:"mid",q:"LCP가 느릴 때 점검 순서를 말해 보라.",
+ core:["LCP는 TTFB → 리소스 로드 지연 → 리소스 로드 시간 → 렌더 지연 네 구간으로 쪼개 본다.","히어로 이미지에 <code>fetchpriority=\"high\"</code>, <code>preload</code>를 주고 지연 로딩을 걸지 않는다.","렌더 블로킹 CSS·폰트 축소, 서버 응답 캐시, 이미지 포맷·해상도 축소.","클라이언트 렌더에서는 하이드레이션·데이터 페치 워터폴이 렌더 지연으로 잡힌다."],
+ good:"네 구간 분해로 병목을 지목하고 측정 도구(필드 어트리뷰션)를 든다.",
+ weak:"이미지 압축만 말한다.",
+ next:"LCP 요소가 매 화면마다 다르면 무엇을 기준으로 개선하나?",
+ r:[["web.dev LCP",W+"lcp"],["web.dev LCP 최적화",W+"optimize-lcp"],["web.dev fetchpriority",W+"fetch-priority"]]},
+{c:"perf",l:"mid",q:"번들이 커졌을 때 실제로 무엇을 하나?",
+ core:["먼저 분석. 번들 시각화 도구로 무엇이 큰지 확인하고 중복 의존성(버전 두 개)을 찾는다.","전체 import(유틸 라이브러리 통째, 아이콘 세트), moment류 로케일 포함 여부 점검.","라우트·모달·에디터 단위 code splitting과 지연 로드. 초기 경로에 필요한 것만 남긴다.","예산(budget)을 CI에 걸어 회귀를 막는다."],
+ good:"측정 → 원인 → 분할 → 회귀 감시 순서로 말하고 수치를 든다.",
+ weak:"\"lazy import를 쓴다\"만 답하고 무엇이 큰지 모른다.",
+ next:"코드 분할을 늘렸는데 체감이 더 나빠졌다면 왜인가?",
+ r:[["web.dev 코드 분할",W+"reduce-javascript-payloads-with-code-splitting"],["web.dev 성능 예산",W+"performance-budgets-101"]]},
+{c:"perf",l:"sr",q:"성능 개선을 어떻게 증명하나?",
+ core:["먼저 측정. 필드 RUM 분포(p75)와 대상 사용자 세그먼트를 정한다.","가설은 하나씩. 전후 조건을 동일하게 맞추고 저사양 기기·저속 네트워크 프로파일로 재현한다.","Long Task·INP 어트리뷰션으로 원인 지점을 특정한다.","회귀 감시: 성능 예산, CI 측정, 배포와 지표를 연결한 알림."],
+ good:"수치와 분포로 말하고 회귀 감시까지 설계한다.",
+ weak:"체감이 빨라졌다고 말하고 근거가 없다.",
+ next:"개선 후 p75는 좋아졌는데 p95가 나빠졌다면?",
+ r:[["web.dev INP 최적화",W+"optimize-inp"],["MDN Long Task API",M+"Web/API/PerformanceLongTaskTiming"],["web.dev 성능 예산",W+"performance-budgets-101"]]},
+{c:"perf",l:"mid",q:"1만 행 목록을 렌더해야 한다면?",
+ core:["윈도잉(가상 스크롤)으로 보이는 범위만 DOM에 유지한다.","행 컴포넌트 memo, 안정 key, 셀 계산 캐시로 스크롤 중 작업을 줄인다.","트레이드오프: 검색(Ctrl+F)·접근성·스크롤 앵커링이 약해진다. 가변 높이는 측정 비용이 든다.","대안은 페이징이나 서버 집계. 사용자가 실제로 무엇을 찾는지가 선택 기준."],
+ good:"윈도잉의 대가를 알고 페이징 대안과 비교한다.",
+ weak:"라이브러리 이름만 말한다.",
+ next:"행 높이가 콘텐츠마다 다르면 어떻게 처리하나?",
+ r:[["web.dev 긴 목록 가상화",W+"virtualize-long-lists-react-window"]]},
+{c:"perf",l:"jr",q:"이미지 최적화의 기본은?",
+ core:["표시 크기에 맞는 해상도 제공(<code>srcset</code>/<code>sizes</code>), AVIF·WebP 같은 최신 포맷.","화면 밖 이미지는 <code>loading=\"lazy\"</code>, 첫 화면 LCP 이미지는 지연 로딩을 걸지 않는다.","<code>width</code>/<code>height</code> 또는 <code>aspect-ratio</code>를 지정해 CLS를 막는다."],
+ good:"LCP 이미지 예외를 알고 CLS 방지까지 말한다.",
+ weak:"모든 이미지에 lazy를 붙인다고 답한다.",
+ next:"CDN 리사이즈와 빌드 타임 리사이즈의 차이는?",
+ r:[["MDN img (srcset·loading)",M+"Web/HTML/Reference/Elements/img"],["web.dev 반응형 이미지",W+"serve-responsive-images"],["web.dev CLS",W+"cls"]]},
+{c:"perf",l:"mid",q:"웹폰트 때문에 생기는 깜빡임과 레이아웃 이동을 어떻게 다루나?",
+ core:["<code>font-display</code>로 정책 선택: <code>swap</code>은 폴백 먼저(이동 발생), <code>optional</code>은 첫 방문에 폴백 유지.","핵심 폰트는 <code>preload</code>, 서브셋으로 용량 축소, 가변 폰트로 파일 수 감소.","폴백 폰트 메트릭을 맞춰(<code>size-adjust</code>, <code>ascent-override</code>) 교체 시 이동을 줄인다."],
+ good:"정책별 트레이드오프를 말하고 메트릭 정렬까지 안다.",
+ weak:"\"폰트를 preload한다\"만 답한다.",
+ next:"브랜드 폰트가 필수인데 CLS가 기준을 넘으면?",
+ r:[["MDN font-display",M+"Web/CSS/@font-face/font-display"],["web.dev 웹폰트 로딩 최적화",W+"optimize-webfont-loading"]]},
+
+// ---------- 테스트 ----------
+{c:"test",l:"mid",q:"무엇을 유닛으로, 무엇을 e2e로 테스트하나?",
+ core:["순수 로직·경계 조건은 유닛. 컴포넌트+스토어+네트워크 모킹의 통합 테스트가 비용 대비 신뢰가 가장 높다.","e2e는 핵심 사용자 흐름 소수(로그인·결제·저장)로 제한한다. 느리고 깨지기 쉬워서.","기준은 '이 테스트가 깨질 때 실제 사용자 문제가 있었는가'."],
+ good:"비용·신뢰 균형으로 설명하고 자기 프로젝트의 배치를 수치로 말한다.",
+ weak:"커버리지 숫자를 목표로 제시한다.",
+ next:"커버리지 80%인데 장애가 났다면 무엇을 바꾸겠나?",
+ r:[["Testing Trophy (Kent C. Dodds)","https://kentcdodds.com/blog/the-testing-trophy-and-testing-classifications"],["Practical Test Pyramid (Fowler)","https://martinfowler.com/articles/practical-test-pyramid.html"]]},
+{c:"test",l:"mid",q:"Testing Library의 쿼리 우선순위와 그 이유는?",
+ core:["접근성 기준 쿼리 우선: <code>getByRole</code> → <code>getByLabelText</code> → <code>getByText</code> → 마지막 수단으로 <code>getByTestId</code>.","사용자가 화면을 인식하는 방식과 같은 축으로 찾아야 테스트가 구현 변경에 견딘다. 부수적으로 접근성 결함도 드러난다.","클래스명·DOM 구조에 의존하면 리팩터마다 깨진다."],
+ good:"우선순위를 순서대로 말하고 접근성 검증 효과를 언급한다.",
+ weak:"testid가 가장 안정적이라고 답한다.",
+ next:"role로 못 찾는 커스텀 위젯은 어떻게 테스트하나?",
+ r:[["Testing Library 쿼리 우선순위","https://testing-library.com/docs/queries/about/"],["Testing Library 원칙","https://testing-library.com/docs/guiding-principles"]]},
+{c:"test",l:"sr",q:"flaky 테스트의 원인 top과 처방은?",
+ core:["고정 <code>sleep</code>과 시간·애니메이션 의존 → 조건 기반 대기(자동 재시도 assertion).","테스트 간 상태 공유(DB·스토리지·로그인 세션) → 테스트별 격리와 시드 데이터.","순서 의존·병렬 자원 충돌(같은 포트·같은 계정) → 워커별 자원 분리.","네트워크 실물 의존 → 경계 모킹. 재시도는 은폐 수단이 아니라 관측 장치로 쓰고 실패율을 추적한다."],
+ good:"원인별 처방을 짝지어 말하고 재시도를 측정과 함께 다룬다.",
+ weak:"재시도 횟수를 늘려 해결했다고 답한다.",
+ next:"CI에서만 깨지고 로컬에서 재현되지 않으면 무엇부터 보나?",
+ r:[["Playwright 재시도·flaky","https://playwright.dev/docs/test-retries"]]},
+{c:"test",l:"mid",q:"모킹은 어디까지 해야 하나?",
+ core:["네트워크 경계에서 모킹(요청 인터셉트)하면 앱 내부 구조를 바꿔도 테스트가 살아남는다.","내부 모듈을 모킹하면 리팩터마다 깨지고, 실제로는 깨진 코드가 통과하는 가짜 green이 생긴다.","시간·랜덤·기기 API는 제어 가능한 대체물로 고정한다."],
+ good:"경계 모킹과 내부 모킹의 결과 차이를 경험으로 설명한다.",
+ weak:"편의상 전부 모킹한다고 답한다.",
+ next:"모킹한 응답이 실제 서버 스펙과 달라지는 것을 어떻게 막나?",
+ r:[["MSW 철학(경계 모킹)","https://mswjs.io/docs/philosophy"]]},
+
+// ---------- 빌드·툴링 ----------
+{c:"build",l:"mid",q:"tree shaking이 안 먹는 이유는?",
+ core:["CJS 모듈은 정적 분석이 어렵다. ESM이어야 제거가 가능하다.","<code>package.json</code>의 <code>sideEffects</code> 설정 누락 또는 실제 사이드이펙트(전역 등록, CSS import).","배럴 파일(<code>export *</code>)로 모듈 전체가 참조되어 남는 경우.","프로덕션 모드(minify·DCE)로 빌드하지 않은 경우."],
+ good:"원인을 나열하고 번들 분석으로 확인한 경험을 말한다.",
+ weak:"번들러가 알아서 해 준다고 답한다.",
+ next:"배럴 파일을 없애면 어떤 부작용이 있나?",
+ r:[["webpack tree shaking","https://webpack.js.org/guides/tree-shaking/"]]},
+{c:"build",l:"mid",q:"ESM과 CJS가 섞여 생기는 문제는?",
+ core:["named export interop 차이로 <code>import { x }</code>가 실패하거나 default에 감싸여 들어온다.","같은 패키지가 두 형식으로 동시에 번들되는 dual package hazard → 인스턴스·전역 상태가 두 개.","<code>exports</code> 조건부 필드 해석이 번들러·런타임마다 달라 SSR과 브라우저가 다른 파일을 집는다."],
+ good:"실제 디버깅 절차(어느 파일이 해석됐는지 확인)를 말한다.",
+ weak:"에러 메시지만 기억하고 원인 구조를 모른다.",
+ next:"SSR에서만 깨지는 라이브러리를 어떻게 처리했나?",
+ r:[["Node.js packages(exports·interop)","https://nodejs.org/api/packages.html"]]},
+{c:"build",l:"sr",q:"모노레포에서 의존 경계를 어떻게 강제하나?",
+ core:["태그·경로 기반 규칙을 린트로 강제해 허용된 방향만 import 가능하게 한다.","순환 의존 방지: 상위 배럴 import 금지, 모듈 내부는 상대 경로, 외부는 alias.","변경 영향 그래프로 영향받은 프로젝트만 빌드·테스트하고 캐시를 공유한다.","규칙 없는 공유 레이어는 결국 모든 것이 모든 것에 의존하는 상태로 수렴한다."],
+ good:"규칙을 도구로 강제한 경험과 CI 시간 변화 수치를 말한다.",
+ weak:"리뷰에서 주의시킨다고 답한다.",
+ next:"경계 규칙 때문에 개발이 느려진다는 반발에 어떻게 답하나?",
+ r:[["Nx 모듈 경계 강제","https://nx.dev/features/enforce-module-boundaries"]]},
+{c:"build",l:"mid",q:"프로덕션 에러를 어떻게 읽을 수 있게 만드나?",
+ core:["난독화된 스택은 소스맵을 에러 트래킹 서비스에 업로드해 복원한다. 소스맵은 공개 배포하지 않는다.","릴리스 버전을 스택과 함께 태깅해 어느 배포에서 난 에러인지 구분한다.","브라우저·기기·사용자 흐름(breadcrumb)을 함께 수집하고, 전역 <code>error</code>·<code>unhandledrejection</code>을 연결한다."],
+ good:"릴리스 태깅과 소스맵 비공개 운영을 함께 말한다.",
+ weak:"콘솔 로그를 본다고 답한다.",
+ next:"에러가 특정 배포 이후 급증했다면 무엇부터 보나?",
+ r:[["소스맵 업로드 운영(Sentry)","https://docs.sentry.io/platforms/javascript/sourcemaps/"]]},
+
+// ---------- 접근성 ----------
+{c:"a11y",l:"jr",q:"버튼을 <code>div</code>로 만들면 무엇을 잃나?",
+ core:["키보드 포커스, Enter/Space 활성화, 스크린리더의 role·상태 전달, 비활성 처리.","대체하려면 <code>role=\"button\"</code>, <code>tabindex=\"0\"</code>, 키 핸들러, <code>aria-disabled</code>를 전부 직접 구현해야 한다.","네이티브 요소를 쓰는 것이 언제나 더 싸다."],
+ good:"잃는 항목을 구체적으로 나열하고 네이티브 우선 원칙을 말한다.",
+ weak:"\"클릭은 되니까 괜찮다\"고 답한다.",
+ next:"링크와 버튼은 어떤 기준으로 나누나?",
+ r:[["MDN ARIA 기법",M+"Web/Accessibility/ARIA/Guides/Techniques"],["ARIA APG 키보드 인터페이스","https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/"]]},
+{c:"a11y",l:"mid",q:"모달 접근성 체크리스트를 말해 보라.",
+ core:["열릴 때 포커스를 모달 안으로 이동, 내부에 포커스 트랩, 닫을 때 원래 트리거로 복귀.","Esc로 닫기, <code>role=\"dialog\"</code> + <code>aria-modal=\"true\"</code> + <code>aria-labelledby</code>.","배경 스크롤 잠금, 배경 콘텐츠를 보조기기에서 감추기.","실제 스크린리더와 키보드만으로 검증."],
+ good:"포커스 복귀와 배경 처리까지 포함하고 실제 검증 방법을 말한다.",
+ weak:"오버레이 클릭으로 닫히는지만 확인한다.",
+ next:"모달 안에 또 다른 팝업이 열리면 포커스는 어떻게 관리하나?",
+ r:[["ARIA APG Dialog 패턴","https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/"]]},
+{c:"a11y",l:"mid",q:"ARIA를 쓰는 것이 오히려 나쁜 경우는?",
+ core:["ARIA의 첫 규칙은 '가능하면 ARIA를 쓰지 마라'. 네이티브 시맨틱이 항상 우선.","잘못된 role은 접근성 트리를 덮어써 원래 의미를 파괴한다.","<code>aria-label</code>과 보이는 텍스트가 어긋나면 음성 제어 사용자가 조작할 수 없다. 라벨 중복 낭독도 흔한 결함.","<code>aria-hidden</code>을 포커스 가능한 요소에 걸면 키보드로는 닿지만 낭독되지 않는 상태가 된다."],
+ good:"첫 규칙을 알고 잘못된 role의 부작용을 예로 든다.",
+ weak:"ARIA를 많이 붙이면 접근성이 좋아진다고 답한다.",
+ next:"디자인 시스템에서 접근성 회귀를 어떻게 막나?",
+ r:[["MDN ARIA 기법",M+"Web/Accessibility/ARIA/Guides/Techniques"],["MDN ARIA Roles 참조",M+"Web/Accessibility/ARIA/Reference/Roles"]]},
+
+// ---------- 아키텍처·협업 ----------
+{c:"arch",l:"sr",q:"파괴적 변경을 여러 배포에 걸쳐 어떻게 나누나?",
+ core:["Parallel Change(Expand → Migrate → Contract): 새 형태를 추가하고, 소비자를 옮기고, 마지막에 옛 형태를 제거한다.","무중단·블루그린 배포에서는 구·신 버전이 일시 공존하므로 이 순서가 선택이 아니라 필수다.","각 단계는 단독 롤백이 가능해야 한다. 양쪽 쓰기·읽기 플래그로 경계를 만든다.","정리(Contract) 단계에 담당자와 기한을 붙이지 않으면 영구 부채가 된다."],
+ good:"공존 구간을 전제로 단계를 설계하고 롤백 단위를 말한다.",
+ weak:"한 번에 바꾸고 배포 순서로 맞춘다고 답한다.",
+ next:"소비자가 사내 다른 팀이면 Contract 단계를 어떻게 진행하나?",
+ r:[["Martin Fowler — ParallelChange","https://martinfowler.com/bliki/ParallelChange.html"]]},
+{c:"arch",l:"sr",q:"컴포넌트 경계를 어디서 자르나?",
+ core:["같이 바뀌는 것끼리 묶고, 다른 이유로 바뀌는 것은 가른다(변경 이유 단위 응집).","분리 신호: props 폭발, 불리언 난립, 내부 분기 다수, 재사용마다 예외 추가.","상태 소유권을 먼저 정하고 그 경계에 컴포넌트를 맞춘다.","공용화는 세 번째 사례부터. 두 사례로 추상화하면 잘못된 추상이 남는다."],
+ good:"판단 기준을 변경 이유와 상태 소유권으로 대고 되돌린 경험도 말한다.",
+ weak:"\"재사용할 수 있게 작게 만든다\"만 답한다.",
+ next:"공용 컴포넌트가 앱마다 다르게 쓰여야 한다면?",
+ r:[["react.dev 상태 관리·구조",R+"learn/managing-state"]]},
+{c:"arch",l:"sr",q:"프론트엔드 장애를 어떻게 관측하나?",
+ core:["에러 트래킹(소스맵·릴리스 태깅), 필드 성능(RUM), 사용자 흐름 이벤트, 그리고 배포 시점과 지표를 연결한 알림.","이벤트 이름·속성 규칙을 정해 두지 않으면 데이터가 남아도 질문에 답할 수 없다.","실패 경로에 로그를 먼저 심는다(요청 실패, 재시도, 빈 상태). 성공 경로만 계측하면 장애가 안 보인다.","페이지 이탈 시 전송은 <code>sendBeacon</code>으로."],
+ good:"관측 항목을 답해야 할 질문에서 역산하고 명명 규칙을 언급한다.",
+ weak:"에러 트래킹 도구 설치로 끝낸다.",
+ next:"사용자 제보만 있고 로그가 없는 장애는 어떻게 추적하나?",
+ r:[["MDN sendBeacon",M+"Web/API/Navigator/sendBeacon"],["Sentry 소스맵","https://docs.sentry.io/platforms/javascript/sourcemaps/"]]},
+{c:"arch",l:"sr",q:"실시간 피드나 AI 채팅 화면을 설계한다면 무엇을 먼저 정하나?",
+ core:["전송 방식(SSE vs WebSocket)과 유실·재연결 보정 규칙.","스트리밍 토큰을 화면에 붙일 때 렌더 빈도 제어(프레임당 1회 배치), 긴 대화는 가상화.","중단·재생성·부분 실패 UX, 그리고 낙관적 사용자 메시지 표시와 서버 확정 사이의 재조정.","비용·레이트 리밋 처리, 재연결 시 스트림 재개 지점."],
+ good:"스트리밍 렌더 비용과 유실 보정을 함께 말하고 취소 경로를 설계한다.",
+ weak:"토큰을 받는 대로 setState한다고만 답한다.",
+ next:"스트리밍 중 사용자가 탭을 떠났다면 어떻게 처리하나?",
+ r:[["MDN Streams API",M+"Web/API/Streams_API"],["MDN EventSource",M+"Web/API/EventSource"],["web.dev 긴 작업 쪼개기",W+"optimize-long-tasks"]]},
+{c:"arch",l:"sr",q:"기술 부채 정리나 리팩터를 어떻게 설득했나?",
+ core:["수치로 말한다: 리드타임, 버그 재발률, 번들 크기, p75 지표, 온보딩 시간.","크게 한 번이 아니라 기능 작업에 얹어 작게 쪼갠 계획으로 제안한다.","리스크와 롤백 계획을 함께 제시하고, 끝난 뒤 같은 지표를 다시 측정해 보고한다."],
+ good:"승인받은 실제 사례와 사후 측정을 말한다.",
+ weak:"코드가 더럽다는 주관적 표현만 쓴다.",
+ next:"설득이 실패했을 때 어떻게 했나?",
+ r:[["web.dev 성능 예산",W+"performance-budgets-101"]]},
+{c:"arch",l:"sr",q:"코드 리뷰에서 무엇을 막고 무엇을 넘기나?",
+ core:["막는다: 정확성·보안·데이터 손실·공개 계약 변경·롤백 불가 설계.","자동화한다: 포맷·네이밍 규칙·린트 가능한 규칙은 사람이 지적하지 않는다.","제안은 근거와 비용을 함께. 취향 논쟁은 팀 규칙으로 승격시켜 끝낸다.","라운드를 뭉쳐 왕복을 줄이고, 차단 항목과 선택 항목을 라벨로 구분한다."],
+ good:"차단 기준을 명시하고 자동화로 옮긴 경험을 든다.",
+ weak:"모든 지적을 동일한 무게로 남긴다.",
+ next:"의견이 갈려 합의가 안 될 때 어떻게 끝내나?",
+ r:[["Testing Library 원칙(리뷰 기준 예)","https://testing-library.com/docs/guiding-principles"]]},
+{c:"arch",l:"all",q:"최근 가장 어려웠던 버그와 원인을 확정한 과정을 말해 보라.",
+ core:["재현 확보 → 가설 하나씩 측정 → 범인 변경 지점 특정(bisect·로그 대조) → 근본 원인 수정 → 재발 방지 테스트.","증상 수정과 근본 수정을 구분해 말하는지가 핵심 신호.","막다른 길과 틀린 가설을 솔직히 말하는 것이 감점이 아니다."],
+ good:"측정 근거(로그·프로파일·커밋)를 들고 왜 그 결론인지 설명한다.",
+ weak:"\"결국 캐시 문제였다\" 같은 결론만 말하고 확정 과정이 없다.",
+ next:"같은 종류의 버그가 다시 나지 않게 무엇을 바꿨나?",
+ r:[["Chrome DevTools 성능 프로파일링","https://developer.chrome.com/docs/devtools/performance"]]},
+{c:"arch",l:"all",q:"기획·디자인과 의견이 충돌했을 때 어떻게 했나?",
+ core:["요구의 배경(무엇을 해결하려는지)을 먼저 확인한다.","대안을 비용과 함께 제시한다: 구현 기간, 성능·접근성 영향, 유지 비용.","결정 기준을 사용자 영향으로 옮기고, 결정과 근거를 문서에 남긴다."],
+ good:"관철 여부와 무관하게 판단 기준과 기록을 말한다.",
+ weak:"기술적으로 불가능하다고 답해 끝냈다고 말한다.",
+ next:"결정이 나중에 틀렸다고 판명되면 어떻게 되돌렸나?",
+ r:[["Martin Fowler — ParallelChange","https://martinfowler.com/bliki/ParallelChange.html"]]},
+{c:"arch",l:"all",q:"추정이 크게 틀린 경험이 있나?",
+ core:["불확실성을 분해했는지: 모르는 부분은 스파이크로 먼저 줄인다.","중간 보고 지점을 두어 틀린 추정을 빨리 드러낸다.","마감이 고정이면 범위를 협상한다. 품질을 조용히 깎는 선택은 나중에 더 비싸다."],
+ good:"틀린 원인을 구조적으로 설명하고 이후 방식이 바뀐 점을 든다.",
+ weak:"운이 나빴다거나 요구가 자주 바뀌었다는 설명에서 멈춘다.",
+ next:"지금 같은 일을 다시 추정하면 무엇을 다르게 하나?",
+ r:[["Practical Test Pyramid(리스크 기반 판단 예)","https://martinfowler.com/articles/practical-test-pyramid.html"]]}
+];
+
+const state = { lv:"all", cat:"all", q:"" };
+try{ const s = JSON.parse(localStorage.getItem("fe-iv") || "{}"); Object.assign(state, s||{}); }catch(e){}
+
+const levelsEl = document.getElementById("levels");
+const catsEl = document.getElementById("cats");
+const listEl = document.getElementById("list");
+const statsEl = document.getElementById("stats");
+const qEl = document.getElementById("q");
+const quizEl = document.getElementById("quiz");
+
+function save(){ try{ localStorage.setItem("fe-iv", JSON.stringify({lv:state.lv,cat:state.cat,quiz:quizEl.checked})); }catch(e){} }
+
+const LEVEL_BTNS = [["all","전체"],["jr","주니어"],["mid","미들"],["sr","시니어"]];
+levelsEl.innerHTML = LEVEL_BTNS.map(([k,label]) =>
+  `<button type="button" data-lv="${k}" aria-pressed="${state.lv===k}">${label}</button>`).join("");
+catsEl.innerHTML = [["all","전체 영역"]].concat(Object.entries(CATS)).map(([k,label]) =>
+  `<button type="button" data-cat="${k}" aria-pressed="${state.cat===k}">${label}</button>`).join("");
+
+const strip = s => String(s).replace(/<[^>]+>/g,"");
+function matches(item){
+  if(state.lv!=="all" && item.l!==state.lv && item.l!=="all") return false;
+  if(state.cat!=="all" && item.c!==state.cat) return false;
+  if(state.q){
+    const hay = strip([item.q, item.core.join(" "), item.good, item.weak, item.next,
+      item.r.map(r=>r[0]).join(" ")].join(" ")).toLowerCase();
+    if(!hay.includes(state.q.toLowerCase())) return false;
+  }
+  return true;
+}
+
+function render(){
+  const shown = Q.filter(matches);
+  const byCat = new Map();
+  for(const item of shown){ if(!byCat.has(item.c)) byCat.set(item.c, []); byCat.get(item.c).push(item); }
+  if(!shown.length){ listEl.innerHTML = `<p class="empty">조건에 맞는 문항이 없다. 검색어나 영역을 바꿔 보라.</p>`; }
+  else{
+    listEl.innerHTML = [...byCat.entries()].map(([cat, items]) => `
+      <section class="cat">
+        <h2>${CATS[cat]} <span class="n">${items.length}문항</span></h2>
+        <div class="rule"></div>
+        ${items.map(it => `
+          <article>
+            <div class="meta"><span class="lv lv-${it.l}">${LV[it.l]}</span></div>
+            <h3>${it.q}</h3>
+            <button class="reveal" type="button">답 보기</button>
+            <div class="answer">
+              <ul class="core">${it.core.map(c=>`<li>${c}</li>`).join("")}</ul>
+              <div class="signals">
+                <div class="sig sig-good"><span class="t">좋은 신호</span>${it.good}</div>
+                <div class="sig sig-weak"><span class="t">약한 신호</span>${it.weak}</div>
+              </div>
+              <p class="next"><b>후속</b>${it.next}</p>
+              <p class="refs"><b>레퍼런스</b>${it.r.map(([t,u])=>`<a href="${u}" target="_blank" rel="noreferrer">${t}</a>`).join(" · ")}</p>
+            </div>
+          </article>`).join("")}
+      </section>`).join("");
+  }
+  const c = l => Q.filter(x=>x.l===l).length;
+  statsEl.innerHTML = `<span>총 <b>${Q.length}</b>문항</span><span>주니어 <b>${c("jr")}</b></span>`
+    + `<span>미들 <b>${c("mid")}</b></span><span>시니어 <b>${c("sr")}</b></span><span>공통 <b>${c("all")}</b></span>`
+    + `<span>영역 <b>${Object.keys(CATS).length}</b></span><span>현재 표시 <b>${shown.length}</b></span>`;
+}
+
+levelsEl.addEventListener("click", e => {
+  const b = e.target.closest("button[data-lv]"); if(!b) return;
+  state.lv = b.dataset.lv;
+  levelsEl.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+  save(); render();
+});
+catsEl.addEventListener("click", e => {
+  const b = e.target.closest("button[data-cat]"); if(!b) return;
+  state.cat = b.dataset.cat;
+  catsEl.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+  save(); render();
+});
+qEl.addEventListener("input", () => { state.q = qEl.value.trim(); render(); });
+listEl.addEventListener("click", e => {
+  const b = e.target.closest(".reveal"); if(!b) return;
+  b.closest("article").dataset.revealed = "1";
+});
+quizEl.addEventListener("change", () => {
+  document.body.classList.toggle("quiz", quizEl.checked);
+  listEl.querySelectorAll("article[data-revealed]").forEach(a => delete a.dataset.revealed);
+  save();
+});
+try{ const s = JSON.parse(localStorage.getItem("fe-iv")||"{}"); if(s && s.quiz){ quizEl.checked = true; document.body.classList.add("quiz"); } }catch(e){}
+render();
+</script>
+</body>
+</html>
