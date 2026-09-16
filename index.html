@@ -93,6 +93,11 @@
   .sig-weak{background:var(--weak-soft);color:var(--ink)}
   .sig-weak .t{color:var(--weak)}
   .next{font-size:13.5px;color:var(--muted);padding-left:12px;border-left:2px solid var(--line)}
+  .snippet{margin:0;border:1px solid var(--line);background:var(--surface)}
+  .snippet figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--muted)}
+  .snippet figcaption .lang{color:var(--accent);text-transform:uppercase;font-size:10px;letter-spacing:.08em}
+  .snippet pre{margin:0;padding:10px 12px;overflow-x:auto;background:var(--surface-2)}
+  .snippet code{font-family:var(--mono);font-size:12.5px;line-height:1.6;background:none;padding:0;white-space:pre;color:var(--ink)}
   .probes{border-left:2px solid var(--accent);padding-left:12px}
   .probes > b{display:block;margin-bottom:6px}
   .probes ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px}
@@ -1509,8 +1514,1180 @@ const PROBES = {
 115:[["급한 핫픽스는 게이트를 어떻게 통과시키나?","축약 경로를 미리 정의한다(핵심 스모크만 + 사후 보완, 승인자 명시). 임시 우회를 그때그때 만들면 관행이 된다."],
      ["우회 경로가 남용되는지 어떻게 보나?","우회 사용 건수와 사후 보완 이행률을 계측한다."]]
 };
-Q.forEach((q,i)=>{ q.p = q.p || PROBES[i] || []; });
+const CODE = {
+116:[["debounce — 취소 가능","js",`function debounce(fn, wait = 300) {
+  let timer = null;
+  function debounced(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = null;
+      fn.apply(this, args);       // this·인자 보존
+    }, wait);
+  }
+  debounced.cancel = () => { clearTimeout(timer); timer = null; };
+  return debounced;
+}`],
+   ["throttle — 주기당 1회 + 마지막 호출 보장","js",`function throttle(fn, interval = 200) {
+  let last = 0, timer = null, lastArgs = null;
+  return function throttled(...args) {
+    const now = Date.now();
+    const remain = interval - (now - last);
+    lastArgs = args;
+    if (remain <= 0) {
+      last = now;
+      fn.apply(this, args);
+    } else if (!timer) {          // 마지막 입력을 버리지 않는다
+      timer = setTimeout(() => {
+        last = Date.now(); timer = null;
+        fn.apply(this, lastArgs);
+      }, remain);
+    }
+  };
+}`]],
+117:[["리스너 1개로 1000행 처리","js",`list.addEventListener("click", (e) => {
+  const row = e.target.closest("[data-id]");       // 아이콘 클릭도 잡힌다
+  if (!row || !list.contains(row)) return;
+  const action = e.target.closest("[data-action]")?.dataset.action ?? "open";
+  handle(action, row.dataset.id);
+});`],
+    ["행 마크업 — 키보드로도 눌린다","html",`<ul id="list">
+  <li data-id="42">
+    <button type="button" data-action="open">보고서 열기</button>
+    <button type="button" data-action="delete" aria-label="보고서 42 삭제">삭제</button>
+  </li>
+</ul>`]],
+118:[["요청 취소 + 쿼리 캐시","js",`const cache = new Map();
 
+async function search(query, signal) {
+  const key = query.trim().toLowerCase();
+  if (cache.has(key)) return cache.get(key);
+  const res = await fetch("/api/search?q=" + encodeURIComponent(key), { signal });
+  if (!res.ok) throw new Error("search failed: " + res.status);
+  const data = await res.json();
+  cache.set(key, data);
+  return data;
+}
+
+// 입력마다: 이전 요청 취소 → 최신 응답만 화면에 남는다
+let controller = null;
+const onInput = debounce(async (query) => {
+  controller?.abort();
+  controller = new AbortController();
+  try {
+    render(await search(query, controller.signal));
+  } catch (err) {
+    if (err.name !== "AbortError") showError(err);
+  }
+}, 250);`],
+    ["combobox 마크업 — 키보드·스크린리더","html",`<label for="q">도시 검색</label>
+<input id="q" role="combobox" aria-expanded="true" aria-controls="q-list"
+       aria-autocomplete="list" aria-activedescendant="q-opt-2" autocomplete="off">
+<ul id="q-list" role="listbox">
+  <li id="q-opt-1" role="option" aria-selected="false">서울</li>
+  <li id="q-opt-2" role="option" aria-selected="true">성남</li>
+</ul>
+<p aria-live="polite">2개 결과</p>`]],
+119:[["센티넬 + IntersectionObserver","js",`const io = new IntersectionObserver((entries) => {
+  const [entry] = entries;
+  if (!entry.isIntersecting || loading || !cursor) return;   // 중복 로드 차단
+  loadNextPage();
+}, { rootMargin: "200px" });                                  // 도달 전에 미리
+
+io.observe(sentinel);
+
+async function loadNextPage() {
+  loading = true;
+  try {
+    const res = await fetch("/api/feed?cursor=" + encodeURIComponent(cursor));
+    const { items, nextCursor } = await res.json();          // 오프셋 아님: 커서
+    append(items);
+    cursor = nextCursor;                                      // null 이면 마지막 페이지
+    if (!cursor) io.unobserve(sentinel);
+  } finally {
+    loading = false;
+  }
+}`],
+    ["키보드 폴백은 남긴다","html",`<div id="sentinel" aria-hidden="true"></div>
+<button type="button" id="load-more">더 보기</button>`]],
+120:[["네이티브 dialog — 트랩·Esc·top layer 를 브라우저가 처리","js",`const dialog = document.querySelector("#confirm");
+let opener = null;
+
+openBtn.addEventListener("click", () => {
+  opener = document.activeElement;
+  dialog.showModal();              // 배경 비활성 + 포커스 트랩 + Esc 기본 제공
+});
+
+dialog.addEventListener("close", () => {
+  opener?.focus();                 // 닫으면 트리거로 복귀
+});`],
+    ["마크업 — 이름 있는 대화상자","html",`<dialog id="confirm" aria-labelledby="confirm-title">
+  <h2 id="confirm-title">케이스를 삭제할까요?</h2>
+  <form method="dialog">
+    <button value="cancel">취소</button>
+    <button value="delete" autofocus>삭제</button>
+  </form>
+</dialog>`]],
+121:[["레이아웃은 CSS 가 한다 — 관성 스크롤·터치 무료","css",`.carousel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.carousel > .slide {
+  scroll-snap-align: center;
+  aspect-ratio: 16 / 9;   /* 자리 확보 = CLS 방지 */
+}
+@media (prefers-reduced-motion: reduce) {
+  .carousel { scroll-behavior: auto; }   /* 자동 재생도 멈춘다 */
+}`],
+    ["JS 는 인덱스 동기화만","js",`nextBtn.addEventListener("click", () => {
+  track.scrollBy({ left: track.clientWidth, behavior: prefersReduced ? "auto" : "smooth" });
+});
+
+// 현재 위치는 스크롤에서 읽는다(계산 중복 금지)
+track.addEventListener("scroll", throttle(() => {
+  const index = Math.round(track.scrollLeft / track.clientWidth);
+  status.textContent = (index + 1) + " / " + total;   // aria-live 영역
+}, 100));`]],
+122:[["네이티브 제약 + 메시지만 커스터마이즈","js",`form.addEventListener("submit", (e) => {
+  if (!form.checkValidity()) {
+    e.preventDefault();
+    const first = form.querySelector(":invalid");
+    showMessage(first, messageFor(first.validity));
+    first.focus();                      // 첫 에러로 포커스
+  }
+});
+
+function messageFor(v) {              // ValidityState 로 사유를 읽는다
+  if (v.valueMissing) return "필수 항목입니다.";
+  if (v.typeMismatch) return "이메일 형식이 아닙니다.";
+  if (v.tooShort)     return "8자 이상 입력하세요.";
+  if (v.patternMismatch) return "영문과 숫자만 사용할 수 있습니다.";
+  return "값을 확인해 주세요.";
+}`],
+    ["에러를 필드에 연결한다","html",`<label for="email">이메일</label>
+<input id="email" name="email" type="email" required
+       aria-describedby="email-error" aria-invalid="true">
+<p id="email-error" role="alert">이메일 형식이 아닙니다.</p>`]],
+123:[["retry — 백오프 + 지터 + 취소","js",`async function retry(fn, { times = 3, base = 300, signal } = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt < times; attempt++) {
+    signal?.throwIfAborted();
+    try {
+      return await fn({ attempt, signal });
+    } catch (err) {
+      if (err.name === "AbortError" || !isRetryable(err)) throw err;
+      lastErr = err;
+      const wait = base * 2 ** attempt * (0.5 + Math.random());  // 지터
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
+}
+
+const isRetryable = (err) =>
+  err.status === undefined || err.status === 429 || err.status >= 500;`],
+    ["pLimit — 동시 실행 제한","js",`function pLimit(concurrency) {
+  let active = 0;
+  const queue = [];
+  const next = () => {
+    if (active >= concurrency || queue.length === 0) return;
+    active++;
+    const { fn, resolve, reject } = queue.shift();
+    fn().then(resolve, reject).finally(() => {   // 실패에도 카운터를 되돌린다
+      active--;
+      next();
+    });
+  };
+  return (fn) => new Promise((resolve, reject) => {
+    queue.push({ fn, resolve, reject });
+    next();
+  });
+}
+
+const limit = pLimit(4);
+await Promise.all(urls.map((u) => limit(() => fetch(u))));`]],
+124:[["고정 높이 윈도잉","js",`const ROW = 36, OVERSCAN = 5;
+
+function render(scrollTop, viewportH) {
+  const start = Math.max(0, Math.floor(scrollTop / ROW) - OVERSCAN);
+  const visible = Math.ceil(viewportH / ROW) + OVERSCAN * 2;
+  const end = Math.min(rows.length, start + visible);
+
+  spacer.style.height = rows.length * ROW + "px";   // 스크롤바 길이 유지
+  body.style.transform = "translateY(" + start * ROW + "px)";
+  body.replaceChildren(...rows.slice(start, end).map(renderRow));
+}
+
+viewport.addEventListener("scroll", () => {
+  requestAnimationFrame(() => render(viewport.scrollTop, viewport.clientHeight));
+});`],
+    ["먼저 검토할 CSS 대안","css",`/* 목록이 크지만 DOM 을 유지해야 한다면(검색·인쇄·스크린리더 탐색) */
+.row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 36px;   /* 추정 높이 → 스크롤바 안정 */
+}`]],
+125:[["포인터 이벤트 — 마우스·터치·펜 한 경로","js",`handle.addEventListener("pointerdown", (e) => {
+  e.target.setPointerCapture(e.pointerId);    // 포인터가 벗어나도 계속 받는다
+  const startY = e.clientY;
+  const rects = rows.map((r) => r.getBoundingClientRect());   // 시작 시 1회 측정
+
+  const onMove = (ev) => {
+    const dy = ev.clientY - startY;
+    dragged.style.transform = "translateY(" + dy + "px)";     // 레이아웃 재계산 없음
+    preview(indexAt(rects, ev.clientY));
+  };
+  const onUp = async (ev) => {
+    handle.removeEventListener("pointermove", onMove);
+    const to = indexAt(rects, ev.clientY);
+    const prev = items.slice();
+    commitOptimistic(move(items, from, to));                  // 낙관적 반영
+    try { await save({ id: items[from].id, rank: rankBetween(to) }); }
+    catch { commitOptimistic(prev); showError(); }            // 실패 시 롤백
+  };
+  handle.addEventListener("pointermove", onMove);
+  handle.addEventListener("pointerup", onUp, { once: true });
+});`],
+    ["키보드 대안은 필수","js",`row.addEventListener("keydown", (e) => {
+  if (!e.altKey) return;                       // Alt+↑/↓ 로 순서 변경
+  if (e.key === "ArrowUp")   { e.preventDefault(); moveBy(-1); }
+  if (e.key === "ArrowDown") { e.preventDefault(); moveBy(+1); }
+});`]],
+126:[["roving tabindex — Tab 은 목록을 나가고 방향키로 이동","js",`tablist.addEventListener("keydown", (e) => {
+  const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+  const i = tabs.indexOf(document.activeElement);
+  const map = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 };
+  if (!(e.key in map)) return;
+  e.preventDefault();
+  select(tabs[(map[e.key] + tabs.length) % tabs.length]);
+});
+
+function select(tab) {
+  for (const t of tablist.querySelectorAll('[role="tab"]')) {
+    const on = t === tab;
+    t.setAttribute("aria-selected", String(on));
+    t.tabIndex = on ? 0 : -1;                    // 목록 안에서는 하나만 탭 정지
+    document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+  }
+  tab.focus();
+}`],
+    ["마크업","html",`<div role="tablist" aria-label="케이스 상세">
+  <button role="tab" id="t1" aria-controls="p1" aria-selected="true"  tabindex="0">요약</button>
+  <button role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1">로그</button>
+</div>
+<div role="tabpanel" id="p1" aria-labelledby="t1">…</div>
+<div role="tabpanel" id="p2" aria-labelledby="t2" hidden>…</div>`]],
+127:[["스토어 — getState / setState / subscribe","js",`function createStore(initial) {
+  let state = initial;
+  const listeners = new Set();
+  return {
+    getState: () => state,
+    setState(patch) {
+      const next = typeof patch === "function" ? patch(state) : { ...state, ...patch };
+      if (next === state) return;
+      state = next;
+      listeners.forEach((l) => l());
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);   // 해제 함수 반환이 계약
+    },
+  };
+}`],
+    ["React 연결 — tearing 방지 + 원시값 구독","jsx",`import { useSyncExternalStore } from "react";
+
+export function useStore(selector) {
+  return useSyncExternalStore(
+    store.subscribe,
+    () => selector(store.getState()),      // 새 객체를 만들면 무한 리렌더
+    () => selector(serverSnapshot)         // SSR 스냅샷
+  );
+}
+
+// 좋음: 원시값 구독
+const count = useStore((s) => s.items.length);
+// 나쁨: 매번 새 배열 → 렌더마다 변경으로 판정
+// const items = useStore((s) => s.items.filter((i) => i.open));`]],
+128:[["History API — 링크 가로채기 예외를 남긴다","js",`document.addEventListener("click", (e) => {
+  const a = e.target.closest("a[href]");
+  if (!a) return;
+  const url = new URL(a.href, location.href);
+  if (url.origin !== location.origin) return;                 // 외부 링크
+  if (a.target === "_blank" || a.hasAttribute("download")) return;
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;  // 새 탭/창
+  e.preventDefault();
+  history.pushState(null, "", url);
+  navigate(url.pathname);
+});
+
+addEventListener("popstate", () => navigate(location.pathname));`],
+    ["전환 후 접근성 처리","js",`async function navigate(path) {
+  const view = await resolve(path);          // 코드 분할 로드
+  main.replaceChildren(view.node);
+  document.title = view.title;               // 제목 갱신
+  liveRegion.textContent = view.title + " 페이지로 이동했습니다";
+  main.focus();                              // main 에 tabindex="-1"
+  scrollTo({ top: view.restoreScroll ?? 0 });
+}`]],
+129:[["기본은 속성 하나","html",`<!-- 첫 화면(LCP) 이미지: 지연 로딩 금지, 우선순위 부여 -->
+<img src="/hero-800.avif" width="800" height="450" alt="시술 전후 비교"
+     fetchpriority="high" decoding="async">
+
+<!-- 화면 밖 이미지 -->
+<img src="/thumb-320.avif" width="320" height="180" alt="" loading="lazy" decoding="async">`],
+    ["세밀한 제어가 필요할 때만 직접","js",`const io = new IntersectionObserver((entries, observer) => {
+  for (const entry of entries) {
+    if (!entry.isIntersecting) continue;
+    const img = entry.target;
+    img.src = img.dataset.src;
+    observer.unobserve(img);        // 로드 후 해제 — 안 하면 관찰 대상이 쌓인다
+  }
+}, { rootMargin: "300px" });
+
+document.querySelectorAll("img[data-src]").forEach((img) => io.observe(img));`]],
+130:[["로케일·숫자 인식 정렬","js",`const collator = new Intl.Collator("ko", { numeric: true, sensitivity: "base" });
+
+const sorted = [...rows].sort((a, b) => {
+  const r = collator.compare(a[key], b[key]);     // "케이스 2" < "케이스 10"
+  return dir === "asc" ? r : -r;
+});
+
+// 문자열 기본 sort() 는 유니코드 코드포인트 순 → 대소문자·한글·숫자에서 틀린다`],
+    ["정렬 상태를 보조기기에 알린다","html",`<table>
+  <thead>
+    <tr>
+      <th aria-sort="ascending"><button type="button">케이스명</button></th>
+      <th aria-sort="none"><button type="button">생성일</button></th>
+    </tr>
+  </thead>
+</table>
+<p aria-live="polite">케이스명 오름차순, 42건</p>`]],
+0:[["클로저로 상태를 가둔다 — 그리고 누수가 되는 경로","js",`function createCounter() {
+  let count = 0;                      // 외부에서 접근 불가, 함수만 기억한다
+  return { inc: () => ++count, get: () => count };
+}
+
+// 누수: 클로저가 큰 객체·DOM 을 붙잡은 채 리스너가 남는다
+function attach(node, hugeData) {
+  const onClick = () => console.log(hugeData.length);  // hugeData 를 계속 참조
+  node.addEventListener("click", onClick);
+  return () => node.removeEventListener("click", onClick);  // 해제 함수 필수
+}`]],
+3:[["출력 순서를 근거와 함께","js",`console.log("1 sync");
+setTimeout(() => console.log("5 macrotask"), 0);
+queueMicrotask(() => console.log("3 microtask"));
+Promise.resolve().then(() => console.log("4 microtask"));
+console.log("2 sync");
+
+// 1 sync → 2 sync → 3 microtask → 4 microtask → 5 macrotask
+// 동기 코드 전부 → 마이크로태스크 큐를 "전부" 비움 → 렌더 기회 → 매크로태스크 1개`],
+   ["마이크로태스크 기아 — 화면이 멈춘다","js",`// 나쁨: 마이크로태스크가 자기를 재등록 → 렌더 기회가 오지 않는다
+function drain(queue) {
+  if (!queue.length) return;
+  process(queue.pop());
+  Promise.resolve().then(() => drain(queue));
+}
+
+// 좋음: 프레임에 양보한다
+async function drainYielding(queue) {
+  while (queue.length) {
+    process(queue.pop());
+    if (navigator.scheduling?.isInputPending?.()) await scheduler.yield();
+  }
+}`]],
+4:[["콜백으로 넘기면 바인딩이 유실된다","js",`const timer = {
+  label: "upload",
+  report() { console.log(this.label); },
+};
+
+timer.report();                       // "upload"  — 점 앞 객체가 this
+setTimeout(timer.report, 0);          // undefined — 참조만 떼어 냈다
+setTimeout(() => timer.report(), 0);  // "upload"  — 호출 형태를 유지
+setTimeout(timer.report.bind(timer), 0);  // "upload"`]],
+5:[["1단 복사 vs 깊은 복사 — 손실 지점","js",`const state = { user: { name: "다윗" }, at: new Date(), tags: undefined };
+
+const shallow = { ...state };
+shallow.user.name = "변경";
+state.user.name;                 // "변경"  — 중첩 객체는 참조 공유
+
+const viaJson = JSON.parse(JSON.stringify(state));
+typeof viaJson.at;               // "string" — Date 가 문자열로, tags 는 사라짐
+
+const clone = structuredClone(state);   // Date·Map·순환 참조 보존(함수·DOM 은 불가)`],
+   ["상태 갱신은 바뀐 경로만 새로","js",`// 전량 복사 대신 구조적 공유 — 참조 비교로 리렌더를 가를 수 있다
+const next = {
+  ...state,
+  user: { ...state.user, name: "다윗" },
+};
+next.tags === state.tags;   // true — 바뀌지 않은 가지는 같은 참조`]],
+6:[["all 은 하나 실패로 전체 reject — 남은 요청은 취소되지 않는다","js",`// 부분 실패를 화면에 보여야 하면 allSettled
+const results = await Promise.allSettled([loadCases(), loadQuota(), loadNotices()]);
+for (const r of results) {
+  if (r.status === "fulfilled") render(r.value);
+  else renderWidgetError(r.reason);          // 위젯 하나만 에러 표시
+}`],
+   ["타임아웃은 race 가 아니라 신호로","js",`// race 로 타임아웃을 만들면 원 요청이 계속 살아 있다
+const res = await fetch("/api/cases", { signal: AbortSignal.timeout(5000) });
+
+// 여러 신호를 합칠 때
+const signal = AbortSignal.any([userCancel.signal, AbortSignal.timeout(5000)]);`]],
+7:[["에러가 조용히 사라지는 네 경로","js",`// 1) await 누락 → unhandled rejection
+save(payload);                 // 실패해도 호출부는 모른다
+await save(payload);
+
+// 2) forEach + async → 반환된 Promise 가 버려진다
+items.forEach(async (i) => await save(i));          // 나쁨
+await Promise.all(items.map((i) => save(i)));       // 좋음
+
+// 3) 타이머 콜백의 throw 는 바깥 try/catch 가 못 잡는다
+try { setTimeout(() => { throw new Error("boom"); }, 0); } catch { /* 안 잡힌다 */ }
+
+// 4) 마지막 그물
+addEventListener("unhandledrejection", (e) => report(e.reason));
+addEventListener("error", (e) => report(e.error));`]],
+8:[["DOM 에 메타데이터를 붙이되 수명을 늘리지 않는다","js",`const meta = new WeakMap();
+
+function track(node, info) {
+  meta.set(node, info);          // 강한 Map 이면 노드 제거 후에도 회수되지 않는다
+}
+
+// 노드가 DOM 에서 사라지고 다른 참조가 없으면 엔트리도 회수 대상
+// 단, 회수 시점은 보장되지 않는다 → 정리 로직의 유일한 수단으로 쓰지 않는다`]],
+76:[["값 복사 vs 참조 복사","js",`let a = 1, b = a; b = 2;        // a === 1 (값 복사)
+
+const o1 = { n: 1 };
+const o2 = o1; o2.n = 2;        // o1.n === 2 (주소 복사)
+
+function mutate(obj) { obj.n = 99; }   // 인자 변경이 호출부에 보인다
+mutate(o1); o1.n;               // 99
+
+({ n: 1 }) === ({ n: 1 });      // false — 내용이 같아도 참조가 다르다`]],
+78:[["|| 가 0 을 덮어쓰는 버그","js",`const settings = { retries: 0, label: "" };
+
+settings.retries || 3;   // 3   ← 0 이 falsy 라서 기본값이 끼어든다 (버그)
+settings.retries ?? 3;   // 0   ← null/undefined 일 때만 기본값
+settings.label   ?? "무제";  // ""
+
+// 옵셔널 체이닝은 "없을 수 있는" 값에만
+user.profile?.avatar?.url         // 선택 필드
+order?.total.toFixed(2)           // 필수 값을 가리면 원인 추적이 늦어진다`]],
+79:[["reduce 로 객체를 누적할 때의 O(n²)","js",`// 나쁨: 매 회 새 객체를 만든다
+const byId = items.reduce((acc, it) => ({ ...acc, [it.id]: it }), {});
+
+// 좋음: 누적 객체를 직접 채우거나 Map
+const byId2 = items.reduce((acc, it) => { acc[it.id] = it; return acc; }, {});
+const byId3 = new Map(items.map((it) => [it.id, it]));
+
+// 중간 탈출이 필요하면 for...of — reduce 로 억지로 만들지 않는다
+for (const it of items) if (it.broken) { report(it); break; }`]],
+80:[["두 축은 다르다: 기본 동작 vs 전파","js",`form.addEventListener("submit", (e) => {
+  e.preventDefault();        // 페이지 새로고침(기본 동작)만 막는다. 전파는 계속
+  submitViaFetch();
+});
+
+menu.addEventListener("click", (e) => {
+  e.stopPropagation();       // 상위의 "바깥 클릭 닫기"가 죽는다 — 범위를 좁혀 쓴다
+});
+
+// passive 리스너에서는 preventDefault 가 무시된다(경고)
+el.addEventListener("touchmove", onMove, { passive: true });`],
+   ["스크롤 제어는 CSS 로","css",`.pan-area { touch-action: pan-y; }   /* 가로 제스처만 차단, JS 개입 없음 */`]],
+31:[["인덱스 key 가 입력값을 다른 행에 붙인다","jsx",`// 나쁨: 앞에 항목을 추가하면 모든 key 가 밀린다
+{rows.map((row, i) => <Row key={i} row={row} />)}
+
+// 좋음: 안정적인 id
+{rows.map((row) => <Row key={row.id} row={row} />)}
+
+// 의도적 초기화: key 를 바꿔 서브트리를 재마운트
+<EditForm key={caseId} caseId={caseId} />`]],
+32:[["클린업 + 요청 취소 + 경합 차단","jsx",`useEffect(() => {
+  const controller = new AbortController();
+  let alive = true;
+
+  (async () => {
+    try {
+      const res = await fetch("/api/case/" + caseId, { signal: controller.signal });
+      const data = await res.json();
+      if (alive) setCase(data);            // 언마운트 후 setState 방지
+    } catch (err) {
+      if (err.name !== "AbortError") setError(err);
+    }
+  })();
+
+  return () => { alive = false; controller.abort(); };   // 겹친 요청도 취소
+}, [caseId]);                                            // 의존성을 비우면 stale`],
+   ["이펙트가 필요 없는 경우","jsx",`// 나쁨: 파생 값을 이펙트로 동기화
+useEffect(() => setFullName(first + " " + last), [first, last]);
+
+// 좋음: 렌더 중 계산
+const fullName = first + " " + last;`]],
+33:[["참조 동일성이 소비자에게 의미 있을 때만","jsx",`const Row = memo(function Row({ item, onSelect }) { /* … */ });
+
+function List({ items }) {
+  // onSelect 를 매 렌더 새로 만들면 memo(Row) 가 전부 무효화된다
+  const onSelect = useCallback((id) => select(id), []);
+  // 비싼 계산만 메모
+  const sorted = useMemo(() => [...items].sort(byName), [items]);
+
+  return sorted.map((item) => <Row key={item.id} item={item} onSelect={onSelect} />);
+}`]],
+34:[["Provider value 를 메모하고 Context 를 쪼갠다","jsx",`// 나쁨: 매 렌더 새 객체 → 모든 소비자 리렌더
+<AppContext.Provider value={{ user, setUser }}>
+
+// 좋음: 자주 바뀌는 값과 안 바뀌는 값을 분리 + 메모
+const actions = useMemo(() => ({ setUser, logout }), []);   // 거의 불변
+<UserStateContext.Provider value={user}>
+  <UserActionsContext.Provider value={actions}>{children}</UserActionsContext.Provider>
+</UserStateContext.Provider>`],
+   ["부분 구독이 필요하면 selector 스토어","jsx",`// 새 배열을 반환하는 selector → 매 렌더 변경 판정(루프 위험)
+const open = useStore((s) => s.items.filter((i) => i.open));           // 나쁨
+const openCount = useStore((s) => s.items.reduce((n, i) => n + (i.open ? 1 : 0), 0));  // 원시값`]],
+38:[["이중 호출에서 드러나는 결함과 수정","jsx",`// 나쁨: 멱등하지 않다 — 개발에서 이벤트가 두 번 간다
+useEffect(() => { track("case_opened", { caseId }); }, [caseId]);
+
+// 좋음: 전송 계층에서 중복 제거 키를 쓴다
+useEffect(() => {
+  const key = "case_opened:" + caseId;
+  if (sentOnce.has(key)) return;
+  sentOnce.add(key);
+  track("case_opened", { caseId });
+}, [caseId]);
+
+// 구독형은 클린업만 제대로 두면 이중 호출에 안전하다
+useEffect(() => {
+  const sub = socket.subscribe(caseId, onMessage);
+  return () => sub.unsubscribe();
+}, [caseId]);`]],
+89:[["재조정을 깨뜨리는 대표 패턴","jsx",`// 나쁨: 렌더마다 새 컴포넌트 타입 → 서브트리 언마운트·재마운트, 상태 소실
+function Page() {
+  function Panel() { return <input />; }     // 매 렌더 새 함수 = 새 타입
+  return <Panel />;
+}
+
+// 좋음: 컴포넌트는 모듈 스코프에 정의
+function Panel() { return <input />; }
+function Page() { return <Panel />; }`]],
+90:[["제어 / 비제어 / 흔한 실수","jsx",`// 제어: state 가 값을 소유 — 검증·포맷팅에 유리
+<input value={name} onChange={(e) => setName(e.target.value)} />
+
+// 비제어: DOM 이 소유 — 큰 폼에서 렌더가 적다
+<input defaultValue={name} ref={nameRef} />
+
+// 실수: value 만 주고 onChange 를 빼면 입력이 안 된다(읽기 전용처럼 보인다)
+<input value={name} />          // React 가 경고한다`],
+   ["큰 폼은 제출 시 한 번에 읽는다","jsx",`function onSubmit(e) {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.currentTarget));
+  save(data);                    // 키 입력마다 리렌더하지 않는다
+}`]],
+91:[["0 이 화면에 찍히는 이유","jsx",`// 나쁨: count 가 0 이면 && 가 0 을 반환하고 React 는 숫자 0 을 렌더한다
+{count && <Badge count={count} />}
+
+// 좋음: 명시적 비교
+{count > 0 && <Badge count={count} />}
+{count > 0 ? <Badge count={count} /> : null}
+
+// false·null·undefined 는 렌더되지 않지만 0·NaN 은 렌더된다`]],
+45:[["unknown 은 좁히기를 강제한다","ts",`function handle(input: unknown) {
+  // input.trim();            // 컴파일 에러 — 검사 없이는 아무 연산도 못 한다
+  if (typeof input === "string") input.trim();      // 여기서만 string
+}
+
+function isCase(v: unknown): v is { id: string; state: string } {
+  return typeof v === "object" && v !== null
+    && typeof (v as Record<string, unknown>).id === "string"
+    && typeof (v as Record<string, unknown>).state === "string";
+}`]],
+46:[["as 는 검증이 아니다 — satisfies 로 검사를 유지","ts",`type Case = { id: string; state: "IMPORTED" | "DESIGNED" };
+
+const wrong = { id: "c1", state: "DONE" } as Case;   // 통과한다. 런타임에 틀림
+
+const right = { id: "c1", state: "DESIGNED" } satisfies Case;
+//    ^ 초과·누락·오타를 잡으면서 리터럴 타입도 보존한다
+
+const STATES = ["IMPORTED", "DESIGNED"] as const;    // as const 는 목적이 다르다`],
+   ["테스트 스텁도 단언 없이","ts",`const stub = Object.assign({}, base, { state: "DESIGNED" }) satisfies Partial<Case>;`]],
+47:[["구조적 타이핑의 함정과 branded 타입","ts",`type CaseId = string;
+type UserId = string;
+function open(id: CaseId) {}
+open("u_1" as UserId);                      // 통과 — 모양이 같다
+
+// branded 타입으로 분리
+declare const brand: unique symbol;
+type Branded<T, B> = T & { readonly [brand]: B };
+type CaseId2 = Branded<string, "CaseId">;
+
+const toCaseId = (s: string): CaseId2 => s as CaseId2;   // 변환 함수만 통과
+function open2(id: CaseId2) {}
+// open2("u_1");                            // 컴파일 에러`]],
+48:[["경계에서 1회 파싱, 내부는 파싱된 타입만 신뢰","ts",`import { z } from "zod";
+
+const Case = z.object({
+  id: z.string(),
+  state: z.enum(["IMPORTED", "DESIGNED"]),
+  updatedAt: z.coerce.date(),
+});
+type Case = z.infer<typeof Case>;           // 스키마가 단일 출처
+
+export async function fetchCase(id: string): Promise<Case> {
+  const res = await fetch("/api/case/" + id);
+  const parsed = Case.safeParse(await res.json());
+  if (!parsed.success) {
+    report("case_parse_failed", parsed.error.issues);   // 조용히 넘기지 않는다
+    throw new Error("invalid case payload");
+  }
+  return parsed.data;
+}`]],
+15:[["border-box 리셋과 마진 병합","css",`*, *::before, *::after { box-sizing: border-box; }
+/* content-box: width 200 + padding 32 + border 2 = 실제 234 */
+/* border-box:  지정한 200 이 최종 너비 */
+
+.card { width: 200px; padding: 16px; border: 1px solid; }
+
+/* 마진 병합: 인접 형제의 수직 마진이 합쳐지지 않고 큰 값만 남는다 */
+.a { margin-bottom: 24px; }
+.b { margin-top: 16px; }            /* 간격은 40px 이 아니라 24px */
+
+/* 병합을 피하는 가장 단순한 방법 = 레이아웃이 간격을 소유한다 */
+.stack { display: flex; flex-direction: column; gap: 24px; }`]],
+16:[["쌓임 맥락을 만드는 속성들","css",`/* 부모가 맥락을 만들면 자식 z-index 는 그 안에서만 경쟁한다 */
+.parent {
+  position: relative;
+  z-index: 1;          /* 맥락 생성 */
+  /* transform / filter / opacity < 1 / will-change / contain 도 생성한다 */
+}
+.child { position: absolute; z-index: 9999; }   /* 여전히 .parent 위로는 못 간다 */
+
+/* 레이어는 토큰으로 관리한다 */
+:root { --z-dropdown: 100; --z-modal: 1000; --z-toast: 1100; }`],
+    ["잘림 문제는 구조로 푼다","jsx",`// overflow:hidden 부모 밖으로 렌더
+createPortal(<Dropdown />, document.body);`]],
+18:[["sticky 가 안 되는 원인 3개","css",`.wrap { overflow: hidden; }       /* ① 조상 overflow → 스크롤 컨테이너가 바뀐다 */
+
+.header {
+  position: sticky;
+  /* top 미지정 → 임계점이 없어 붙지 않는다 ② */
+  top: env(safe-area-inset-top, 0px);
+}
+
+.section { height: auto; }        /* ③ 부모 높이에 여유가 없으면 고정 구간이 없다 */
+
+/* 앵커가 헤더에 가려지는 문제 */
+:target { scroll-margin-top: var(--header-h, 56px); }`]],
+19:[["중앙 정렬 4가지와 제약","css",`.a { display: grid; place-items: center; }              /* 부모 높이 필요 */
+.b { display: flex; align-items: center; justify-content: center; }
+.c { position: absolute; inset: 0; margin: auto; width: 120px; height: 40px; }
+.d { position: absolute; top: 50%; left: 50%; translate: -50% -50%; }  /* 크기 몰라도 됨 */
+
+/* 모바일 뷰포트: 100vh 는 주소창을 포함해 잘린다 */
+.screen { min-height: 100dvh; }`]],
+20:[["토큰은 전량 :root 에, 다크는 토큰만 재정의","css",`:root {                          /* 완전한 라이트 팔레트 */
+  --bg: #ffffff; --fg: #131a24; --accent: #1f4d7a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {        /* 명시적 라이트 선택이 이긴다 */
+    --bg: #0f141a; --fg: #e7ecf2; --accent: #7fb3e0;
+  }
+}
+:root[data-theme="dark"] { --bg: #0f141a; --fg: #e7ecf2; --accent: #7fb3e0; }
+
+body { background: var(--bg); color: var(--fg); }   /* 컴포넌트는 토큰만 참조 */
+
+/* 안티패턴: 미디어 쿼리 안에만 정의된 색 → 조건이 어긋난 상태에서 미정의 */`]],
+85:[["명시도와 :where() / @layer","css",`#app .btn.primary { color: red; }    /* id 1, class 2 */
+.btn.primary      { color: blue; }   /* 짐 */
+
+/* :where() 안은 명시도 0 → 덮어쓰기 쉬운 기본값 */
+:where(.btn) { padding: 8px 12px; }
+
+/* 레이어로 출처 순서를 정하면 명시도 경쟁이 필요 없다 */
+@layer reset, base, components, overrides;
+@layer components { .btn { color: blue; } }
+@layer overrides  { .btn { color: red; } }   /* 명시도가 낮아도 이긴다 */`]],
+86:[["display 차이와 '시각적으로만 숨기기'","css",`.inline  { display: inline; width: 200px; height: 40px; }  /* width·height 무시 */
+.iblock  { display: inline-block; }                        /* 줄 안 + 크기 적용 */
+.block   { display: block; }
+.gone    { display: none; }        /* 접근성 트리에서도 사라진다 */
+
+/* 화면에서만 감추고 스크린리더에는 남긴다 */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}`]],
+87:[["단위 선택 — 사용자 글자 크기를 존중","css",`html { font-size: 100%; }              /* 사용자 설정 기준 = 16px 가정 금지 */
+
+.title  { font-size: 1.5rem; }          /* 루트 기준 — 타이포·간격 기본 */
+.icon   { width: 1em; height: 1em; }    /* 요소 폰트 비례 — 중첩되면 누적 */
+.col    { width: 50%; }                 /* 부모 기준 */
+.hero   { padding-block: clamp(24px, 5vw, 64px); }   /* 뷰포트 기준 + 상·하한 */
+.border { border-width: 1px; }          /* 확대와 무관해야 하는 곳은 px */
+
+/* 고정 높이 + px 폰트는 200% 확대에서 잘린다 */
+.chip { min-height: 2.5rem; height: auto; }`]],
+21:[["해시 자산과 HTML 은 정책이 다르다","http",`# 콘텐츠 해시가 붙은 정적 자산 — 1년 + immutable
+Cache-Control: public, max-age=31536000, immutable
+
+# HTML 엔트리 — 매번 검증(새 배포 즉시 반영)
+Cache-Control: no-cache
+
+# API 응답 — 짧게 캐시 + 재검증 허용
+Cache-Control: private, max-age=0, stale-while-revalidate=60
+ETag: "c-42-7"
+
+# CDN 만 더 오래 (브라우저와 분리)
+Cache-Control: max-age=0, s-maxage=600`]],
+22:[["preflight 를 부르는 조건과 서버 응답","http",`# 이 요청은 단순 요청이 아니다 → OPTIONS 가 먼저 나간다
+POST /api/cases HTTP/1.1
+Content-Type: application/json          # 단순 요청 허용 타입이 아니다
+X-Request-Id: abc                        # 커스텀 헤더 하나로도 트리거
+
+# 서버 preflight 응답
+Access-Control-Allow-Origin: https://app.example.com   # credentials 면 * 불가
+Access-Control-Allow-Methods: POST, GET
+Access-Control-Allow-Headers: Content-Type, X-Request-Id
+Access-Control-Allow-Credentials: true
+Access-Control-Max-Age: 600              # preflight 결과 캐시`]],
+26:[["위험한 싱크와 안전한 렌더","jsx",`// 저장형 XSS: 사용자 입력이 HTML 로 실행된다
+<div dangerouslySetInnerHTML={{ __html: comment.body }} />   // 금지
+
+// 텍스트로 렌더 — 프레임워크 기본 이스케이프를 유지
+<div>{comment.body}</div>
+
+// 서식이 필요하면 허용 목록 sanitizer 를 거친다(raw HTML 허용 끄기)
+<div dangerouslySetInnerHTML={{ __html: sanitize(comment.body) }} />`],
+    ["URL 스킴도 입력이다","js",`const SAFE = /^(https?:|mailto:|\\/)/i;
+const href = SAFE.test(userUrl) ? userUrl : "#";   // javascript: 차단`]],
+105:[["origin 과 스키마를 둘 다 검증","js",`const ALLOWED = new Set(["https://widget.example.com"]);
+
+addEventListener("message", (e) => {
+  if (!ALLOWED.has(e.origin)) return;              // ① 출처 확인
+  const msg = WidgetMessage.safeParse(e.data);     // ② 스키마 확인
+  if (!msg.success) return;
+  handle(msg.data);
+});
+
+// 송신: 대상 오리진을 정확히 지정한다("*" 금지)
+iframe.contentWindow.postMessage({ type: "init", locale }, "https://widget.example.com");`]],
+50:[["LCP 자원에 우선순위를 준다","html",`<link rel="preload" as="image" href="/hero-800.avif" fetchpriority="high">
+<img src="/hero-800.avif" width="800" height="450" alt="" fetchpriority="high">
+
+<!-- 렌더 블로킹을 줄인다 -->
+<link rel="stylesheet" href="/app.css">                 <!-- 임계 CSS 는 인라인 -->
+<script src="/app.js" defer></script>`],
+    ["필드에서 LCP 구간을 분해한다","js",`import { onLCP } from "web-vitals/attribution";
+
+onLCP(({ value, attribution }) => {
+  report("lcp", {
+    value,
+    element: attribution.element,
+    ttfb: attribution.timeToFirstByte,
+    loadDelay: attribution.resourceLoadDelay,
+    loadTime: attribution.resourceLoadDuration,
+    renderDelay: attribution.elementRenderDelay,
+  });
+});`]],
+54:[["해상도별 제공 + 자리 확보","html",`<img
+  src="/case-800.avif"
+  srcset="/case-400.avif 400w, /case-800.avif 800w, /case-1600.avif 1600w"
+  sizes="(max-width: 600px) 100vw, 800px"
+  width="800" height="450"
+  alt="상악 우측 제1대구치 크라운"
+  loading="lazy" decoding="async">
+
+<picture>
+  <source type="image/avif" srcset="/case.avif">
+  <source type="image/webp" srcset="/case.webp">
+  <img src="/case.jpg" width="800" height="450" alt="">
+</picture>`]],
+55:[["폰트 교체로 인한 이동을 줄인다","css",`@font-face {
+  font-family: "Brand";
+  src: url("/brand.woff2") format("woff2");
+  font-display: swap;          /* optional: 첫 방문 교체를 포기해 CLS 0 */
+  size-adjust: 96%;            /* 폴백과 메트릭을 맞춘다 */
+  ascent-override: 88%;
+  descent-override: 12%;
+}
+body { font-family: "Brand", "IBM Plex Sans KR", system-ui, sans-serif; }`],
+    ["핵심 폰트만 preload","html",`<link rel="preload" href="/brand.woff2" as="font" type="font/woff2" crossorigin>`]],
+106:[["비긴급 업데이트를 내려 입력을 먼저 처리","jsx",`const [isPending, startTransition] = useTransition();
+
+function onChange(e) {
+  setQuery(e.target.value);                    // 긴급: 입력 반영은 즉시
+  startTransition(() => setResults(filter(all, e.target.value)));  // 비긴급
+}
+
+return (
+  <>
+    <input value={query} onChange={onChange} aria-busy={isPending} />
+    {isPending ? <Skeleton /> : <List items={results} />}
+  </>
+);`],
+    ["INP 구간을 필드에서 나눠 본다","js",`import { onINP } from "web-vitals/attribution";
+
+onINP(({ value, attribution }) => {
+  report("inp", {
+    value,
+    target: attribution.interactionTarget,
+    inputDelay: attribution.inputDelay,             // 실행 중 긴 작업
+    processingDuration: attribution.processingDuration,  // 핸들러·렌더
+    presentationDelay: attribution.presentationDelay,    // 표현 지연
+  });
+});`]],
+107:[["청크 업로드 + 재개","js",`const CHUNK = 5 * 1024 * 1024;
+
+async function upload(file, sessionId, signal) {
+  const done = new Set(await fetchUploadedParts(sessionId));   // 재개 지점
+  const limit = pLimit(3);
+  const parts = Math.ceil(file.size / CHUNK);
+
+  await Promise.all(
+    Array.from({ length: parts }, (_, i) => i)
+      .filter((i) => !done.has(i))
+      .map((i) => limit(() => retry(() => putPart(
+        sessionId, i, file.slice(i * CHUNK, (i + 1) * CHUNK), signal
+      ), { signal })))
+  );
+
+  return complete(sessionId, parts);       // 서버 병합·검증까지가 "완료"
+}`],
+    ["진행률·취소","js",`const controller = new AbortController();
+cancelBtn.onclick = () => controller.abort();
+// 청크 완료마다 진행률 갱신(요청 단위 이벤트가 파일 단위보다 정확하다)`]],
+109:[["자원별 캐시 전략 — 인증 응답은 캐시하지 않는다","js",`self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (request.mode === "navigate") {                 // HTML: 네트워크 우선
+    event.respondWith(fetch(request).catch(() => caches.match("/offline.html")));
+    return;
+  }
+  if (url.pathname.startsWith("/api/")) return;      // 인증 응답: 손대지 않는다
+  if (/\\.(js|css|woff2|avif)$/.test(url.pathname)) { // 해시 자산: 캐시 우선
+    event.respondWith(caches.match(request).then((hit) => hit ?? fetchAndPut(request)));
+  }
+});`],
+    ["업데이트 게이트 — 옛 버전 고착을 막는다","js",`// 페이지: 새 워커가 대기 중이면 사용자에게 알린 뒤 적용
+const reg = await navigator.serviceWorker.register("/sw.js");
+reg.addEventListener("updatefound", () => {
+  reg.installing?.addEventListener("statechange", (e) => {
+    if (e.target.state === "installed" && navigator.serviceWorker.controller) {
+      showReloadBanner(() => { reg.waiting?.postMessage("SKIP_WAITING"); });
+    }
+  });
+});
+navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());`]],
+111:[["Suspense 경계는 로딩 단위와 맞춘다","jsx",`// 나쁨: 경계가 너무 넓다 — 화면 전체가 사라졌다 나타난다
+<Suspense fallback={<FullPageSpinner />}>
+  <Header /><Feed /><Sidebar />
+</Suspense>
+
+// 좋음: 느린 부분만 감싼다
+<Header />
+<Suspense fallback={<FeedSkeleton />}><Feed /></Suspense>
+<Suspense fallback={<SidebarSkeleton />}><Sidebar /></Suspense>`]],
+104:[["Authorization Code + PKCE (implicit 금지)","js",`// 1) verifier 생성 → challenge 로 인증 요청
+const verifier = base64url(crypto.getRandomValues(new Uint8Array(32)));
+const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+const challenge = base64url(new Uint8Array(digest));
+sessionStorage.setItem("pkce_verifier", verifier);
+
+location.assign("https://auth.example.com/authorize?" + new URLSearchParams({
+  response_type: "code",                 // 토큰을 URL 로 받지 않는다
+  client_id: CLIENT_ID,
+  redirect_uri: REDIRECT_URI,
+  code_challenge: challenge,
+  code_challenge_method: "S256",
+  state: crypto.randomUUID(),            // CSRF 방어
+  scope: "openid profile",
+}));`],
+    ["다중 탭 갱신 경합을 막는다","js",`// 같은 리프레시 토큰을 두 탭이 동시에 쓰면 회전 정책이 서로를 무효화한다
+export const refresh = () => navigator.locks.request("token-refresh", async () => {
+  if (Date.now() < expiresAt - 5000) return accessToken;   // 다른 탭이 이미 갱신
+  const res = await fetch("/auth/refresh", { method: "POST", credentials: "include" });
+  if (!res.ok) { logout(); throw new Error("refresh failed"); }  // 루프 차단
+  ({ accessToken, expiresAt } = await res.json());
+  return accessToken;
+});`]],
+142:[["구간을 코드로 표시해 프로파일에 남긴다","js",`// 추측하지 않는다 — 어느 구간이 긴지 표시부터
+performance.mark("handler:start");
+const rows = buildRows(raw);              // 의심 구간
+performance.mark("handler:built");
+render(rows);
+performance.measure("build", "handler:start", "handler:built");
+performance.measure("render", "handler:built");
+
+// Performance 패널의 Timings 트랙에 그대로 보인다`],
+     ["강제 동기 레이아웃(layout thrashing) 제거","js",`// 나쁨: 읽기와 쓰기를 번갈아 → 프레임마다 레이아웃 재계산
+for (const el of items) {
+  const h = el.offsetHeight;              // 읽기(강제 레이아웃)
+  el.style.height = h * 2 + "px";         // 쓰기
+}
+
+// 좋음: 읽기 전부 → 쓰기 전부
+const heights = items.map((el) => el.offsetHeight);
+items.forEach((el, i) => { el.style.height = heights[i] * 2 + "px"; });`]],
+143:[["오래된 응답이 최신 화면을 덮는 경합","js",`// 나쁨: 취소도 순서 검사도 없다
+async function load(query) {
+  const data = await fetchList(query);
+  setRows(data);                 // 느린 이전 요청이 나중에 도착해 덮어쓴다
+}
+
+// 좋음: 토큰으로 최신 요청만 반영
+let seq = 0;
+async function load2(query) {
+  const my = ++seq;
+  const data = await fetchList(query);
+  if (my === seq) setRows(data);
+}`],
+     ["조용히 삼켜진 예외를 드러낸다","js",`// 나쁨: catch 가 비어 화면만 빈다
+try { setRows(parse(await res.json())); } catch {}
+
+// 좋음: 보고 + 사용자에게 보이는 상태
+try {
+  setRows(parse(await res.json()));
+} catch (err) {
+  report("list_parse_failed", { err: String(err) });
+  setError("목록을 불러오지 못했습니다");
+}`]],
+144:[["무엇이 매 렌더 바뀌는지 찍는다","jsx",`function useWhyRender(name, deps) {
+  const prev = useRef(deps);
+  useEffect(() => {
+    const changed = deps
+      .map((d, i) => (Object.is(d, prev.current[i]) ? null : i))
+      .filter((i) => i !== null);
+    if (changed.length) console.log(name, "changed deps:", changed);
+    prev.current = deps;
+  });
+}`],
+     ["대표 원인 두 가지","jsx",`// ① 렌더 중 setState — 조건 없이 호출하면 즉시 루프
+function Bad({ items }) {
+  setCount(items.length);              // 금지
+  return null;
+}
+const count = items.length;            // 파생 계산으로 대체
+
+// ② 매 렌더 새 객체를 의존성에 넣는다
+useEffect(() => { load(filter); }, [{ ...filter }]);   // 항상 새 참조 → 무한
+useEffect(() => { load(filter); }, [filter.status, filter.page]);  // 원시값으로`]],
+148:[["자리 확보로 이동을 없앤다","css",`/* 이미지·임베드: 비율로 공간을 먼저 잡는다 */
+.thumb { aspect-ratio: 16 / 9; width: 100%; height: auto; }
+
+/* 나중에 삽입되는 배너: 최소 높이를 예약 */
+.banner-slot { min-height: 72px; }
+
+/* 스크롤바 등장으로 인한 가로 이동 */
+html { scrollbar-gutter: stable; }`],
+     ["어떤 요소가 움직였는지 필드에서 확인","js",`import { onCLS } from "web-vitals/attribution";
+
+onCLS(({ value, attribution }) => {
+  report("cls", {
+    value,
+    largestShiftTarget: attribution.largestShiftTarget,   // 선택자로 지목된다
+    largestShiftTime: attribution.largestShiftTime,
+  });
+});`]],
+150:[["리뷰 코멘트에 붙일 수정 예시","jsx",`// 받은 diff (차단)
+- <div dangerouslySetInnerHTML={{ __html: comment.body }} />
+
+// 제안 ①: 서식이 필요 없으면 텍스트
++ <div className="comment-body">{comment.body}</div>
+
+// 제안 ②: 서식이 필요하면 허용 목록 sanitizer (raw HTML 차단)
++ import DOMPurify from "dompurify";
++ const clean = DOMPurify.sanitize(comment.body, {
++   ALLOWED_TAGS: ["b", "i", "em", "strong", "a", "p", "br", "ul", "ol", "li"],
++   ALLOWED_ATTR: ["href"],
++   ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,
++ });
++ <div dangerouslySetInnerHTML={{ __html: clean }} />`]],
+151:[["N+1 을 배치·프리페치로 바꾼다","jsx",`// 받은 diff: 행마다 요청 (100행 = 100요청, 취소도 없다)
+function Row({ id }) {
+  const [detail, setDetail] = useState(null);
+  useEffect(() => { fetch("/api/case/" + id).then(r => r.json()).then(setDetail); }, [id]);
+}
+
+// 제안 ①: 목록 응답에 필요한 필드를 포함 (서버와 계약 변경)
+// 제안 ②: 배치 엔드포인트
+const details = useQuery({
+  queryKey: ["cases", "detail", ids],
+  queryFn: ({ signal }) => fetchDetails(ids, { signal }),   // 1요청
+});
+
+// 그대로 둘 수밖에 없다면: 동시성 제한 + 취소 + 캐시
+useEffect(() => {
+  const c = new AbortController();
+  limit(() => fetchDetail(id, { signal: c.signal })).then(setDetail).catch(ignoreAbort);
+  return () => c.abort();
+}, [id]);`]],
+152:[["가장 싼 수정은 태그 교체","jsx",`// 받은 diff: 키보드로 접근·실행 불가, 스크린리더가 버튼으로 읽지 않는다
+- <div className="btn" onClick={save}>저장</div>
+
+// 제안: 네이티브 버튼 (포커스·Enter/Space·disabled 를 공짜로 얻는다)
++ <button type="button" className="btn" onClick={save}>저장</button>
+
+// 이동 동작이면 링크로
++ <a className="btn" href={"/cases/" + id}>상세 보기</a>`],
+     ["불가피하게 div 를 써야 한다면 전부 직접","jsx",`<div
+  role="button"
+  tabIndex={0}
+  aria-disabled={busy || undefined}
+  onClick={busy ? undefined : save}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!busy) save(); }
+  }}
+>저장</div>`]],
+153:[["as any 대신 원인별 처방","ts",`// 받은 diff
+- const rows = (res.data as any).items;
+
+// ① 응답이 불확실하면 경계에서 파싱
++ const { items } = ListResponse.parse(res.data);
+
+// ② 유니온 좁히기
++ if (node.kind === "case") node.caseId;       // 판별 유니온
+
+// ③ 서드파티 타입이 틀렸다면 한 곳에 격리
++ // ponytail: @vendor/sdk v3 의 listCases 반환 타입이 실제와 다르다(items 누락)
++ function listCases(): Promise<CaseListResponse> {
++   return sdk.listCases() as unknown as Promise<CaseListResponse>;
++ }
+
+// ④ 정말 급하면 범위를 좁힌 단언 + 제거 조건이 적힌 이슈
++ const items = (res.data as { items: unknown[] }).items;   // TODO(FE-1234)`]],
+161:[["그럴듯하지만 틀린 코드 — 결함 5개를 찾아라","js",`// AI 가 생성했다고 가정한 코드
+async function loadPage(page) {
+  const res = await fetch("/api/items?page=" + page);
+  const data = res.json();                       // ① await 누락 → Promise 가 들어간다
+  const items = data.items;
+  for (let i = 0; i <= items.length; i++) {      // ② off-by-one → undefined 접근
+    render(items[i]);
+  }
+  const copy = { ...state };
+  copy.filters.status = "open";                  // ③ 얕은 복사 → 원본 상태 변경
+  setState(copy);
+  if (total == "0") showEmpty();                 // ④ 느슨한 비교 + 타입 혼동
+  return items;                                  // ⑤ 실패(!res.ok)를 처리하지 않는다
+}`],
+     ["수정 + 결함을 잡는 테스트","js",`async function loadPage(page, signal) {
+  const res = await fetch("/api/items?page=" + page, { signal });
+  if (!res.ok) throw new Error("items failed: " + res.status);     // ⑤
+  const data = await res.json();                                    // ①
+  for (const item of data.items) render(item);                      // ②
+  setState((s) => ({ ...s, filters: { ...s.filters, status: "open" } }));  // ③
+  if (data.total === 0) showEmpty();                                // ④
+  return data.items;
+}
+
+test("서버가 500이면 던지고 빈 상태를 그리지 않는다", async () => {
+  server.use(http.get("/api/items", () => new Response(null, { status: 500 })));
+  await expect(loadPage(1)).rejects.toThrow(/items failed: 500/);
+  expect(showEmpty).not.toHaveBeenCalled();
+});`]],
+132:[["커서 페이징 응답 계약","json",`{
+  "items": [
+    { "id": "c_1042", "title": "상악 크라운", "updatedAt": "2026-09-16T08:12:00Z" }
+  ],
+  "nextCursor": "eyJ1cGRhdGVkQXQiOiIyMDI2LTA5LTE2VDA4OjEyOjAwWiIsImlkIjoiY18xMDQyIn0",
+  "hasMore": true
+}`],
+     ["정규화 캐시 — 같은 글이 두 화면에서 어긋나지 않게","js",`// 목록은 id 배열만, 본문은 엔티티 한 곳
+const state = {
+  entities: { posts: { c_1042: { id: "c_1042", liked: false, likes: 12 } } },
+  feed: { ids: ["c_1042", "c_1041"], nextCursor: "eyJ..." },
+};
+
+// 좋아요는 엔티티 한 곳만 갱신 → 피드·상세가 동시에 맞는다
+function toggleLike(id) {
+  const prev = state.entities.posts[id];
+  patchEntity(id, { liked: !prev.liked, likes: prev.likes + (prev.liked ? -1 : 1) });
+  return save(id, { idempotencyKey: crypto.randomUUID() })
+    .catch(() => patchEntity(id, prev));      // 실패 롤백
+}`]],
+133:[["SSE 수신 + 프레임당 1회 렌더","js",`const es = new EventSource("/api/chat/" + sessionId + "/stream");
+let buffer = "";
+let scheduled = false;
+
+es.addEventListener("token", (e) => {
+  buffer += JSON.parse(e.data).text;
+  if (scheduled) return;                 // 토큰마다 setState 하지 않는다
+  scheduled = true;
+  requestAnimationFrame(() => {
+    scheduled = false;
+    appendToMessage(buffer);             // 프레임당 1회 커밋
+    buffer = "";
+  });
+});
+
+es.addEventListener("done", () => es.close());
+es.onerror = () => { /* 브라우저가 재연결한다. Last-Event-ID 로 재개 지점 전달 */ };`],
+     ["중단은 서버 생성까지 취소한다","js",`const controller = new AbortController();
+stopBtn.onclick = () => controller.abort();          // 비용이 계속 발생하지 않게
+
+await fetch("/api/chat", {
+  method: "POST",
+  signal: controller.signal,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ sessionId, prompt }),
+});`]],
+138:[["멱등 키로 중복 결제를 막는다","js",`// 키는 "결제 시도" 단위로 한 번 만들고 재시도에 재사용한다
+const attemptKey = useRef(crypto.randomUUID());
+
+async function pay() {
+  setState("submitting");
+  try {
+    const res = await retry(() => fetch("/api/payments", {
+      method: "POST",
+      headers: { "Idempotency-Key": attemptKey.current },   // 재시도도 같은 키
+      body: JSON.stringify({ orderId, amount }),
+    }), { times: 3 });
+
+    if (res.status === 409) return setState("already_paid");
+    if (!res.ok) throw new Error("payment failed: " + res.status);
+    setState("done");
+  } catch {
+    setState("unknown");                   // 성공/실패를 단정하지 않는다
+    const confirmed = await confirmByServer(orderId);   // 서버 조회로 확정
+    setState(confirmed.paid ? "done" : "failed");
+  }
+}`],
+     ["상태 기계로 재진입을 정의한다","js",`const NEXT = {
+  idle:       { submit: "submitting" },
+  submitting: { ok: "done", conflict: "already_paid", fail: "failed", timeout: "unknown" },
+  unknown:    { confirmed_paid: "done", confirmed_unpaid: "failed" },
+  done:       {},                       // 뒤로 가기로 재진입해도 재결제 불가
+};`]],
+146:[["UA 분기 대신 기능 탐지","js",`// 나쁨: 브라우저 감지
+if (/Safari/.test(navigator.userAgent)) applyHack();
+
+// 좋음: 기능 탐지
+if (!("anchorName" in document.documentElement.style)) usePopoverFallback();`],
+     ["CSS 는 @supports 로","css",`.panel { position: absolute; }              /* 폴백 먼저 */
+
+@supports (position-area: bottom span-right) {
+  .panel { position-area: bottom span-right; }   /* 지원하는 곳만 */
+}`]],
+147:[["무엇이 서빙되는지부터 확인한다","bash",`# 캐시를 우회해 실제 응답을 본다
+curl -s -H 'Cache-Control: no-cache' https://app.example.com/ | grep -o 'assets/[^"]*\\.js'
+
+# 배포 버전 엔드포인트와 대조
+curl -s https://app.example.com/version.json
+
+# hosts 하이재킹·프록시 의심이면 IP 를 고정해 직접
+curl -s --resolve app.example.com:443:203.0.113.10 https://app.example.com/version.json`],
+     ["프로덕션 전용 분기를 로컬에서 재현","bash",`# dev 서버가 아니라 프로덕션 빌드를 띄워 확인한다
+npm run build && npx serve dist
+
+# 소스맵으로 스택 복원 (소스맵은 공개 배포하지 않는다)
+npx source-map-cli resolve dist/assets/app-a1b2c3.js.map 1 45213`]]
+};
+Q.forEach((q,i)=>{ q.p = q.p || PROBES[i] || []; q.code = CODE[i] || []; });
+const EXTRA_REFS = {3: [["MDN scheduler.yield", "https://developer.mozilla.org/en-US/docs/Web/API/Scheduler/yield"]], 6: [["MDN AbortSignal.any()", "https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/any_static"]], 18: [["MDN scroll-margin", "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin"]], 19: [["MDN 길이 단위(dvh)", "https://developer.mozilla.org/en-US/docs/Web/CSS/length"]], 26: [["DOMPurify(허용목록 sanitizer)", "https://github.com/cure53/DOMPurify"]], 50: [["web-vitals 라이브러리(attribution)", "https://github.com/GoogleChrome/web-vitals"]], 80: [["MDN touch-action", "https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action"]], 85: [["MDN @layer", "https://developer.mozilla.org/en-US/docs/Web/CSS/@layer"]], 87: [["MDN clamp()", "https://developer.mozilla.org/en-US/docs/Web/CSS/clamp"]], 90: [["MDN FormData", "https://developer.mozilla.org/en-US/docs/Web/API/FormData"]], 104: [["MDN Web Locks API", "https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API"], ["MDN SubtleCrypto.digest()", "https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest"]], 106: [["web-vitals 라이브러리(attribution)", "https://github.com/GoogleChrome/web-vitals"]], 109: [["MDN Cache", "https://developer.mozilla.org/en-US/docs/Web/API/Cache"]], 121: [["MDN prefers-reduced-motion", "https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion"]], 125: [["MDN setPointerCapture()", "https://developer.mozilla.org/en-US/docs/Web/API/Element/setPointerCapture"]], 130: [["MDN aria-sort", "https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-sort"]], 138: [["IETF Idempotency-Key 헤더 초안", "https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header"]], 142: [["MDN performance.mark()", "https://developer.mozilla.org/en-US/docs/Web/API/Performance/mark"], ["web.dev layout thrashing", "https://web.dev/articles/avoid-large-complex-layouts-and-layout-thrashing"]], 146: [["MDN @supports", "https://developer.mozilla.org/en-US/docs/Web/CSS/@supports"]], 148: [["web-vitals 라이브러리(attribution)", "https://github.com/GoogleChrome/web-vitals"], ["MDN scrollbar-gutter", "https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-gutter"]], 161: [["MSW 철학(경계 모킹)", "https://mswjs.io/docs/philosophy"]]};
+Q.forEach((q,i)=>{ const e = EXTRA_REFS[i]; if (e) { const seen = new Set(q.r.map(x=>x[1])); for (const ref of e) if (!seen.has(ref[1])) q.r.push(ref); } });
+
+
+/* DATA_END — 위까지가 문항 데이터, 아래는 UI */
 const state = { lv:"all", cat:"all", q:"" };
 try{ const s = JSON.parse(localStorage.getItem("fe-iv") || "{}"); Object.assign(state, s||{}); }catch(e){}
 
@@ -1530,12 +2707,13 @@ catsEl.innerHTML = [["all","전체 영역"]].concat(Object.entries(CATS)).map(([
   `<button type="button" data-cat="${k}" aria-pressed="${state.cat===k}">${label}</button>`).join("");
 
 const strip = s => String(s).replace(/<[^>]+>/g,"");
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 function matches(item){
   if(state.lv!=="all" && item.l!==state.lv && item.l!=="all") return false;
   if(state.cat!=="all" && item.c!==state.cat) return false;
   if(state.q){
     const hay = strip([item.q, item.core.join(" "), item.good, item.weak, item.next,
-      (item.p||[]).map(x=>x.join(" ")).join(" "),
+      (item.p||[]).map(x=>x.join(" ")).join(" "), (item.code||[]).map(x=>x[0]+" "+x[2]).join(" "),
       item.r.map(r=>r[0]).join(" ")].join(" ")).toLowerCase();
     if(!hay.includes(state.q.toLowerCase())) return false;
   }
@@ -1559,6 +2737,7 @@ function render(){
             <button class="reveal" type="button">답 보기</button>
             <div class="answer">
               <ul class="core">${it.core.map(c=>`<li>${c}</li>`).join("")}</ul>
+              ${it.code && it.code.length ? it.code.map(([label,lang,src])=>`<figure class="snippet"><figcaption>${label}<span class="lang">${lang}</span></figcaption><pre><code>${esc(src)}</code></pre></figure>`).join("") : ""}
               <div class="signals">
                 <div class="sig sig-good"><span class="t">좋은 신호</span>${it.good}</div>
                 <div class="sig sig-weak"><span class="t">약한 신호</span>${it.weak}</div>

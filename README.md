@@ -6,8 +6,9 @@
 
 - 문항 163개 · 영역 19개
 - 레벨 분포: 주니어 40 / 미들 68 / 시니어 52 / 공통 3
-- 레퍼런스 링크 199개 (전부 HTTP 200 확인)
+- 레퍼런스 링크 218개 (전부 HTTP 200 확인)
 - 꼬리질문 342단계 — 문항마다 면접관이 파고드는 질문과 단계별 기대 답
+- 코드 예제 114개 — 코드로 답해야 하는 72문항에 동작하는 예제 첨부
 
 ## 쓰는 법
 
@@ -39,6 +40,22 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 함수가 선언된 렉시컬 스코프의 변수를 계속 참조하는 것. 호출이 끝나도 그 변수는 살아 있다.
 - 디바운스·스로틀의 타이머 보관, once 플래그, 모듈 내부 상태 은닉, 커스텀 훅의 내부 값.
 - 루프에서 `var`로 캡처하면 마지막 값 하나만 남고 `let`은 반복마다 새 바인딩을 만든다.
+
+*클로저로 상태를 가둔다 — 그리고 누수가 되는 경로*
+
+```js
+function createCounter() {
+  let count = 0;                      // 외부에서 접근 불가, 함수만 기억한다
+  return { inc: () => ++count, get: () => count };
+}
+
+// 누수: 클로저가 큰 객체·DOM 을 붙잡은 채 리스너가 남는다
+function attach(node, hugeData) {
+  const onClick = () => console.log(hugeData.length);  // hugeData 를 계속 참조
+  node.addEventListener("click", onClick);
+  return () => node.removeEventListener("click", onClick);  // 해제 함수 필수
+}
+```
 
 - ✅ **좋은 신호** — 디바운스나 이벤트 핸들러 같은 자기 코드로 설명하고, 변수 수명이 늘어난다는 점을 짚는다.
 - ⚠️ **약한 신호** — "함수 안의 함수"라고만 말하고 스코프·수명 이야기가 없다.
@@ -91,6 +108,38 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 따라서 then과 queueMicrotask가 등록 순서대로 먼저, setTimeout이 마지막.
 - `await` 뒤 코드도 마이크로태스크다. 마이크로태스크가 자기를 계속 생성하면 렌더가 굶어 화면이 멈춘다.
 
+*출력 순서를 근거와 함께*
+
+```js
+console.log("1 sync");
+setTimeout(() => console.log("5 macrotask"), 0);
+queueMicrotask(() => console.log("3 microtask"));
+Promise.resolve().then(() => console.log("4 microtask"));
+console.log("2 sync");
+
+// 1 sync → 2 sync → 3 microtask → 4 microtask → 5 macrotask
+// 동기 코드 전부 → 마이크로태스크 큐를 "전부" 비움 → 렌더 기회 → 매크로태스크 1개
+```
+
+*마이크로태스크 기아 — 화면이 멈춘다*
+
+```js
+// 나쁨: 마이크로태스크가 자기를 재등록 → 렌더 기회가 오지 않는다
+function drain(queue) {
+  if (!queue.length) return;
+  process(queue.pop());
+  Promise.resolve().then(() => drain(queue));
+}
+
+// 좋음: 프레임에 양보한다
+async function drainYielding(queue) {
+  while (queue.length) {
+    process(queue.pop());
+    if (navigator.scheduling?.isInputPending?.()) await scheduler.yield();
+  }
+}
+```
+
 - ✅ **좋은 신호** — 순서를 맞히고 큐 구조로 설명하며, 마이크로태스크 기아 같은 실제 증상까지 연결한다.
 - ⚠️ **약한 신호** — "비동기는 나중에 실행된다" 수준. 두 큐의 우선순위를 모른다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -100,7 +149,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 렌더 기회가 오지 않아 화면이 멈춘다(입력도 막힌다). 작업을 매크로태스크로 쪼개거나 scheduler.yield 로 양보해야 한다.
   3. 그 증상을 프로파일러에서 어떻게 식별하나?
      - 기대 답: Long Task 로 잡히고 프레임이 비어 있다. 호출 스택 상단에 같은 함수가 반복 등장한다.
-- 📖 **레퍼런스** — [MDN Execution model (event loop)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model)
+- 📖 **레퍼런스** — [MDN Execution model (event loop)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model) · [MDN scheduler.yield](https://developer.mozilla.org/en-US/docs/Web/API/Scheduler/yield)
 
 #### [미들] `this`는 어떻게 결정되나? 콜백으로 넘기면 왜 깨지나?
 
@@ -109,6 +158,20 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 호출 형태가 결정한다: 일반 호출(undefined/전역), 메서드 호출(점 앞 객체), `new`(새 인스턴스), `call/apply/bind`(명시).
 - 화살표 함수는 호출과 무관하게 정의 시점의 `this`를 가져온다.
 - 메서드를 참조만 떼어 콜백으로 넘기면 점 앞 객체가 사라져 바인딩이 유실된다 → `bind` 또는 클래스 필드 화살표.
+
+*콜백으로 넘기면 바인딩이 유실된다*
+
+```js
+const timer = {
+  label: "upload",
+  report() { console.log(this.label); },
+};
+
+timer.report();                       // "upload"  — 점 앞 객체가 this
+setTimeout(timer.report, 0);          // undefined — 참조만 떼어 냈다
+setTimeout(() => timer.report(), 0);  // "upload"  — 호출 형태를 유지
+setTimeout(timer.report.bind(timer), 0);  // "upload"
+```
 
 - ✅ **좋은 신호** — 네 규칙을 우선순위로 정리하고, 화살표를 쓰면 안 되는 경우(프로토타입 메서드, `currentTarget` 접근)도 안다.
 - ⚠️ **약한 신호** — "화살표 쓰면 해결"로 끝내고 왜 그런지 설명하지 못한다.
@@ -126,6 +189,32 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - spread와 `Object.assign`은 1단만 복사한다. 중첩 객체는 참조 공유.
 - 깊은 복사는 `structuredClone`이 표준(함수·DOM 노드·클래스 인스턴스는 불가). `JSON.parse(JSON.stringify())`는 `Date`·`undefined`·`NaN`·순환 참조에서 손실이 난다.
 - 상태 관리에서는 전체 복사보다 바뀐 경로만 새 객체로 만드는 불변 갱신이 기본. 참조 비교로 리렌더를 가를 수 있다.
+
+*1단 복사 vs 깊은 복사 — 손실 지점*
+
+```js
+const state = { user: { name: "다윗" }, at: new Date(), tags: undefined };
+
+const shallow = { ...state };
+shallow.user.name = "변경";
+state.user.name;                 // "변경"  — 중첩 객체는 참조 공유
+
+const viaJson = JSON.parse(JSON.stringify(state));
+typeof viaJson.at;               // "string" — Date 가 문자열로, tags 는 사라짐
+
+const clone = structuredClone(state);   // Date·Map·순환 참조 보존(함수·DOM 은 불가)
+```
+
+*상태 갱신은 바뀐 경로만 새로*
+
+```js
+// 전량 복사 대신 구조적 공유 — 참조 비교로 리렌더를 가를 수 있다
+const next = {
+  ...state,
+  user: { ...state.user, name: "다윗" },
+};
+next.tags === state.tags;   // true — 바뀌지 않은 가지는 같은 참조
+```
 
 - ✅ **좋은 신호** — 복사 방식별 손실을 구체적으로 알고, 불변 갱신이 렌더 최적화와 이어진다는 점까지 말한다.
 - ⚠️ **약한 신호** — 항상 JSON 왕복으로 깊은 복사한다고 답하고 손실 사례를 모른다.
@@ -145,6 +234,27 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `race`: 타임아웃 경쟁. `any`: 첫 성공만 필요할 때(미러 서버).
 - 취소는 Promise가 아니라 `AbortController`의 책임이다.
 
+*all 은 하나 실패로 전체 reject — 남은 요청은 취소되지 않는다*
+
+```js
+// 부분 실패를 화면에 보여야 하면 allSettled
+const results = await Promise.allSettled([loadCases(), loadQuota(), loadNotices()]);
+for (const r of results) {
+  if (r.status === "fulfilled") render(r.value);
+  else renderWidgetError(r.reason);          // 위젯 하나만 에러 표시
+}
+```
+
+*타임아웃은 race 가 아니라 신호로*
+
+```js
+// race 로 타임아웃을 만들면 원 요청이 계속 살아 있다
+const res = await fetch("/api/cases", { signal: AbortSignal.timeout(5000) });
+
+// 여러 신호를 합칠 때
+const signal = AbortSignal.any([userCancel.signal, AbortSignal.timeout(5000)]);
+```
+
 - ✅ **좋은 신호** — 부분 실패 UX를 기준으로 골라내고, reject 후 남은 요청 처리와 취소 수단을 구분한다.
 - ⚠️ **약한 신호** — 이름별 동작만 암기해 말하고 어떤 화면에 쓸지 예를 못 든다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -152,7 +262,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: allSettled 로 부분 성공을 표시하고 실패 위젯만 재시도 가능하게. 전체 화면 에러로 덮지 않는다.
   2. 그 재시도가 서버에 위험할 수 있나?
      - 기대 답: 멱등하지 않은 요청이면 중복 생성이 생긴다. 재시도는 조회·멱등 요청으로 제한하거나 요청 키를 쓴다.
-- 📖 **레퍼런스** — [MDN Promise.all](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all) · [MDN Promise.allSettled](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled) · [MDN AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
+- 📖 **레퍼런스** — [MDN Promise.all](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all) · [MDN Promise.allSettled](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled) · [MDN AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) · [MDN AbortSignal.any()](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/any_static)
 
 #### [미들] async 함수의 에러가 조용히 사라지는 경우를 아는가?
 
@@ -162,6 +272,25 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `forEach`에 async 콜백을 넣으면 반환된 Promise가 버려진다 → `for...of` 또는 `Promise.all(map())`.
 - `setTimeout` 콜백 내부 throw는 바깥 try/catch가 못 잡는다.
 - 전역 `unhandledrejection`·`error` 핸들러로 수집해 에러 트래킹에 보낸다.
+
+*에러가 조용히 사라지는 네 경로*
+
+```js
+// 1) await 누락 → unhandled rejection
+save(payload);                 // 실패해도 호출부는 모른다
+await save(payload);
+
+// 2) forEach + async → 반환된 Promise 가 버려진다
+items.forEach(async (i) => await save(i));          // 나쁨
+await Promise.all(items.map((i) => save(i)));       // 좋음
+
+// 3) 타이머 콜백의 throw 는 바깥 try/catch 가 못 잡는다
+try { setTimeout(() => { throw new Error("boom"); }, 0); } catch { /* 안 잡힌다 */ }
+
+// 4) 마지막 그물
+addEventListener("unhandledrejection", (e) => report(e.reason));
+addEventListener("error", (e) => report(e.error));
+```
 
 - ✅ **좋은 신호** — 직접 겪은 누락 사례를 들고 전역 핸들러·로깅까지 연결한다.
 - ⚠️ **약한 신호** — try/catch만 있으면 된다고 답한다.
@@ -179,6 +308,19 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 객체를 키로 부가 정보를 붙이되 그 객체의 수명을 늘리고 싶지 않을 때(DOM 노드별 메타데이터, 인스턴스별 캐시).
 - 강한 참조 Map에 DOM을 담으면 노드가 제거돼도 회수되지 않는다(detached DOM 누수).
 - `WeakRef`/`FinalizationRegistry`는 회수 시점을 보장하지 않으므로 정리 로직의 유일한 수단으로 쓰면 안 된다.
+
+*DOM 에 메타데이터를 붙이되 수명을 늘리지 않는다*
+
+```js
+const meta = new WeakMap();
+
+function track(node, info) {
+  meta.set(node, info);          // 강한 Map 이면 노드 제거 후에도 회수되지 않는다
+}
+
+// 노드가 DOM 에서 사라지고 다른 참조가 없으면 엔트리도 회수 대상
+// 단, 회수 시점은 보장되지 않는다 → 정리 로직의 유일한 수단으로 쓰지 않는다
+```
 
 - ✅ **좋은 신호** — 누수 관측 경험과 함께 말하고 파이널라이저의 비결정성을 스스로 경고한다.
 - ⚠️ **약한 신호** — "가비지 컬렉션되는 Map"이라는 정의만 말한다.
@@ -198,6 +340,20 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 원시 타입(number·string·boolean·null·undefined·symbol·bigint)은 값이 복사된다. 참조 타입(객체·배열·함수)은 주소가 복사된다.
 - 그래서 함수 인자로 넘긴 객체를 안에서 수정하면 밖에서도 바뀐다.
 - 동등 비교도 다르다. 객체는 내용이 같아도 참조가 다르면 `===`가 false.
+
+*값 복사 vs 참조 복사*
+
+```js
+let a = 1, b = a; b = 2;        // a === 1 (값 복사)
+
+const o1 = { n: 1 };
+const o2 = o1; o2.n = 2;        // o1.n === 2 (주소 복사)
+
+function mutate(obj) { obj.n = 99; }   // 인자 변경이 호출부에 보인다
+mutate(o1); o1.n;               // 99
+
+({ n: 1 }) === ({ n: 1 });      // false — 내용이 같아도 참조가 다르다
+```
 
 - ✅ **좋은 신호** — 함수 인자 수정 사례로 설명하고 참조 비교 결과까지 말한다.
 - ⚠️ **약한 신호** — 타입 목록만 외워 나열한다.
@@ -233,6 +389,20 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `??`는 `null/undefined`일 때만 기본값을 쓴다. `||`는 `0`·`''`·`false`도 기본값으로 덮어써 버그를 만든다.
 - 남용은 위험하다. 값이 없으면 안 되는 자리에서 조용히 넘기면 원인 파악이 늦어진다.
 
+*|| 가 0 을 덮어쓰는 버그*
+
+```js
+const settings = { retries: 0, label: "" };
+
+settings.retries || 3;   // 3   ← 0 이 falsy 라서 기본값이 끼어든다 (버그)
+settings.retries ?? 3;   // 0   ← null/undefined 일 때만 기본값
+settings.label   ?? "무제";  // ""
+
+// 옵셔널 체이닝은 "없을 수 있는" 값에만
+user.profile?.avatar?.url         // 선택 필드
+order?.total.toFixed(2)           // 필수 값을 가리면 원인 추적이 늦어진다
+```
+
 - ✅ **좋은 신호** — `||`와 `??`의 차이를 `0` 사례로 설명하고 남용 위험도 말한다.
 - ⚠️ **약한 신호** — 에러가 안 나게 하는 문법이라고만 답한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -249,6 +419,20 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 변환은 `map`, 선별은 `filter`, 하나로 접는 것은 `reduce` — 의도가 이름으로 드러난다.
 - 중간 탈출(`break`)이나 복잡한 상태 누적은 `for...of`가 읽기 쉽다. `reduce` 안에 로직을 몰아넣으면 가독성이 무너진다.
 - 체인은 배열을 여러 번 순회한다. 수만 건 이상이면 한 번의 루프로 합치는 것이 실측상 유리할 수 있다.
+
+*reduce 로 객체를 누적할 때의 O(n²)*
+
+```js
+// 나쁨: 매 회 새 객체를 만든다
+const byId = items.reduce((acc, it) => ({ ...acc, [it.id]: it }), {});
+
+// 좋음: 누적 객체를 직접 채우거나 Map
+const byId2 = items.reduce((acc, it) => { acc[it.id] = it; return acc; }, {});
+const byId3 = new Map(items.map((it) => [it.id, it]));
+
+// 중간 탈출이 필요하면 for...of — reduce 로 억지로 만들지 않는다
+for (const it of items) if (it.broken) { report(it); break; }
+```
 
 - ✅ **좋은 신호** — 가독성 기준을 먼저 대고 성능은 규모를 조건으로 붙인다.
 - ⚠️ **약한 신호** — 고차 함수가 항상 더 좋다 또는 항상 더 느리다고 단정한다.
@@ -267,6 +451,28 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `stopPropagation`은 상위로의 전파를 막는다. 기본 동작은 그대로 일어난다.
 - 둘을 혼동하면 '폼이 계속 새로고침된다' 또는 '바깥 클릭 닫기가 안 먹는다'가 된다.
 
+*두 축은 다르다: 기본 동작 vs 전파*
+
+```js
+form.addEventListener("submit", (e) => {
+  e.preventDefault();        // 페이지 새로고침(기본 동작)만 막는다. 전파는 계속
+  submitViaFetch();
+});
+
+menu.addEventListener("click", (e) => {
+  e.stopPropagation();       // 상위의 "바깥 클릭 닫기"가 죽는다 — 범위를 좁혀 쓴다
+});
+
+// passive 리스너에서는 preventDefault 가 무시된다(경고)
+el.addEventListener("touchmove", onMove, { passive: true });
+```
+
+*스크롤 제어는 CSS 로*
+
+```css
+.pan-area { touch-action: pan-y; }   /* 가로 제스처만 차단, JS 개입 없음 */
+```
+
 - ✅ **좋은 신호** — 두 축(기본 동작 / 전파)을 분명히 나누고 각각의 증상을 예로 든다.
 - ⚠️ **약한 신호** — 둘을 같이 호출하는 습관만 있고 차이를 설명하지 못한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -274,7 +480,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 무시된다(경고). 기본 동작을 막아야 하면 passive 를 쓸 수 없다.
   2. 그럼 터치 제스처에서 스크롤만 막으려면?
      - 기대 답: CSS touch-action 으로 선언적으로 제한한다. JS 로 막는 것보다 성능이 좋다.
-- 📖 **레퍼런스** — [MDN preventDefault](https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault) · [MDN stopPropagation](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopPropagation)
+- 📖 **레퍼런스** — [MDN preventDefault](https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault) · [MDN stopPropagation](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopPropagation) · [MDN touch-action](https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action)
 
 ### 브라우저·렌더링 (6)
 
@@ -393,6 +599,23 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `border-box`로 리셋하면 지정한 width가 최종 너비가 되어 레이아웃 계산이 예측 가능해진다.
 - 수직 마진은 인접 요소 간 병합된다(margin collapse). flex·grid 컨테이너 안에서는 병합되지 않는다.
 
+*border-box 리셋과 마진 병합*
+
+```css
+*, *::before, *::after { box-sizing: border-box; }
+/* content-box: width 200 + padding 32 + border 2 = 실제 234 */
+/* border-box:  지정한 200 이 최종 너비 */
+
+.card { width: 200px; padding: 16px; border: 1px solid; }
+
+/* 마진 병합: 인접 형제의 수직 마진이 합쳐지지 않고 큰 값만 남는다 */
+.a { margin-bottom: 24px; }
+.b { margin-top: 16px; }            /* 간격은 40px 이 아니라 24px */
+
+/* 병합을 피하는 가장 단순한 방법 = 레이아웃이 간격을 소유한다 */
+.stack { display: flex; flex-direction: column; gap: 24px; }
+```
+
 - ✅ **좋은 신호** — border-box 리셋 이유를 계산 예측성으로 설명하고 마진 병합까지 안다.
 - ⚠️ **약한 신호** — 용어만 말하고 왜 리셋하는지 모른다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -409,6 +632,28 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 쌓임 맥락(stacking context)을 먼저 본다. `position`+z-index, `transform`, `opacity<1`, `filter`, `will-change`, `contain` 등이 새 맥락을 만든다.
 - 자식은 부모 맥락을 벗어날 수 없다. 부모가 낮으면 자식 z-index 9999도 무의미.
 - 해결은 DOM 위치를 바꾸거나 포털로 최상위에 렌더, 그리고 레이어 값을 토큰으로 관리.
+
+*쌓임 맥락을 만드는 속성들*
+
+```css
+/* 부모가 맥락을 만들면 자식 z-index 는 그 안에서만 경쟁한다 */
+.parent {
+  position: relative;
+  z-index: 1;          /* 맥락 생성 */
+  /* transform / filter / opacity < 1 / will-change / contain 도 생성한다 */
+}
+.child { position: absolute; z-index: 9999; }   /* 여전히 .parent 위로는 못 간다 */
+
+/* 레이어는 토큰으로 관리한다 */
+:root { --z-dropdown: 100; --z-modal: 1000; --z-toast: 1100; }
+```
+
+*잘림 문제는 구조로 푼다*
+
+```jsx
+// overflow:hidden 부모 밖으로 렌더
+createPortal(<Dropdown />, document.body);
+```
 
 - ✅ **좋은 신호** — 맥락 생성 조건을 알고 포털 같은 구조적 해법을 제시한다.
 - ⚠️ **약한 신호** — 값을 더 올려 본다고 답한다.
@@ -445,6 +690,23 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 부모 높이가 콘텐츠와 같아 고정될 여유 구간이 없는 경우.
 - 표 헤더는 `thead th`에 걸고 `border-collapse` 영향을 확인한다.
 
+*sticky 가 안 되는 원인 3개*
+
+```css
+.wrap { overflow: hidden; }       /* ① 조상 overflow → 스크롤 컨테이너가 바뀐다 */
+
+.header {
+  position: sticky;
+  /* top 미지정 → 임계점이 없어 붙지 않는다 ② */
+  top: env(safe-area-inset-top, 0px);
+}
+
+.section { height: auto; }        /* ③ 부모 높이에 여유가 없으면 고정 구간이 없다 */
+
+/* 앵커가 헤더에 가려지는 문제 */
+:target { scroll-margin-top: var(--header-h, 56px); }
+```
+
 - ✅ **좋은 신호** — 조상 overflow를 1순위로 의심하고 DevTools로 확인하는 절차를 말한다.
 - ⚠️ **약한 신호** — 브라우저 버그로 돌린다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -452,7 +714,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: env(safe-area-inset-top) 을 고정 요소의 padding 에 더한다. 뷰포트 메타에 viewport-fit=cover 가 필요하다.
   2. sticky 헤더와 스크롤 앵커링이 충돌하면?
      - 기대 답: scroll-margin-top 으로 앵커 위치를 보정한다. 헤더 높이를 변수로 두고 공유한다.
-- 📖 **레퍼런스** — [MDN position](https://developer.mozilla.org/en-US/docs/Web/CSS/position)
+- 📖 **레퍼런스** — [MDN position](https://developer.mozilla.org/en-US/docs/Web/CSS/position) · [MDN scroll-margin](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin)
 
 #### [주니어] 요소를 가로·세로 중앙에 두는 방법을 여러 개 말해 보라.
 
@@ -462,6 +724,18 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `position:absolute; inset:0; margin:auto`, 또는 `top:50%; left:50%; translate:-50% -50%`(크기를 몰라도 된다).
 - 텍스트 한 줄은 `line-height`로도 되지만 다중 행에서 깨진다.
 
+*중앙 정렬 4가지와 제약*
+
+```css
+.a { display: grid; place-items: center; }              /* 부모 높이 필요 */
+.b { display: flex; align-items: center; justify-content: center; }
+.c { position: absolute; inset: 0; margin: auto; width: 120px; height: 40px; }
+.d { position: absolute; top: 50%; left: 50%; translate: -50% -50%; }  /* 크기 몰라도 됨 */
+
+/* 모바일 뷰포트: 100vh 는 주소창을 포함해 잘린다 */
+.screen { min-height: 100dvh; }
+```
+
 - ✅ **좋은 신호** — 부모 높이를 모르는 경우, 스크롤이 생기는 경우 등 제약별로 고른다.
 - ⚠️ **약한 신호** — 한 가지만 알고 왜 다른 상황에서 깨지는지 모른다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -469,7 +743,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 주소창 포함 높이로 계산돼 실제 보이는 영역보다 크다. dvh/svh 또는 100% 기반으로 바꾼다.
   2. 키보드가 올라올 때 입력창을 어떻게 보이게 하나?
      - 기대 답: visualViewport 이벤트로 보정하거나 스크롤 인투 뷰. 고정 하단 바는 키보드와 겹치기 쉽다.
-- 📖 **레퍼런스** — [MDN grid 정렬](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout/Basic_concepts_of_grid_layout)
+- 📖 **레퍼런스** — [MDN grid 정렬](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout/Basic_concepts_of_grid_layout) · [MDN 길이 단위(dvh)](https://developer.mozilla.org/en-US/docs/Web/CSS/length)
 
 #### [시니어] 디자인 토큰과 CSS 커스텀 프로퍼티로 다크 모드를 설계한다면?
 
@@ -479,6 +753,24 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 컴포넌트는 리터럴 색을 쓰지 않고 토큰만 참조한다. 미디어 쿼리 안에만 정의된 색은 조건이 어긋난 상태에서 미정의가 되어 대비 사고를 만든다.
 - 사용자의 명시적 토글과 시스템 설정 두 축을 모두 다루려면 속성 선택자와 `prefers-color-scheme`을 겹쳐 우선순위를 정한다.
 - 의미 색(성공·경고·위험)은 브랜드 액센트와 분리하고 대비는 WCAG 기준으로 검증한다.
+
+*토큰은 전량 :root 에, 다크는 토큰만 재정의*
+
+```css
+:root {                          /* 완전한 라이트 팔레트 */
+  --bg: #ffffff; --fg: #131a24; --accent: #1f4d7a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {        /* 명시적 라이트 선택이 이긴다 */
+    --bg: #0f141a; --fg: #e7ecf2; --accent: #7fb3e0;
+  }
+}
+:root[data-theme="dark"] { --bg: #0f141a; --fg: #e7ecf2; --accent: #7fb3e0; }
+
+body { background: var(--bg); color: var(--fg); }   /* 컴포넌트는 토큰만 참조 */
+
+/* 안티패턴: 미디어 쿼리 안에만 정의된 색 → 조건이 어긋난 상태에서 미정의 */
+```
 
 - ✅ **좋은 신호** — 토큰 계층(원시→의미→컴포넌트)을 구분하고 대비 검증·QA 방법까지 말한다.
 - ⚠️ **약한 신호** — 클래스 `.dark`를 붙여 색을 각 컴포넌트에서 덮는다고 답한다.
@@ -499,6 +791,21 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 명시도 전쟁은 구조 문제의 증상이다. 중첩 선택자를 줄이고 클래스 한 겹으로 맞춘다.
 - `!important`는 서드파티 스타일을 덮을 때처럼 제어권이 없는 경우로 제한한다. 남기면 다음 사람이 또 `!important`를 쓴다.
 
+*명시도와 :where() / @layer*
+
+```css
+#app .btn.primary { color: red; }    /* id 1, class 2 */
+.btn.primary      { color: blue; }   /* 짐 */
+
+/* :where() 안은 명시도 0 → 덮어쓰기 쉬운 기본값 */
+:where(.btn) { padding: 8px 12px; }
+
+/* 레이어로 출처 순서를 정하면 명시도 경쟁이 필요 없다 */
+@layer reset, base, components, overrides;
+@layer components { .btn { color: blue; } }
+@layer overrides  { .btn { color: red; } }   /* 명시도가 낮아도 이긴다 */
+```
+
 - ✅ **좋은 신호** — 가중치 순서를 말하고 명시도 문제를 구조로 푸는 방향을 제시한다.
 - ⚠️ **약한 신호** — 안 먹히면 `!important`를 붙인다고 답한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -506,7 +813,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 명시도가 0 이 되어 덮어쓰기 쉬운 기본 스타일을 만들 수 있다. 리셋·라이브러리 기본값에 유용.
   2. 캐스케이드 레이어(@layer)는 어떤 문제를 푸나?
      - 기대 답: 출처 순서를 명시적으로 정해 명시도 경쟁 없이 우선순위를 관리한다.
-- 📖 **레퍼런스** — [MDN 명시도](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_cascade/Specificity)
+- 📖 **레퍼런스** — [MDN 명시도](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_cascade/Specificity) · [MDN @layer](https://developer.mozilla.org/en-US/docs/Web/CSS/@layer)
 
 #### [주니어] `display`의 block, inline, inline-block, none 차이는?
 
@@ -516,6 +823,22 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - inline은 콘텐츠 폭만 차지하고 width·height와 수직 마진이 무시된다.
 - inline-block은 줄 안에 놓이지만 크기 지정이 된다.
 - `none`은 레이아웃에서 제거된다(접근성 트리에서도 사라짐). 숨기되 낭독은 남기려면 시각적 숨김 기법을 쓴다.
+
+*display 차이와 '시각적으로만 숨기기'*
+
+```css
+.inline  { display: inline; width: 200px; height: 40px; }  /* width·height 무시 */
+.iblock  { display: inline-block; }                        /* 줄 안 + 크기 적용 */
+.block   { display: block; }
+.gone    { display: none; }        /* 접근성 트리에서도 사라진다 */
+
+/* 화면에서만 감추고 스크린리더에는 남긴다 */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+```
 
 - ✅ **좋은 신호** — inline에서 height가 안 먹는 이유를 설명하고 `none`과 `visibility`를 구분한다.
 - ⚠️ **약한 신호** — 셋을 비슷한 것으로 설명한다.
@@ -535,6 +858,21 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `%`는 부모 기준, `vw/vh`는 뷰포트 기준이라 반응형에 쓰지만 모바일 주소창 변화·확대 시 문제가 생긴다.
 - `px`는 테두리처럼 확대와 무관해야 하는 곳에.
 
+*단위 선택 — 사용자 글자 크기를 존중*
+
+```css
+html { font-size: 100%; }              /* 사용자 설정 기준 = 16px 가정 금지 */
+
+.title  { font-size: 1.5rem; }          /* 루트 기준 — 타이포·간격 기본 */
+.icon   { width: 1em; height: 1em; }    /* 요소 폰트 비례 — 중첩되면 누적 */
+.col    { width: 50%; }                 /* 부모 기준 */
+.hero   { padding-block: clamp(24px, 5vw, 64px); }   /* 뷰포트 기준 + 상·하한 */
+.border { border-width: 1px; }          /* 확대와 무관해야 하는 곳은 px */
+
+/* 고정 높이 + px 폰트는 200% 확대에서 잘린다 */
+.chip { min-height: 2.5rem; height: auto; }
+```
+
 - ✅ **좋은 신호** — 접근성(사용자 글자 크기)을 이유로 rem을 고르는 근거를 댄다.
 - ⚠️ **약한 신호** — 모든 값을 px로 고정한다고 답한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -542,7 +880,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 고정 높이·px 폰트를 피하고 rem 기반 간격, 내용에 따라 늘어나는 컨테이너. 200% 확대 테스트로 검증.
   2. 최소 폰트 크기를 px 로 고정하면 무엇이 문제인가?
      - 기대 답: 사용자 설정을 무시해 접근성 요건을 위반할 수 있다.
-- 📖 **레퍼런스** — [MDN CSS 값과 단위](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Values_and_units)
+- 📖 **레퍼런스** — [MDN CSS 값과 단위](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Values_and_units) · [MDN clamp()](https://developer.mozilla.org/en-US/docs/Web/CSS/clamp)
 
 ### 네트워크·HTTP (10)
 
@@ -554,6 +892,23 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - HTML 엔트리: `no-cache`로 매번 검증. 그래야 새 배포가 즉시 반영된다.
 - `ETag`/`Last-Modified`로 조건부 요청 → 304. `stale-while-revalidate`로 체감 지연 제거.
 - 브라우저 캐시와 CDN 캐시를 구분하고(`s-maxage`) 배포 시 무효화 대상을 정한다.
+
+*해시 자산과 HTML 은 정책이 다르다*
+
+```http
+# 콘텐츠 해시가 붙은 정적 자산 — 1년 + immutable
+Cache-Control: public, max-age=31536000, immutable
+
+# HTML 엔트리 — 매번 검증(새 배포 즉시 반영)
+Cache-Control: no-cache
+
+# API 응답 — 짧게 캐시 + 재검증 허용
+Cache-Control: private, max-age=0, stale-while-revalidate=60
+ETag: "c-42-7"
+
+# CDN 만 더 오래 (브라우저와 분리)
+Cache-Control: max-age=0, s-maxage=600
+```
 
 - ✅ **좋은 신호** — 해시 파일명과 HTML 정책을 짝으로 설명하고 배포 후 구버전이 남는 사고를 예로 든다.
 - ⚠️ **약한 신호** — 모든 응답에 긴 max-age를 준다고 답한다.
@@ -572,6 +927,22 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 줄이려면 `Access-Control-Max-Age`로 캐시, 불필요한 커스텀 헤더 제거, 같은 오리진 프록시.
 - `credentials: include`면 `Access-Control-Allow-Origin: *`가 불가하고 정확한 오리진과 `Allow-Credentials`가 필요하다.
 - CORS는 브라우저 규칙이다. 서버가 막는 게 아니라서 curl은 통과한다.
+
+*preflight 를 부르는 조건과 서버 응답*
+
+```http
+# 이 요청은 단순 요청이 아니다 → OPTIONS 가 먼저 나간다
+POST /api/cases HTTP/1.1
+Content-Type: application/json          # 단순 요청 허용 타입이 아니다
+X-Request-Id: abc                        # 커스텀 헤더 하나로도 트리거
+
+# 서버 preflight 응답
+Access-Control-Allow-Origin: https://app.example.com   # credentials 면 * 불가
+Access-Control-Allow-Methods: POST, GET
+Access-Control-Allow-Headers: Content-Type, X-Request-Id
+Access-Control-Allow-Credentials: true
+Access-Control-Max-Age: 600              # preflight 결과 캐시
+```
 
 - ✅ **좋은 신호** — 브라우저만의 규칙이라는 점을 분명히 하고, 실패 응답과 CORS 오류를 구분해 디버깅한 경험이 있다.
 - ⚠️ **약한 신호** — 프록시로 우회했다는 말만 하고 발생 조건을 설명하지 못한다.
@@ -716,6 +1087,39 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 범위(scope)와 오래된 캐시 정리를 설계하지 않으면 저장소가 계속 커지고 디버깅이 어려워진다.
 - 오프라인 쓰기는 큐잉 + 복귀 시 동기화 + 충돌 규칙이 필요하다.
 
+*자원별 캐시 전략 — 인증 응답은 캐시하지 않는다*
+
+```js
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (request.mode === "navigate") {                 // HTML: 네트워크 우선
+    event.respondWith(fetch(request).catch(() => caches.match("/offline.html")));
+    return;
+  }
+  if (url.pathname.startsWith("/api/")) return;      // 인증 응답: 손대지 않는다
+  if (/\.(js|css|woff2|avif)$/.test(url.pathname)) { // 해시 자산: 캐시 우선
+    event.respondWith(caches.match(request).then((hit) => hit ?? fetchAndPut(request)));
+  }
+});
+```
+
+*업데이트 게이트 — 옛 버전 고착을 막는다*
+
+```js
+// 페이지: 새 워커가 대기 중이면 사용자에게 알린 뒤 적용
+const reg = await navigator.serviceWorker.register("/sw.js");
+reg.addEventListener("updatefound", () => {
+  reg.installing?.addEventListener("statechange", (e) => {
+    if (e.target.state === "installed" && navigator.serviceWorker.controller) {
+      showReloadBanner(() => { reg.waiting?.postMessage("SKIP_WAITING"); });
+    }
+  });
+});
+navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
+```
+
 - ✅ **좋은 신호** — 업데이트 게이트와 자원별 캐시 정책을 나눠 말하고 사고 경험을 든다.
 - ⚠️ **약한 신호** — PWA 플러그인을 켰다는 설명에서 멈춘다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -723,7 +1127,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 새 워커 활성화 신호를 받아 사용자에게 갱신을 안내하거나 안전 지점에서 자동 적용. 강제 skipWaiting 은 열린 탭을 깨뜨릴 수 있다.
   2. 오프라인 캐시가 인증 응답을 담아 버리면?
      - 기대 답: 다른 사용자에게 노출될 수 있다. 인증 응답은 캐시 금지, 로그아웃 시 캐시 삭제.
-- 📖 **레퍼런스** — [MDN Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) · [web.dev 서비스워커 캐시 전략](https://web.dev/articles/service-workers-cache-storage)
+- 📖 **레퍼런스** — [MDN Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) · [web.dev 서비스워커 캐시 전략](https://web.dev/articles/service-workers-cache-storage) · [MDN Cache](https://developer.mozilla.org/en-US/docs/Web/API/Cache)
 
 ### 보안 (6)
 
@@ -736,6 +1140,26 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 프레임워크 기본 이스케이프를 유지하고 `innerHTML`·`dangerouslySetInnerHTML`은 금지하거나 sanitizer를 거친다.
 - 사용자 입력 URL은 스킴 검증(`javascript:` 차단). CSP는 2차 방어선.
 
+*위험한 싱크와 안전한 렌더*
+
+```jsx
+// 저장형 XSS: 사용자 입력이 HTML 로 실행된다
+<div dangerouslySetInnerHTML={{ __html: comment.body }} />   // 금지
+
+// 텍스트로 렌더 — 프레임워크 기본 이스케이프를 유지
+<div>{comment.body}</div>
+
+// 서식이 필요하면 허용 목록 sanitizer 를 거친다(raw HTML 허용 끄기)
+<div dangerouslySetInnerHTML={{ __html: sanitize(comment.body) }} />
+```
+
+*URL 스킴도 입력이다*
+
+```js
+const SAFE = /^(https?:|mailto:|\/)/i;
+const href = SAFE.test(userUrl) ? userUrl : "#";   // javascript: 차단
+```
+
 - ✅ **좋은 신호** — 위험 싱크 목록을 알고, 입력 필터링이 아니라 출력 인코딩이 본질이라고 말한다.
 - ⚠️ **약한 신호** — "입력값을 필터링한다"로 끝낸다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -745,7 +1169,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 설정 오류(허용 태그·속성 과다), mXSS, SVG·MathML 경로. 라이브러리 업데이트와 CSP 2차 방어가 필요하다.
   3. CSP 가 있으면 sanitizer 를 빼도 되나?
      - 기대 답: 안 된다. CSP 는 실행 차단이고 DOM 오염 자체는 막지 못한다.
-- 📖 **레퍼런스** — [OWASP XSS 방어 치트시트](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html) · [OWASP DOM XSS 치트시트](https://cheatsheetseries.owasp.org/cheatsheets/DOM_based_XSS_Prevention_Cheat_Sheet.html)
+- 📖 **레퍼런스** — [OWASP XSS 방어 치트시트](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html) · [OWASP DOM XSS 치트시트](https://cheatsheetseries.owasp.org/cheatsheets/DOM_based_XSS_Prevention_Cheat_Sheet.html) · [DOMPurify(허용목록 sanitizer)](https://github.com/cure53/DOMPurify)
 
 #### [시니어] CSP를 실제로 도입하는 순서와 함정은?
 
@@ -809,6 +1233,39 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 다중 탭 갱신 경합, 만료 중 요청 큐잉, 로그아웃 시 서버 측 무효화를 설계한다.
 - 임베드·서드파티 컨텍스트에서는 쿠키 정책(`SameSite`·파티셔닝)이 흐름을 바꾼다.
 
+*Authorization Code + PKCE (implicit 금지)*
+
+```js
+// 1) verifier 생성 → challenge 로 인증 요청
+const verifier = base64url(crypto.getRandomValues(new Uint8Array(32)));
+const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+const challenge = base64url(new Uint8Array(digest));
+sessionStorage.setItem("pkce_verifier", verifier);
+
+location.assign("https://auth.example.com/authorize?" + new URLSearchParams({
+  response_type: "code",                 // 토큰을 URL 로 받지 않는다
+  client_id: CLIENT_ID,
+  redirect_uri: REDIRECT_URI,
+  code_challenge: challenge,
+  code_challenge_method: "S256",
+  state: crypto.randomUUID(),            // CSRF 방어
+  scope: "openid profile",
+}));
+```
+
+*다중 탭 갱신 경합을 막는다*
+
+```js
+// 같은 리프레시 토큰을 두 탭이 동시에 쓰면 회전 정책이 서로를 무효화한다
+export const refresh = () => navigator.locks.request("token-refresh", async () => {
+  if (Date.now() < expiresAt - 5000) return accessToken;   // 다른 탭이 이미 갱신
+  const res = await fetch("/auth/refresh", { method: "POST", credentials: "include" });
+  if (!res.ok) { logout(); throw new Error("refresh failed"); }  // 루프 차단
+  ({ accessToken, expiresAt } = await res.json());
+  return accessToken;
+});
+```
+
 - ✅ **좋은 신호** — PKCE 채택 이유와 토큰 수명·회전 정책을 말하고 다중 탭 경합까지 다룬다.
 - ⚠️ **약한 신호** — 프레임워크 라이브러리를 붙였다는 설명에서 멈춘다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -818,7 +1275,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 같은 리프레시 토큰의 재사용, 기기·지역 급변, 비정상 갱신 빈도.
   3. SPA 에서 implicit 흐름을 아직 쓰면 무엇이 위험한가?
      - 기대 답: 토큰이 URL 에 노출되고 히스토리·리퍼러로 유출된다. Authorization Code + PKCE 로 옮긴다.
-- 📖 **레퍼런스** — [RFC 7636 — PKCE](https://datatracker.ietf.org/doc/html/rfc7636) · [OAuth 2.0 for Browser-Based Apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps) · [OWASP 세션 관리](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+- 📖 **레퍼런스** — [RFC 7636 — PKCE](https://datatracker.ietf.org/doc/html/rfc7636) · [OAuth 2.0 for Browser-Based Apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps) · [OWASP 세션 관리](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) · [MDN Web Locks API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API) · [MDN SubtleCrypto.digest()](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest)
 
 #### [시니어] iframe이나 위젯과 `postMessage`로 통신할 때 무엇을 검증하나?
 
@@ -827,6 +1284,22 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 수신 측은 `event.origin`을 화이트리스트와 대조하고, 메시지 스키마를 검증한다. 검증 없는 `postMessage` 핸들러는 크로스 오리진 침입 경로다.
 - 송신 측은 대상 오리진을 `"*"`가 아닌 정확한 값으로 지정한다.
 - 임베드 쪽 신뢰 경계를 문서화하고, 위젯에 권한을 넘길 때는 sandbox 속성과 권한 정책으로 좁힌다.
+
+*origin 과 스키마를 둘 다 검증*
+
+```js
+const ALLOWED = new Set(["https://widget.example.com"]);
+
+addEventListener("message", (e) => {
+  if (!ALLOWED.has(e.origin)) return;              // ① 출처 확인
+  const msg = WidgetMessage.safeParse(e.data);     // ② 스키마 확인
+  if (!msg.success) return;
+  handle(msg.data);
+});
+
+// 송신: 대상 오리진을 정확히 지정한다("*" 금지)
+iframe.contentWindow.postMessage({ type: "init", locale }, "https://widget.example.com");
+```
 
 - ✅ **좋은 신호** — origin·스키마 이중 검증을 말하고 `"*"` 사용의 위험을 안다.
 - ⚠️ **약한 신호** — 메시지를 받으면 바로 처리한다고 답한다.
@@ -864,6 +1337,19 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 최악은 잘못된 재사용으로 사용자 입력이 다른 행에 붙는 것.
 - 안정적인 서버 id를 쓰고, 없으면 생성 시점에 부여한 로컬 id를 쓴다. 정적 목록에선 인덱스도 무해하다.
 
+*인덱스 key 가 입력값을 다른 행에 붙인다*
+
+```jsx
+// 나쁨: 앞에 항목을 추가하면 모든 key 가 밀린다
+{rows.map((row, i) => <Row key={i} row={row} />)}
+
+// 좋음: 안정적인 id
+{rows.map((row) => <Row key={row.id} row={row} />)}
+
+// 의도적 초기화: key 를 바꿔 서브트리를 재마운트
+<EditForm key={caseId} caseId={caseId} />
+```
+
 - ✅ **좋은 신호** — 어떤 조작에서 깨지는지 시나리오로 말하고 인덱스가 괜찮은 조건도 구분한다.
 - ⚠️ **약한 신호** — "key는 유일해야 한다"만 반복한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -881,6 +1367,37 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 구독·타이머·이벤트 리스너·`AbortController`는 반드시 클린업. 없으면 중복 구독·누수, 언마운트 후 setState.
 - StrictMode의 개발 이중 실행이 멱등하지 않은 이펙트를 드러낸다.
 - 파생 값 계산이나 이벤트 대응은 이펙트가 아니라 렌더 중 계산이나 핸들러가 맞다.
+
+*클린업 + 요청 취소 + 경합 차단*
+
+```jsx
+useEffect(() => {
+  const controller = new AbortController();
+  let alive = true;
+
+  (async () => {
+    try {
+      const res = await fetch("/api/case/" + caseId, { signal: controller.signal });
+      const data = await res.json();
+      if (alive) setCase(data);            // 언마운트 후 setState 방지
+    } catch (err) {
+      if (err.name !== "AbortError") setError(err);
+    }
+  })();
+
+  return () => { alive = false; controller.abort(); };   // 겹친 요청도 취소
+}, [caseId]);                                            // 의존성을 비우면 stale
+```
+
+*이펙트가 필요 없는 경우*
+
+```jsx
+// 나쁨: 파생 값을 이펙트로 동기화
+useEffect(() => setFullName(first + " " + last), [first, last]);
+
+// 좋음: 렌더 중 계산
+const fullName = first + " " + last;
+```
 
 - ✅ **좋은 신호** — 이펙트가 필요 없는 경우를 스스로 구분하고, 린트 경고를 억제하는 대신 구조를 바꾼다.
 - ⚠️ **약한 신호** — 의존성 경고를 `eslint-disable`로 끄는 것이 관행이라고 답한다.
@@ -901,6 +1418,21 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 기본은 쓰지 않는 것. 비교 비용·메모리·코드 복잡도가 붙고 의존성이 틀리면 버그가 된다.
 - 순서는 측정 먼저. 프로파일러에서 렌더 시간과 원인을 확인하고 지점을 고른다.
 
+*참조 동일성이 소비자에게 의미 있을 때만*
+
+```jsx
+const Row = memo(function Row({ item, onSelect }) { /* … */ });
+
+function List({ items }) {
+  // onSelect 를 매 렌더 새로 만들면 memo(Row) 가 전부 무효화된다
+  const onSelect = useCallback((id) => select(id), []);
+  // 비싼 계산만 메모
+  const sorted = useMemo(() => [...items].sort(byName), [items]);
+
+  return sorted.map((item) => <Row key={item.id} item={item} onSelect={onSelect} />);
+}
+```
+
 - ✅ **좋은 신호** — 측정 후 적용 원칙을 말하고 참조 동일성이 필요한 지점을 구체적으로 든다.
 - ⚠️ **약한 신호** — 모든 함수와 값을 감싸는 것이 최적화라고 답한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -918,6 +1450,27 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 자주 바뀌는 값과 거의 안 바뀌는 값을 분리해 Context를 쪼갠다(상태/디스패치 분리).
 - 부분 구독이 필요하면 selector 기반 스토어로 옮긴다. 새 참조를 반환하는 selector는 무한 루프를 만들 수 있어 얕은 비교를 함께 쓴다.
 - memo 경계를 두어 트리 전파를 끊는다.
+
+*Provider value 를 메모하고 Context 를 쪼갠다*
+
+```jsx
+// 나쁨: 매 렌더 새 객체 → 모든 소비자 리렌더
+<AppContext.Provider value={{ user, setUser }}>
+
+// 좋음: 자주 바뀌는 값과 안 바뀌는 값을 분리 + 메모
+const actions = useMemo(() => ({ setUser, logout }), []);   // 거의 불변
+<UserStateContext.Provider value={user}>
+  <UserActionsContext.Provider value={actions}>{children}</UserActionsContext.Provider>
+</UserStateContext.Provider>
+```
+
+*부분 구독이 필요하면 selector 스토어*
+
+```jsx
+// 새 배열을 반환하는 selector → 매 렌더 변경 판정(루프 위험)
+const open = useStore((s) => s.items.filter((i) => i.open));           // 나쁨
+const openCount = useStore((s) => s.items.reduce((n, i) => n + (i.open ? 1 : 0), 0));  // 원시값
+```
 
 - ✅ **좋은 신호** — Context의 구조적 한계(부분 구독 불가)를 알고 도구를 바꿀 근거를 댄다.
 - ⚠️ **약한 신호** — Context를 모든 상태의 기본 저장소로 쓰면서 성능 문제를 `memo` 남발로 덮는다.
@@ -990,6 +1543,27 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 마운트→언마운트→재마운트에 견디는지 검증하기 위한 의도된 동작. 프로덕션에는 없다.
 - 클린업이 없거나 멱등하지 않은 이펙트(중복 구독, 카운터 증가, 중복 전송)가 여기서 드러난다.
 - 끄는 것이 아니라 이펙트를 고치는 것이 답.
+
+*이중 호출에서 드러나는 결함과 수정*
+
+```jsx
+// 나쁨: 멱등하지 않다 — 개발에서 이벤트가 두 번 간다
+useEffect(() => { track("case_opened", { caseId }); }, [caseId]);
+
+// 좋음: 전송 계층에서 중복 제거 키를 쓴다
+useEffect(() => {
+  const key = "case_opened:" + caseId;
+  if (sentOnce.has(key)) return;
+  sentOnce.add(key);
+  track("case_opened", { caseId });
+}, [caseId]);
+
+// 구독형은 클린업만 제대로 두면 이중 호출에 안전하다
+useEffect(() => {
+  const sub = socket.subscribe(caseId, onMessage);
+  return () => sub.unsubscribe();
+}, [caseId]);
+```
 
 - ✅ **좋은 신호** — 드러난 결함을 고친 경험을 말한다.
 - ⚠️ **약한 신호** — 버그로 보고 StrictMode를 제거한다.
@@ -1080,6 +1654,20 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 재조정은 트리를 비교해 최소 변경을 계산한다. `key`가 이 비교의 기준이다.
 - 수작업으로 최적화한 DOM 조작보다 느릴 수 있다. 대신 예측 가능한 코드와 유지 비용을 얻는다.
 
+*재조정을 깨뜨리는 대표 패턴*
+
+```jsx
+// 나쁨: 렌더마다 새 컴포넌트 타입 → 서브트리 언마운트·재마운트, 상태 소실
+function Page() {
+  function Panel() { return <input />; }     // 매 렌더 새 함수 = 새 타입
+  return <Panel />;
+}
+
+// 좋음: 컴포넌트는 모듈 스코프에 정의
+function Panel() { return <input />; }
+function Page() { return <Panel />; }
+```
+
 - ✅ **좋은 신호** — "빠르다"가 아니라 선언적 모델과 유지 비용으로 설명한다.
 - ⚠️ **약한 신호** — 가상 DOM이 항상 더 빠르다고 단정한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -1097,6 +1685,29 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 비제어: DOM이 값을 소유하고 필요할 때 ref나 폼 데이터로 읽는다. 렌더가 적고 큰 폼에 유리.
 - `value`를 주면서 `onChange`를 빼면 값이 고정되어 '입력이 안 되는' 증상이 난다.
 
+*제어 / 비제어 / 흔한 실수*
+
+```jsx
+// 제어: state 가 값을 소유 — 검증·포맷팅에 유리
+<input value={name} onChange={(e) => setName(e.target.value)} />
+
+// 비제어: DOM 이 소유 — 큰 폼에서 렌더가 적다
+<input defaultValue={name} ref={nameRef} />
+
+// 실수: value 만 주고 onChange 를 빼면 입력이 안 된다(읽기 전용처럼 보인다)
+<input value={name} />          // React 가 경고한다
+```
+
+*큰 폼은 제출 시 한 번에 읽는다*
+
+```jsx
+function onSubmit(e) {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.currentTarget));
+  save(data);                    // 키 입력마다 리렌더하지 않는다
+}
+```
+
 - ✅ **좋은 신호** — 폼 크기·검증 요구로 선택 기준을 대고 흔한 실수를 안다.
 - ⚠️ **약한 신호** — 항상 제어 컴포넌트가 정답이라고 답한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -1104,7 +1715,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 필드 단위 구독(비제어 + 폼 라이브러리)이나 렌더 범위 분리. 값 전체를 상위 state 하나에 두지 않는다.
   2. 검증은 언제 실행하나?
      - 기대 답: 블러·제출 시 기본, 실시간 검증은 디바운스. 매 키 입력 전체 검증은 비용이 크다.
-- 📖 **레퍼런스** — [react.dev input](https://react.dev/reference/react-dom/components/input) · [react.dev 상태 공유](https://react.dev/learn/sharing-state-between-components)
+- 📖 **레퍼런스** — [react.dev input](https://react.dev/reference/react-dom/components/input) · [react.dev 상태 공유](https://react.dev/learn/sharing-state-between-components) · [MDN FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData)
 
 #### [주니어] 조건부 렌더링에서 `0`이 화면에 찍히는 이유는?
 
@@ -1113,6 +1724,19 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `{count && <Badge/>}`에서 `count`가 `0`이면 `&&`가 `0`을 반환하고 React는 숫자 `0`을 렌더한다.
 - `false`·`null`·`undefined`는 렌더되지 않지만 `0`과 `NaN`은 렌더된다.
 - 해결은 명시적 비교(`count > 0 ? … : null`) 또는 `Boolean(count) &&`.
+
+*0 이 화면에 찍히는 이유*
+
+```jsx
+// 나쁨: count 가 0 이면 && 가 0 을 반환하고 React 는 숫자 0 을 렌더한다
+{count && <Badge count={count} />}
+
+// 좋음: 명시적 비교
+{count > 0 && <Badge count={count} />}
+{count > 0 ? <Badge count={count} /> : null}
+
+// false·null·undefined 는 렌더되지 않지만 0·NaN 은 렌더된다
+```
 
 - ✅ **좋은 신호** — falsy 값별 렌더 여부를 구분하고 명시적 조건으로 고친다.
 - ⚠️ **약한 신호** — 원인을 모른 채 삼항으로 바꿔 우연히 해결했다고 말한다.
@@ -1131,6 +1755,20 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - Suspense 경계로 로딩 단위를 UI 구조에 맞춰 잘라 폭포수 스피너를 줄인다.
 - 공짜가 아니다. 경계 설계가 틀리면 깜빡임·중복 요청·상태 되돌림이 생긴다.
 - 측정 지표는 INP와 상호작용 후 첫 페인트다.
+
+*Suspense 경계는 로딩 단위와 맞춘다*
+
+```jsx
+// 나쁨: 경계가 너무 넓다 — 화면 전체가 사라졌다 나타난다
+<Suspense fallback={<FullPageSpinner />}>
+  <Header /><Feed /><Sidebar />
+</Suspense>
+
+// 좋음: 느린 부분만 감싼다
+<Header />
+<Suspense fallback={<FeedSkeleton />}><Feed /></Suspense>
+<Suspense fallback={<SidebarSkeleton />}><Sidebar /></Suspense>
+```
 
 - ✅ **좋은 신호** — 어떤 상호작용이 좋아졌는지 지표로 말하고 경계 설계 실패 사례도 든다.
 - ⚠️ **약한 신호** — 최신 API라서 쓴다고 답한다.
@@ -1224,6 +1862,21 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `any`는 전파된다. 한 지점에서 끄면 그 값이 닿는 모든 곳의 검사가 사라진다.
 - 외부 입력(JSON·이벤트·서드파티)은 `unknown`으로 받아 타입 가드나 스키마로 좁힌다.
 
+*unknown 은 좁히기를 강제한다*
+
+```ts
+function handle(input: unknown) {
+  // input.trim();            // 컴파일 에러 — 검사 없이는 아무 연산도 못 한다
+  if (typeof input === "string") input.trim();      // 여기서만 string
+}
+
+function isCase(v: unknown): v is { id: string; state: string } {
+  return typeof v === "object" && v !== null
+    && typeof (v as Record<string, unknown>).id === "string"
+    && typeof (v as Record<string, unknown>).state === "string";
+}
+```
+
 - ✅ **좋은 신호** — 전파 문제를 설명하고 좁히는 수단을 함께 든다.
 - ⚠️ **약한 신호** — 둘이 비슷하다고 답한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -1242,6 +1895,25 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `as const`는 리터럴 보존 목적이라 성격이 다르다.
 - 테스트 스텁에서 부분 객체가 필요하면 부분 타입 + 조립으로 풀고 통째 단언을 피한다.
 
+*as 는 검증이 아니다 — satisfies 로 검사를 유지*
+
+```ts
+type Case = { id: string; state: "IMPORTED" | "DESIGNED" };
+
+const wrong = { id: "c1", state: "DONE" } as Case;   // 통과한다. 런타임에 틀림
+
+const right = { id: "c1", state: "DESIGNED" } satisfies Case;
+//    ^ 초과·누락·오타를 잡으면서 리터럴 타입도 보존한다
+
+const STATES = ["IMPORTED", "DESIGNED"] as const;    // as const 는 목적이 다르다
+```
+
+*테스트 스텁도 단언 없이*
+
+```ts
+const stub = Object.assign({}, base, { state: "DESIGNED" }) satisfies Partial<Case>;
+```
+
 - ✅ **좋은 신호** — 어떤 회귀가 숨는지 사례로 말하고 `satisfies`를 구분해 쓴다.
 - ⚠️ **약한 신호** — 타입 에러가 나면 일단 `as`로 막는다고 답한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -1258,6 +1930,24 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 모양이 같으면 호환된다. 서로 다른 의미의 문자열 id가 교차 대입돼도 컴파일은 통과한다.
 - 초과 속성 검사는 객체 리터럴에만 적용돼, 변수를 거치면 여분 속성이 조용히 통과한다.
 - 구분이 필요하면 branded/nominal 타입(태그 필드나 심볼)으로 식별자를 분리한다.
+
+*구조적 타이핑의 함정과 branded 타입*
+
+```ts
+type CaseId = string;
+type UserId = string;
+function open(id: CaseId) {}
+open("u_1" as UserId);                      // 통과 — 모양이 같다
+
+// branded 타입으로 분리
+declare const brand: unique symbol;
+type Branded<T, B> = T & { readonly [brand]: B };
+type CaseId2 = Branded<string, "CaseId">;
+
+const toCaseId = (s: string): CaseId2 => s as CaseId2;   // 변환 함수만 통과
+function open2(id: CaseId2) {}
+// open2("u_1");                            // 컴파일 에러
+```
 
 - ✅ **좋은 신호** — id 혼동 같은 실제 사고를 들고 branded 타입을 도입한 경험이 있다.
 - ⚠️ **약한 신호** — 덕 타이핑이라는 용어만 말한다.
@@ -1276,6 +1966,29 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 스키마 정의를 단일 출처로 두고 타입을 파생한다. 생성된 타입을 다시 별칭으로 재수출하면 원본과 어긋난다.
 - 파싱 실패 처리(폴백·에러 보고)를 설계해야 한다. 성능을 이유로 검증을 수동 체크로 대체하면 누락 회귀가 생긴다.
 - 서버 스펙(OpenAPI)에서 클라이언트 타입을 생성해 계약을 CI로 검증한다.
+
+*경계에서 1회 파싱, 내부는 파싱된 타입만 신뢰*
+
+```ts
+import { z } from "zod";
+
+const Case = z.object({
+  id: z.string(),
+  state: z.enum(["IMPORTED", "DESIGNED"]),
+  updatedAt: z.coerce.date(),
+});
+type Case = z.infer<typeof Case>;           // 스키마가 단일 출처
+
+export async function fetchCase(id: string): Promise<Case> {
+  const res = await fetch("/api/case/" + id);
+  const parsed = Case.safeParse(await res.json());
+  if (!parsed.success) {
+    report("case_parse_failed", parsed.error.issues);   // 조용히 넘기지 않는다
+    throw new Error("invalid case payload");
+  }
+  return parsed.data;
+}
+```
 
 - ✅ **좋은 신호** — 경계 1회 파싱 원칙과 실패 경로를 말하고 검증 제거로 사고를 본 경험을 든다.
 - ⚠️ **약한 신호** — 타입이 있으니 런타임 검증은 필요 없다고 답한다.
@@ -1316,6 +2029,34 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 렌더 블로킹 CSS·폰트 축소, 서버 응답 캐시, 이미지 포맷·해상도 축소.
 - 클라이언트 렌더에서는 하이드레이션·데이터 페치 워터폴이 렌더 지연으로 잡힌다.
 
+*LCP 자원에 우선순위를 준다*
+
+```html
+<link rel="preload" as="image" href="/hero-800.avif" fetchpriority="high">
+<img src="/hero-800.avif" width="800" height="450" alt="" fetchpriority="high">
+
+<!-- 렌더 블로킹을 줄인다 -->
+<link rel="stylesheet" href="/app.css">                 <!-- 임계 CSS 는 인라인 -->
+<script src="/app.js" defer></script>
+```
+
+*필드에서 LCP 구간을 분해한다*
+
+```js
+import { onLCP } from "web-vitals/attribution";
+
+onLCP(({ value, attribution }) => {
+  report("lcp", {
+    value,
+    element: attribution.element,
+    ttfb: attribution.timeToFirstByte,
+    loadDelay: attribution.resourceLoadDelay,
+    loadTime: attribution.resourceLoadDuration,
+    renderDelay: attribution.elementRenderDelay,
+  });
+});
+```
+
 - ✅ **좋은 신호** — 네 구간 분해로 병목을 지목하고 측정 도구(필드 어트리뷰션)를 든다.
 - ⚠️ **약한 신호** — 이미지 압축만 말한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -1323,7 +2064,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 라우트별로 LCP 요소를 식별해 상위 트래픽 화면부터. 공통 원인(폰트·셸 렌더)이 있으면 그걸 먼저.
   2. preload 를 많이 걸면 왜 역효과가 나나?
      - 기대 답: 대역폭 경쟁으로 정작 중요한 자원이 늦어진다. 우선순위는 소수에만 부여한다.
-- 📖 **레퍼런스** — [web.dev LCP](https://web.dev/articles/lcp) · [web.dev LCP 최적화](https://web.dev/articles/optimize-lcp) · [web.dev fetchpriority](https://web.dev/articles/fetch-priority)
+- 📖 **레퍼런스** — [web.dev LCP](https://web.dev/articles/lcp) · [web.dev LCP 최적화](https://web.dev/articles/optimize-lcp) · [web.dev fetchpriority](https://web.dev/articles/fetch-priority) · [web-vitals 라이브러리(attribution)](https://github.com/GoogleChrome/web-vitals)
 
 #### [미들] 번들이 커졌을 때 실제로 무엇을 하나?
 
@@ -1387,6 +2128,24 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 화면 밖 이미지는 `loading="lazy"`, 첫 화면 LCP 이미지는 지연 로딩을 걸지 않는다.
 - `width`/`height` 또는 `aspect-ratio`를 지정해 CLS를 막는다.
 
+*해상도별 제공 + 자리 확보*
+
+```html
+<img
+  src="/case-800.avif"
+  srcset="/case-400.avif 400w, /case-800.avif 800w, /case-1600.avif 1600w"
+  sizes="(max-width: 600px) 100vw, 800px"
+  width="800" height="450"
+  alt="상악 우측 제1대구치 크라운"
+  loading="lazy" decoding="async">
+
+<picture>
+  <source type="image/avif" srcset="/case.avif">
+  <source type="image/webp" srcset="/case.webp">
+  <img src="/case.jpg" width="800" height="450" alt="">
+</picture>
+```
+
 - ✅ **좋은 신호** — LCP 이미지 예외를 알고 CLS 방지까지 말한다.
 - ⚠️ **약한 신호** — 모든 이미지에 lazy를 붙인다고 답한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -1403,6 +2162,26 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - `font-display`로 정책 선택: `swap`은 폴백 먼저(이동 발생), `optional`은 첫 방문에 폴백 유지.
 - 핵심 폰트는 `preload`, 서브셋으로 용량 축소, 가변 폰트로 파일 수 감소.
 - 폴백 폰트 메트릭을 맞춰(`size-adjust`, `ascent-override`) 교체 시 이동을 줄인다.
+
+*폰트 교체로 인한 이동을 줄인다*
+
+```css
+@font-face {
+  font-family: "Brand";
+  src: url("/brand.woff2") format("woff2");
+  font-display: swap;          /* optional: 첫 방문 교체를 포기해 CLS 0 */
+  size-adjust: 96%;            /* 폴백과 메트릭을 맞춘다 */
+  ascent-override: 88%;
+  descent-override: 12%;
+}
+body { font-family: "Brand", "IBM Plex Sans KR", system-ui, sans-serif; }
+```
+
+*핵심 폰트만 preload*
+
+```html
+<link rel="preload" href="/brand.woff2" as="font" type="font/woff2" crossorigin>
+```
 
 - ✅ **좋은 신호** — 정책별 트레이드오프를 말하고 메트릭 정렬까지 안다.
 - ⚠️ **약한 신호** — "폰트를 preload한다"만 답한다.
@@ -1439,6 +2218,40 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 처리 시간은 핸들러·렌더 비용 → 상태 변경 배치, 비긴급 업데이트를 전환(transition)으로 내리기.
 - 표현 지연은 거대한 DOM·복잡한 레이아웃 → 가상화, `content-visibility`, 레이아웃 단순화.
 
+*비긴급 업데이트를 내려 입력을 먼저 처리*
+
+```jsx
+const [isPending, startTransition] = useTransition();
+
+function onChange(e) {
+  setQuery(e.target.value);                    // 긴급: 입력 반영은 즉시
+  startTransition(() => setResults(filter(all, e.target.value)));  // 비긴급
+}
+
+return (
+  <>
+    <input value={query} onChange={onChange} aria-busy={isPending} />
+    {isPending ? <Skeleton /> : <List items={results} />}
+  </>
+);
+```
+
+*INP 구간을 필드에서 나눠 본다*
+
+```js
+import { onINP } from "web-vitals/attribution";
+
+onINP(({ value, attribution }) => {
+  report("inp", {
+    value,
+    target: attribution.interactionTarget,
+    inputDelay: attribution.inputDelay,             // 실행 중 긴 작업
+    processingDuration: attribution.processingDuration,  // 핸들러·렌더
+    presentationDelay: attribution.presentationDelay,    // 표현 지연
+  });
+});
+```
+
 - ✅ **좋은 신호** — 구간 분해로 원인을 지목하고 필드 어트리뷰션 데이터를 쓴다.
 - ⚠️ **약한 신호** — 메모이제이션을 추가하는 것으로 답을 끝낸다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -1446,7 +2259,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 입력 반응(즉시 피드백)을 먼저 커밋하고 무거운 갱신은 전환으로 내린다. 스켈레톤으로 진행을 알린다.
   2. 전환을 썼는데도 INP 가 안 좋아지면?
      - 기대 답: 핸들러 자체가 무겁거나 표현 지연(거대한 DOM)이 지배한다. 구간 분해로 다시 측정.
-- 📖 **레퍼런스** — [web.dev INP](https://web.dev/articles/inp) · [web.dev INP 최적화](https://web.dev/articles/optimize-inp) · [react.dev useTransition](https://react.dev/reference/react/useTransition)
+- 📖 **레퍼런스** — [web.dev INP](https://web.dev/articles/inp) · [web.dev INP 최적화](https://web.dev/articles/optimize-inp) · [react.dev useTransition](https://react.dev/reference/react/useTransition) · [web-vitals 라이브러리(attribution)](https://github.com/GoogleChrome/web-vitals)
 
 #### [시니어] 대용량 파일 업로드를 어떻게 설계하나?
 
@@ -1456,6 +2269,36 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 진행률·취소는 `AbortController`로. 메인 스레드를 막지 않도록 해시·압축은 워커에서.
 - 서버와 합의할 것: 청크 크기, 세션 만료, 중복 방지 키(멱등), 완료 시 병합 확인.
 - 네트워크 변동에 맞춘 동시성 조절과 이어받기 지점 저장이 실사용 품질을 결정한다.
+
+*청크 업로드 + 재개*
+
+```js
+const CHUNK = 5 * 1024 * 1024;
+
+async function upload(file, sessionId, signal) {
+  const done = new Set(await fetchUploadedParts(sessionId));   // 재개 지점
+  const limit = pLimit(3);
+  const parts = Math.ceil(file.size / CHUNK);
+
+  await Promise.all(
+    Array.from({ length: parts }, (_, i) => i)
+      .filter((i) => !done.has(i))
+      .map((i) => limit(() => retry(() => putPart(
+        sessionId, i, file.slice(i * CHUNK, (i + 1) * CHUNK), signal
+      ), { signal })))
+  );
+
+  return complete(sessionId, parts);       // 서버 병합·검증까지가 "완료"
+}
+```
+
+*진행률·취소*
+
+```js
+const controller = new AbortController();
+cancelBtn.onclick = () => controller.abort();
+// 청크 완료마다 진행률 갱신(요청 단위 이벤트가 파일 단위보다 정확하다)
+```
 
 - ✅ **좋은 신호** — 재개·멱등·동시성 조절을 함께 말하고 실측 수치를 든다.
 - ⚠️ **약한 신호** — `FormData`로 한 번에 보낸다고 답한다.
@@ -2125,6 +2968,45 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 입력 검색·자동 저장은 debounce(200~300ms), 스크롤·리사이즈·마우스 이동은 throttle.
 - 빠뜨리기 쉬운 것: `this`·인자 전달, 취소 함수(`cancel`), 즉시 실행 옵션(leading), 언마운트 시 해제.
 
+*debounce — 취소 가능*
+
+```js
+function debounce(fn, wait = 300) {
+  let timer = null;
+  function debounced(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = null;
+      fn.apply(this, args);       // this·인자 보존
+    }, wait);
+  }
+  debounced.cancel = () => { clearTimeout(timer); timer = null; };
+  return debounced;
+}
+```
+
+*throttle — 주기당 1회 + 마지막 호출 보장*
+
+```js
+function throttle(fn, interval = 200) {
+  let last = 0, timer = null, lastArgs = null;
+  return function throttled(...args) {
+    const now = Date.now();
+    const remain = interval - (now - last);
+    lastArgs = args;
+    if (remain <= 0) {
+      last = now;
+      fn.apply(this, args);
+    } else if (!timer) {          // 마지막 입력을 버리지 않는다
+      timer = setTimeout(() => {
+        last = Date.now(); timer = null;
+        fn.apply(this, lastArgs);
+      }, remain);
+    }
+  };
+}
+```
+
 - ✅ **좋은 신호** — 클로저로 타이머를 잡고 취소·해제까지 만든다. 두 함수의 선택 기준을 사용 사례로 댄다.
 - ⚠️ **약한 신호** — 이름만 알고 구현에서 타이머 정리를 빠뜨린다. 둘을 같은 것으로 설명한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2143,6 +3025,28 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 아이콘·span 같은 내부 노드가 target 이 되므로 `closest` 로 올려야 한다. 데이터는 `data-*` 로 싣는다.
 - 키보드 접근을 위해 각 행은 버튼·링크 같은 실제 컨트롤이어야 한다.
 
+*리스너 1개로 1000행 처리*
+
+```js
+list.addEventListener("click", (e) => {
+  const row = e.target.closest("[data-id]");       // 아이콘 클릭도 잡힌다
+  if (!row || !list.contains(row)) return;
+  const action = e.target.closest("[data-action]")?.dataset.action ?? "open";
+  handle(action, row.dataset.id);
+});
+```
+
+*행 마크업 — 키보드로도 눌린다*
+
+```html
+<ul id="list">
+  <li data-id="42">
+    <button type="button" data-action="open">보고서 열기</button>
+    <button type="button" data-action="delete" aria-label="보고서 42 삭제">삭제</button>
+  </li>
+</ul>
+```
+
 - ✅ **좋은 신호** — 위임 + closest 로 바로 쓰고, 키보드·접근성을 스스로 덧붙인다.
 - ⚠️ **약한 신호** — 행마다 리스너를 붙이거나 target 을 그대로 비교해 아이콘 클릭에서 실패한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2160,6 +3064,47 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 응답 순서 보장: 취소하거나 요청 시퀀스를 비교해 마지막 것만 반영.
 - 접근성: combobox 패턴 — 입력에 `role=combobox`·`aria-expanded`, 목록은 listbox, 활성 항목은 `aria-activedescendant`, 위/아래·Enter·Esc 키 처리.
 - 빈 결과·에러·로딩 상태를 구분해 표시하고, 선택 시 입력값과 내부 값(id)을 분리해 둔다.
+
+*요청 취소 + 쿼리 캐시*
+
+```js
+const cache = new Map();
+
+async function search(query, signal) {
+  const key = query.trim().toLowerCase();
+  if (cache.has(key)) return cache.get(key);
+  const res = await fetch("/api/search?q=" + encodeURIComponent(key), { signal });
+  if (!res.ok) throw new Error("search failed: " + res.status);
+  const data = await res.json();
+  cache.set(key, data);
+  return data;
+}
+
+// 입력마다: 이전 요청 취소 → 최신 응답만 화면에 남는다
+let controller = null;
+const onInput = debounce(async (query) => {
+  controller?.abort();
+  controller = new AbortController();
+  try {
+    render(await search(query, controller.signal));
+  } catch (err) {
+    if (err.name !== "AbortError") showError(err);
+  }
+}, 250);
+```
+
+*combobox 마크업 — 키보드·스크린리더*
+
+```html
+<label for="q">도시 검색</label>
+<input id="q" role="combobox" aria-expanded="true" aria-controls="q-list"
+       aria-autocomplete="list" aria-activedescendant="q-opt-2" autocomplete="off">
+<ul id="q-list" role="listbox">
+  <li id="q-opt-1" role="option" aria-selected="false">서울</li>
+  <li id="q-opt-2" role="option" aria-selected="true">성남</li>
+</ul>
+<p aria-live="polite">2개 결과</p>
+```
 
 - ✅ **좋은 신호** — 경합·취소·캐시를 먼저 말하고 키보드·스크린리더까지 설계한다. 최소 3글자 같은 임의 규칙에도 근거를 댄다.
 - ⚠️ **약한 신호** — 입력마다 fetch 하고 순서 문제를 모른다. 목록을 div 로 만들고 키보드 조작이 없다.
@@ -2181,6 +3126,38 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 중복 요청 방지(진행 중 플래그), 마지막 페이지 판정, 에러 시 재시도 UI.
 - 수백 행이 넘으면 가상화. 키보드·스크린리더 사용자를 위해 "더 보기" 버튼 폴백을 남긴다.
 
+*센티넬 + IntersectionObserver*
+
+```js
+const io = new IntersectionObserver((entries) => {
+  const [entry] = entries;
+  if (!entry.isIntersecting || loading || !cursor) return;   // 중복 로드 차단
+  loadNextPage();
+}, { rootMargin: "200px" });                                  // 도달 전에 미리
+
+io.observe(sentinel);
+
+async function loadNextPage() {
+  loading = true;
+  try {
+    const res = await fetch("/api/feed?cursor=" + encodeURIComponent(cursor));
+    const { items, nextCursor } = await res.json();          // 오프셋 아님: 커서
+    append(items);
+    cursor = nextCursor;                                      // null 이면 마지막 페이지
+    if (!cursor) io.unobserve(sentinel);
+  } finally {
+    loading = false;
+  }
+}
+```
+
+*키보드 폴백은 남긴다*
+
+```html
+<div id="sentinel" aria-hidden="true"></div>
+<button type="button" id="load-more">더 보기</button>
+```
+
 - ✅ **좋은 신호** — 센티넬·커서·중복 방지·폴백을 함께 말하고 접근성 대가를 인지한다.
 - ⚠️ **약한 신호** — 스크롤 이벤트에 계산을 붙이고 중복 로드를 막지 않는다. 페이지 번호로 무한 스크롤을 만든다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2198,6 +3175,34 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 직접 만들면: 열 때 포커스 이동, Tab 순환 트랩, 닫을 때 트리거로 복귀, Esc 처리, 배경 `inert` 또는 aria-hidden, 스크롤 잠금.
 - `role=dialog` + `aria-modal` + `aria-labelledby`. 제목이 없으면 이름 없는 대화상자가 된다.
 - 포털로 렌더할 때 z-index 대신 top layer 나 레이어 토큰을 쓴다.
+
+*네이티브 dialog — 트랩·Esc·top layer 를 브라우저가 처리*
+
+```js
+const dialog = document.querySelector("#confirm");
+let opener = null;
+
+openBtn.addEventListener("click", () => {
+  opener = document.activeElement;
+  dialog.showModal();              // 배경 비활성 + 포커스 트랩 + Esc 기본 제공
+});
+
+dialog.addEventListener("close", () => {
+  opener?.focus();                 // 닫으면 트리거로 복귀
+});
+```
+
+*마크업 — 이름 있는 대화상자*
+
+```html
+<dialog id="confirm" aria-labelledby="confirm-title">
+  <h2 id="confirm-title">케이스를 삭제할까요?</h2>
+  <form method="dialog">
+    <button value="cancel">취소</button>
+    <button value="delete" autofocus>삭제</button>
+  </form>
+</dialog>
+```
 
 - ✅ **좋은 신호** — 네이티브 우선을 말하고 직접 구현 시 체크리스트를 순서대로 댄다.
 - ⚠️ **약한 신호** — 오버레이 div 와 z-index 만으로 끝낸다. 포커스·키보드 처리가 없다.
@@ -2217,6 +3222,40 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 접근성: 슬라이드 목록 구조, 이전/다음 버튼 이름, 현재 위치 안내, 자동 재생이면 일시정지 제공과 `prefers-reduced-motion` 준수.
 - 무한 순환은 복제 슬라이드로 만들면 포커스·스크린리더가 중복을 읽는다. 해결책을 미리 정해야 한다.
 
+*레이아웃은 CSS 가 한다 — 관성 스크롤·터치 무료*
+
+```css
+.carousel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.carousel > .slide {
+  scroll-snap-align: center;
+  aspect-ratio: 16 / 9;   /* 자리 확보 = CLS 방지 */
+}
+@media (prefers-reduced-motion: reduce) {
+  .carousel { scroll-behavior: auto; }   /* 자동 재생도 멈춘다 */
+}
+```
+
+*JS 는 인덱스 동기화만*
+
+```js
+nextBtn.addEventListener("click", () => {
+  track.scrollBy({ left: track.clientWidth, behavior: prefersReduced ? "auto" : "smooth" });
+});
+
+// 현재 위치는 스크롤에서 읽는다(계산 중복 금지)
+track.addEventListener("scroll", throttle(() => {
+  const index = Math.round(track.scrollLeft / track.clientWidth);
+  status.textContent = (index + 1) + " / " + total;   // aria-live 영역
+}, 100));
+```
+
 - ✅ **좋은 신호** — CSS 로 할 수 있는 것과 JS 가 필요한 것을 나누고 자동 재생의 접근성 요건을 안다.
 - ⚠️ **약한 신호** — transform 계산만 말하고 터치·키보드·모션 설정을 고려하지 않는다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2224,7 +3263,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 정지 버튼, 포커스·호버 시 정지, 모션 축소 설정 존중. 5초 이상 자동 이동은 조작 방해가 된다.
   2. 이미지 로딩 때문에 레이아웃이 튀면?
      - 기대 답: 슬라이드 비율을 aspect-ratio 로 고정한다. 크기 미지정이 CLS 원인.
-- 📖 **레퍼런스** — [ARIA APG Carousel 패턴](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) · [MDN CSS scroll snap](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_scroll_snap) · [web.dev CLS](https://web.dev/articles/cls)
+- 📖 **레퍼런스** — [ARIA APG Carousel 패턴](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) · [MDN CSS scroll snap](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_scroll_snap) · [web.dev CLS](https://web.dev/articles/cls) · [MDN prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion)
 
 #### [주니어] 폼 검증을 구현하라. 브라우저 기본 검증을 쓸까 직접 만들까?
 
@@ -2234,6 +3273,36 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 제출 시 검증이 기본, 실시간은 블러 이후. 입력 중 빨간 에러를 뿌리면 방해가 된다.
 - 에러 메시지는 필드와 프로그램적으로 연결(`aria-describedby`)하고 첫 에러로 포커스를 옮긴다.
 - 클라이언트 검증은 UX 용이다. 서버 검증이 진짜 방어선.
+
+*네이티브 제약 + 메시지만 커스터마이즈*
+
+```js
+form.addEventListener("submit", (e) => {
+  if (!form.checkValidity()) {
+    e.preventDefault();
+    const first = form.querySelector(":invalid");
+    showMessage(first, messageFor(first.validity));
+    first.focus();                      // 첫 에러로 포커스
+  }
+});
+
+function messageFor(v) {              // ValidityState 로 사유를 읽는다
+  if (v.valueMissing) return "필수 항목입니다.";
+  if (v.typeMismatch) return "이메일 형식이 아닙니다.";
+  if (v.tooShort)     return "8자 이상 입력하세요.";
+  if (v.patternMismatch) return "영문과 숫자만 사용할 수 있습니다.";
+  return "값을 확인해 주세요.";
+}
+```
+
+*에러를 필드에 연결한다*
+
+```html
+<label for="email">이메일</label>
+<input id="email" name="email" type="email" required
+       aria-describedby="email-error" aria-invalid="true">
+<p id="email-error" role="alert">이메일 형식이 아닙니다.</p>
+```
 
 - ✅ **좋은 신호** — 네이티브 제약 + 커스텀 메시지 조합을 알고 에러 표시 시점과 접근성 연결을 말한다.
 - ⚠️ **약한 신호** — 정규식만 직접 짜고 접근성 연결·서버 검증 이야기가 없다.
@@ -2253,6 +3322,54 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - pLimit: 대기 큐와 진행 카운터. 작업 완료 시 큐에서 다음을 꺼낸다. 에러가 나도 카운터를 되돌려야 멈추지 않는다.
 - 타임아웃은 `AbortSignal.timeout` 으로 붙인다.
 
+*retry — 백오프 + 지터 + 취소*
+
+```js
+async function retry(fn, { times = 3, base = 300, signal } = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt < times; attempt++) {
+    signal?.throwIfAborted();
+    try {
+      return await fn({ attempt, signal });
+    } catch (err) {
+      if (err.name === "AbortError" || !isRetryable(err)) throw err;
+      lastErr = err;
+      const wait = base * 2 ** attempt * (0.5 + Math.random());  // 지터
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
+}
+
+const isRetryable = (err) =>
+  err.status === undefined || err.status === 429 || err.status >= 500;
+```
+
+*pLimit — 동시 실행 제한*
+
+```js
+function pLimit(concurrency) {
+  let active = 0;
+  const queue = [];
+  const next = () => {
+    if (active >= concurrency || queue.length === 0) return;
+    active++;
+    const { fn, resolve, reject } = queue.shift();
+    fn().then(resolve, reject).finally(() => {   // 실패에도 카운터를 되돌린다
+      active--;
+      next();
+    });
+  };
+  return (fn) => new Promise((resolve, reject) => {
+    queue.push({ fn, resolve, reject });
+    next();
+  });
+}
+
+const limit = pLimit(4);
+await Promise.all(urls.map((u) => limit(() => fetch(u))));
+```
+
 - ✅ **좋은 신호** — 재시도 대상 에러 구분과 멱등성 문제를 스스로 꺼낸다. 큐 구현에서 에러 경로를 챙긴다.
 - ⚠️ **약한 신호** — 고정 지연으로 반복 재시도하고 취소·멱등을 고려하지 않는다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2270,6 +3387,36 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 절대 위치 또는 transform 으로 행을 배치하고 스크롤 컨테이너는 고정 높이를 유지한다.
 - 가변 높이는 측정 캐시와 추정치 보정이 필요하다. 점프를 줄이는 것이 핵심 난점.
 - 대가: 브라우저 검색·인쇄·스크린리더 탐색이 제한된다. `content-visibility` 로 부분 대체 가능한지 먼저 본다.
+
+*고정 높이 윈도잉*
+
+```js
+const ROW = 36, OVERSCAN = 5;
+
+function render(scrollTop, viewportH) {
+  const start = Math.max(0, Math.floor(scrollTop / ROW) - OVERSCAN);
+  const visible = Math.ceil(viewportH / ROW) + OVERSCAN * 2;
+  const end = Math.min(rows.length, start + visible);
+
+  spacer.style.height = rows.length * ROW + "px";   // 스크롤바 길이 유지
+  body.style.transform = "translateY(" + start * ROW + "px)";
+  body.replaceChildren(...rows.slice(start, end).map(renderRow));
+}
+
+viewport.addEventListener("scroll", () => {
+  requestAnimationFrame(() => render(viewport.scrollTop, viewport.clientHeight));
+});
+```
+
+*먼저 검토할 CSS 대안*
+
+```css
+/* 목록이 크지만 DOM 을 유지해야 한다면(검색·인쇄·스크린리더 탐색) */
+.row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 36px;   /* 추정 높이 → 스크롤바 안정 */
+}
+```
 
 - ✅ **좋은 신호** — 인덱스 계산을 정확히 말하고 가변 높이·접근성 대가를 먼저 꺼낸다.
 - ⚠️ **약한 신호** — 라이브러리 이름만 대거나 스크롤 이벤트마다 전량 재렌더한다.
@@ -2289,6 +3436,42 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 드롭 결과는 낙관적으로 반영하고 서버 실패 시 롤백. 순서 값은 정수 인덱스보다 간격을 둔 정렬키가 갱신 범위를 줄인다.
 - 키보드 대안이 필수다. 항목 선택 후 방향키 이동 + 확정 방식으로 제공한다.
 
+*포인터 이벤트 — 마우스·터치·펜 한 경로*
+
+```js
+handle.addEventListener("pointerdown", (e) => {
+  e.target.setPointerCapture(e.pointerId);    // 포인터가 벗어나도 계속 받는다
+  const startY = e.clientY;
+  const rects = rows.map((r) => r.getBoundingClientRect());   // 시작 시 1회 측정
+
+  const onMove = (ev) => {
+    const dy = ev.clientY - startY;
+    dragged.style.transform = "translateY(" + dy + "px)";     // 레이아웃 재계산 없음
+    preview(indexAt(rects, ev.clientY));
+  };
+  const onUp = async (ev) => {
+    handle.removeEventListener("pointermove", onMove);
+    const to = indexAt(rects, ev.clientY);
+    const prev = items.slice();
+    commitOptimistic(move(items, from, to));                  // 낙관적 반영
+    try { await save({ id: items[from].id, rank: rankBetween(to) }); }
+    catch { commitOptimistic(prev); showError(); }            // 실패 시 롤백
+  };
+  handle.addEventListener("pointermove", onMove);
+  handle.addEventListener("pointerup", onUp, { once: true });
+});
+```
+
+*키보드 대안은 필수*
+
+```js
+row.addEventListener("keydown", (e) => {
+  if (!e.altKey) return;                       // Alt+↑/↓ 로 순서 변경
+  if (e.key === "ArrowUp")   { e.preventDefault(); moveBy(-1); }
+  if (e.key === "ArrowDown") { e.preventDefault(); moveBy(+1); }
+});
+```
+
 - ✅ **좋은 신호** — 키보드 대안과 서버 순서 모델을 함께 말한다. 포인터 이벤트 선택 이유를 댄다.
 - ⚠️ **약한 신호** — 마우스 이벤트만 처리하고 접근성 대안이 없다. 정렬 결과 저장 방식을 생각하지 않는다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2296,7 +3479,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 이동한 항목만 새 정렬키를 받게 한다. 전체 인덱스 재계산은 대량 쓰기를 만든다.
   2. 드래그 중 스크롤이 필요하면?
      - 기대 답: 가장자리 자동 스크롤을 rAF 기반으로. 스크롤과 좌표 보정을 함께 계산해야 어긋나지 않는다.
-- 📖 **레퍼런스** — [MDN 포인터 이벤트](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events) · [MDN HTML Drag and Drop API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API) · [ARIA APG 키보드 인터페이스](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/)
+- 📖 **레퍼런스** — [MDN 포인터 이벤트](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events) · [MDN HTML Drag and Drop API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API) · [ARIA APG 키보드 인터페이스](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/) · [MDN setPointerCapture()](https://developer.mozilla.org/en-US/docs/Web/API/Element/setPointerCapture)
 
 #### [주니어] 탭 컴포넌트를 구현하라. 키보드 동작은 어떻게 되어야 하나?
 
@@ -2306,6 +3489,40 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 키보드: 좌우 방향키로 탭 이동, Home/End, Tab 은 탭 목록에서 패널로 나간다(roving tabindex).
 - 패널 내용을 언마운트할지 유지할지는 상태 보존 요건으로 결정한다. 폼 입력이 있으면 유지가 안전하다.
 - URL 과 동기화하면 새로고침·공유에서 같은 탭이 열린다.
+
+*roving tabindex — Tab 은 목록을 나가고 방향키로 이동*
+
+```js
+tablist.addEventListener("keydown", (e) => {
+  const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+  const i = tabs.indexOf(document.activeElement);
+  const map = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 };
+  if (!(e.key in map)) return;
+  e.preventDefault();
+  select(tabs[(map[e.key] + tabs.length) % tabs.length]);
+});
+
+function select(tab) {
+  for (const t of tablist.querySelectorAll('[role="tab"]')) {
+    const on = t === tab;
+    t.setAttribute("aria-selected", String(on));
+    t.tabIndex = on ? 0 : -1;                    // 목록 안에서는 하나만 탭 정지
+    document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+  }
+  tab.focus();
+}
+```
+
+*마크업*
+
+```html
+<div role="tablist" aria-label="케이스 상세">
+  <button role="tab" id="t1" aria-controls="p1" aria-selected="true"  tabindex="0">요약</button>
+  <button role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1">로그</button>
+</div>
+<div role="tabpanel" id="p1" aria-labelledby="t1">…</div>
+<div role="tabpanel" id="p2" aria-labelledby="t2" hidden>…</div>
+```
 
 - ✅ **좋은 신호** — roving tabindex 를 알고 URL 동기화·상태 보존 판단까지 말한다.
 - ⚠️ **약한 신호** — 버튼 목록 + 조건부 렌더로만 끝내고 키보드·role 이 없다.
@@ -2325,6 +3542,47 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - selector 가 매번 새 객체를 반환하면 무한 리렌더가 된다. 원시값 단위 구독이나 얕은 비교를 함께 제공.
 - SSR 은 서버 스냅샷을 따로 받아야 한다.
 
+*스토어 — getState / setState / subscribe*
+
+```js
+function createStore(initial) {
+  let state = initial;
+  const listeners = new Set();
+  return {
+    getState: () => state,
+    setState(patch) {
+      const next = typeof patch === "function" ? patch(state) : { ...state, ...patch };
+      if (next === state) return;
+      state = next;
+      listeners.forEach((l) => l());
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);   // 해제 함수 반환이 계약
+    },
+  };
+}
+```
+
+*React 연결 — tearing 방지 + 원시값 구독*
+
+```jsx
+import { useSyncExternalStore } from "react";
+
+export function useStore(selector) {
+  return useSyncExternalStore(
+    store.subscribe,
+    () => selector(store.getState()),      // 새 객체를 만들면 무한 리렌더
+    () => selector(serverSnapshot)         // SSR 스냅샷
+  );
+}
+
+// 좋음: 원시값 구독
+const count = useStore((s) => s.items.length);
+// 나쁨: 매번 새 배열 → 렌더마다 변경으로 판정
+// const items = useStore((s) => s.items.filter((i) => i.open));
+```
+
 - ✅ **좋은 신호** — tearing 문제와 selector 참조 동일성을 스스로 꺼낸다. SSR 스냅샷까지 고려한다.
 - ⚠️ **약한 신호** — useState + 전역 변수로 구현하고 구독 해제·동시성 문제를 모른다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2342,6 +3600,37 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 경로 매칭(동적 세그먼트), 중첩 라우트, 404 처리.
 - 스크롤 복원과 포커스 이동이 접근성의 핵심이다. 전환 후 제목·주요 영역으로 포커스를 옮기고 스크린리더에 알린다.
 - 코드 분할과 결합하면 전환 중 로딩 상태와 프리페치가 필요하다.
+
+*History API — 링크 가로채기 예외를 남긴다*
+
+```js
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a[href]");
+  if (!a) return;
+  const url = new URL(a.href, location.href);
+  if (url.origin !== location.origin) return;                 // 외부 링크
+  if (a.target === "_blank" || a.hasAttribute("download")) return;
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;  // 새 탭/창
+  e.preventDefault();
+  history.pushState(null, "", url);
+  navigate(url.pathname);
+});
+
+addEventListener("popstate", () => navigate(location.pathname));
+```
+
+*전환 후 접근성 처리*
+
+```js
+async function navigate(path) {
+  const view = await resolve(path);          // 코드 분할 로드
+  main.replaceChildren(view.node);
+  document.title = view.title;               // 제목 갱신
+  liveRegion.textContent = view.title + " 페이지로 이동했습니다";
+  main.focus();                              // main 에 tabindex="-1"
+  scrollTo({ top: view.restoreScroll ?? 0 });
+}
+```
 
 - ✅ **좋은 신호** — pushState/popstate 외에 포커스·스크롤·프리페치까지 말한다. 링크 가로채기 예외를 안다.
 - ⚠️ **약한 신호** — hashchange 나 pushState 만 다루고 접근성·예외 처리를 빠뜨린다.
@@ -2361,6 +3650,32 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 첫 화면(LCP) 이미지는 지연 로딩하지 않는다. 오히려 늦어진다.
 - 자리 확보(width/height·aspect-ratio)와 저해상도 플레이스홀더로 CLS 를 막는다.
 
+*기본은 속성 하나*
+
+```html
+<!-- 첫 화면(LCP) 이미지: 지연 로딩 금지, 우선순위 부여 -->
+<img src="/hero-800.avif" width="800" height="450" alt="시술 전후 비교"
+     fetchpriority="high" decoding="async">
+
+<!-- 화면 밖 이미지 -->
+<img src="/thumb-320.avif" width="320" height="180" alt="" loading="lazy" decoding="async">
+```
+
+*세밀한 제어가 필요할 때만 직접*
+
+```js
+const io = new IntersectionObserver((entries, observer) => {
+  for (const entry of entries) {
+    if (!entry.isIntersecting) continue;
+    const img = entry.target;
+    img.src = img.dataset.src;
+    observer.unobserve(img);        // 로드 후 해제 — 안 하면 관찰 대상이 쌓인다
+  }
+}, { rootMargin: "300px" });
+
+document.querySelectorAll("img[data-src]").forEach((img) => io.observe(img));
+```
+
 - ✅ **좋은 신호** — 네이티브 속성을 먼저 말하고 LCP 예외를 짚는다.
 - ⚠️ **약한 신호** — 스크롤 이벤트로 좌표를 계산하고 LCP 이미지까지 지연시킨다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2379,6 +3694,33 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 접근성: 표 헤더에 정렬 상태(`aria-sort`), 셀 탐색이 필요하면 grid 패턴. 필터 결과 개수를 알린다.
 - 상태(정렬·필터·페이지)를 URL 에 두면 공유·복원이 된다.
 
+*로케일·숫자 인식 정렬*
+
+```js
+const collator = new Intl.Collator("ko", { numeric: true, sensitivity: "base" });
+
+const sorted = [...rows].sort((a, b) => {
+  const r = collator.compare(a[key], b[key]);     // "케이스 2" < "케이스 10"
+  return dir === "asc" ? r : -r;
+});
+
+// 문자열 기본 sort() 는 유니코드 코드포인트 순 → 대소문자·한글·숫자에서 틀린다
+```
+
+*정렬 상태를 보조기기에 알린다*
+
+```html
+<table>
+  <thead>
+    <tr>
+      <th aria-sort="ascending"><button type="button">케이스명</button></th>
+      <th aria-sort="none"><button type="button">생성일</button></th>
+    </tr>
+  </thead>
+</table>
+<p aria-live="polite">케이스명 오름차순, 42건</p>
+```
+
 - ✅ **좋은 신호** — 로케일 정렬 함정과 서버 이관 기준을 말하고 aria-sort 를 챙긴다.
 - ⚠️ **약한 신호** — 대소문자·숫자 정렬 버그를 모른 채 기본 sort 를 쓰고 접근성 표기가 없다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2386,7 +3728,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 메인 스레드가 막힌다. 서버 정렬 또는 워커. 정렬 키를 미리 계산해 두는 방법도 있다.
   2. 필터 변경마다 요청하면 과다 호출이 된다. 어떻게 줄이나?
      - 기대 답: 디바운스 + 요청 취소 + 결과 캐시. 키는 필터 조합으로.
-- 📖 **레퍼런스** — [MDN Intl.Collator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator) · [ARIA APG Grid 패턴](https://www.w3.org/WAI/ARIA/apg/patterns/grid/)
+- 📖 **레퍼런스** — [MDN Intl.Collator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator) · [ARIA APG Grid 패턴](https://www.w3.org/WAI/ARIA/apg/patterns/grid/) · [MDN aria-sort](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-sort)
 
 ### 시스템 디자인 (11)
 
@@ -2418,6 +3760,36 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 실시간: SSE/WS 로 새 글 수만 받고 본문은 사용자 동작 후 로드해 스크롤을 흔들지 않는다.
 - 오프라인·재방문: 첫 페이지 캐시로 즉시 렌더 후 재검증.
 
+*커서 페이징 응답 계약*
+
+```json
+{
+  "items": [
+    { "id": "c_1042", "title": "상악 크라운", "updatedAt": "2026-09-16T08:12:00Z" }
+  ],
+  "nextCursor": "eyJ1cGRhdGVkQXQiOiIyMDI2LTA5LTE2VDA4OjEyOjAwWiIsImlkIjoiY18xMDQyIn0",
+  "hasMore": true
+}
+```
+
+*정규화 캐시 — 같은 글이 두 화면에서 어긋나지 않게*
+
+```js
+// 목록은 id 배열만, 본문은 엔티티 한 곳
+const state = {
+  entities: { posts: { c_1042: { id: "c_1042", liked: false, likes: 12 } } },
+  feed: { ids: ["c_1042", "c_1041"], nextCursor: "eyJ..." },
+};
+
+// 좋아요는 엔티티 한 곳만 갱신 → 피드·상세가 동시에 맞는다
+function toggleLike(id) {
+  const prev = state.entities.posts[id];
+  patchEntity(id, { liked: !prev.liked, likes: prev.likes + (prev.liked ? -1 : 1) });
+  return save(id, { idempotencyKey: crypto.randomUUID() })
+    .catch(() => patchEntity(id, prev));      // 실패 롤백
+}
+```
+
 - ✅ **좋은 신호** — 스크롤 안정성(위치 유지·CLS)과 낙관적 업데이트 롤백을 함께 설계한다. 실시간 갱신을 사용자 통제 아래 둔다.
 - ⚠️ **약한 신호** — 서버 API 만 나열하고 목록 갱신·스크롤 점프·실패 처리를 다루지 않는다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2438,6 +3810,42 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 상태: 서버가 메시지 상태 기계를 소유하고 클라이언트는 스냅샷을 따른다. 재생성·중단·부분 실패 후 이력이 어긋나지 않아야 한다.
 - 신뢰·안전: 출력은 신뢰할 수 없는 입력이다. HTML 렌더 시 sanitize, 링크 스킴 검증, 프롬프트 주입 대비.
 - 비용·한도: 레이트 리밋, 토큰 상한, 재시도 정책을 UI 에 드러낸다.
+
+*SSE 수신 + 프레임당 1회 렌더*
+
+```js
+const es = new EventSource("/api/chat/" + sessionId + "/stream");
+let buffer = "";
+let scheduled = false;
+
+es.addEventListener("token", (e) => {
+  buffer += JSON.parse(e.data).text;
+  if (scheduled) return;                 // 토큰마다 setState 하지 않는다
+  scheduled = true;
+  requestAnimationFrame(() => {
+    scheduled = false;
+    appendToMessage(buffer);             // 프레임당 1회 커밋
+    buffer = "";
+  });
+});
+
+es.addEventListener("done", () => es.close());
+es.onerror = () => { /* 브라우저가 재연결한다. Last-Event-ID 로 재개 지점 전달 */ };
+```
+
+*중단은 서버 생성까지 취소한다*
+
+```js
+const controller = new AbortController();
+stopBtn.onclick = () => controller.abort();          // 비용이 계속 발생하지 않게
+
+await fetch("/api/chat", {
+  method: "POST",
+  signal: controller.signal,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ sessionId, prompt }),
+});
+```
 
 - ✅ **좋은 신호** — 렌더 배치와 취소 경로를 먼저 말하고 출력 sanitize 를 보안 문제로 다룬다.
 - ⚠️ **약한 신호** — 스트리밍을 받아 그대로 innerHTML 에 붙이고 중단·비용을 고려하지 않는다.
@@ -2533,6 +3941,43 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 실패 UX: 사유별 안내(잔액·인증·네트워크), 재시도 가능 여부 구분. 낙관적 업데이트는 쓰지 않는다.
 - 관측: 단계별 이탈률과 실패 코드 분포.
 
+*멱등 키로 중복 결제를 막는다*
+
+```js
+// 키는 "결제 시도" 단위로 한 번 만들고 재시도에 재사용한다
+const attemptKey = useRef(crypto.randomUUID());
+
+async function pay() {
+  setState("submitting");
+  try {
+    const res = await retry(() => fetch("/api/payments", {
+      method: "POST",
+      headers: { "Idempotency-Key": attemptKey.current },   // 재시도도 같은 키
+      body: JSON.stringify({ orderId, amount }),
+    }), { times: 3 });
+
+    if (res.status === 409) return setState("already_paid");
+    if (!res.ok) throw new Error("payment failed: " + res.status);
+    setState("done");
+  } catch {
+    setState("unknown");                   // 성공/실패를 단정하지 않는다
+    const confirmed = await confirmByServer(orderId);   // 서버 조회로 확정
+    setState(confirmed.paid ? "done" : "failed");
+  }
+}
+```
+
+*상태 기계로 재진입을 정의한다*
+
+```js
+const NEXT = {
+  idle:       { submit: "submitting" },
+  submitting: { ok: "done", conflict: "already_paid", fail: "failed", timeout: "unknown" },
+  unknown:    { confirmed_paid: "done", confirmed_unpaid: "failed" },
+  done:       {},                       // 뒤로 가기로 재진입해도 재결제 불가
+};
+```
+
 - ✅ **좋은 신호** — 멱등 키와 상태 기계를 먼저 말하고 카드 데이터를 다루지 않는 구조를 택한다.
 - ⚠️ **약한 신호** — 제출 후 로딩만 두고 중복·재진입·부분 실패를 다루지 않는다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2540,7 +3985,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 성공/실패를 단정하지 않고 확인 중 상태로 두고 서버 조회로 확정한다. 재시도는 같은 멱등 키로.
   2. 뒤로 가기로 결제 화면에 다시 들어오면?
      - 기대 답: 이미 완료된 주문이면 완료 화면으로 보낸다. 재결제 가능 상태와 구분해야 한다.
-- 📖 **레퍼런스** — [MDN HTTP 메서드 POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods/POST) · [OWASP 세션 관리](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+- 📖 **레퍼런스** — [MDN HTTP 메서드 POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods/POST) · [OWASP 세션 관리](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) · [IETF Idempotency-Key 헤더 초안](https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header)
 
 #### [시니어] 여러 앱이 쓰는 컴포넌트 라이브러리를 설계하라.
 
@@ -2607,6 +4052,34 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 흔한 원인: 대량 배열 동기 처리, 강제 동기 레이아웃, 거대한 리스트 재렌더, 동기 스토리지 접근.
 - 처방은 원인별로: 작업 쪼개기·워커, 읽기/쓰기 분리, 가상화, 비긴급 업데이트로 내리기.
 
+*구간을 코드로 표시해 프로파일에 남긴다*
+
+```js
+// 추측하지 않는다 — 어느 구간이 긴지 표시부터
+performance.mark("handler:start");
+const rows = buildRows(raw);              // 의심 구간
+performance.mark("handler:built");
+render(rows);
+performance.measure("build", "handler:start", "handler:built");
+performance.measure("render", "handler:built");
+
+// Performance 패널의 Timings 트랙에 그대로 보인다
+```
+
+*강제 동기 레이아웃(layout thrashing) 제거*
+
+```js
+// 나쁨: 읽기와 쓰기를 번갈아 → 프레임마다 레이아웃 재계산
+for (const el of items) {
+  const h = el.offsetHeight;              // 읽기(강제 레이아웃)
+  el.style.height = h * 2 + "px";         // 쓰기
+}
+
+// 좋음: 읽기 전부 → 쓰기 전부
+const heights = items.map((el) => el.offsetHeight);
+items.forEach((el, i) => { el.style.height = heights[i] * 2 + "px"; });
+```
+
 - ✅ **좋은 신호** — 측정 도구를 먼저 열고 구간 분해로 좁힌다. 처방을 원인에 맞춰 고른다.
 - ⚠️ **약한 신호** — 코드를 눈으로 읽어 추측하거나 메모이제이션을 먼저 붙인다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2614,7 +4087,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 소스맵 활성화, 샘플링 간격 조정, 코드에 performance.mark 로 구간을 심는다.
   2. 로컬에서는 빠른데 사용자만 느리면?
      - 기대 답: 기기·네트워크 프로파일로 재현하고 필드 데이터(p75·p95)로 대상 세그먼트를 확인한다.
-- 📖 **레퍼런스** — [Chrome DevTools 성능 프로파일링](https://developer.chrome.com/docs/devtools/performance) · [web.dev INP 최적화](https://web.dev/articles/optimize-inp) · [MDN Long Task API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceLongTaskTiming)
+- 📖 **레퍼런스** — [Chrome DevTools 성능 프로파일링](https://developer.chrome.com/docs/devtools/performance) · [web.dev INP 최적화](https://web.dev/articles/optimize-inp) · [MDN Long Task API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceLongTaskTiming) · [MDN performance.mark()](https://developer.mozilla.org/en-US/docs/Web/API/Performance/mark) · [web.dev layout thrashing](https://web.dev/articles/avoid-large-complex-layouts-and-layout-thrashing)
 
 #### [미들] [실습] 목록이 가끔 비어 보인다. 네트워크는 200 이다. 어디를 보나?
 
@@ -2624,6 +4097,39 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 경합 확인: 요청 두 개가 겹쳐 오래된 응답이 나중에 도착했는지(취소·시퀀스 검사).
 - 예외가 조용히 삼켜졌는지: 브레이크포인트를 'Pause on exceptions' 로 걸고 재현한다.
 - 캐시 오염: 빈 결과가 캐시에 저장돼 이후 계속 빈 화면이 되는 경우.
+
+*오래된 응답이 최신 화면을 덮는 경합*
+
+```js
+// 나쁨: 취소도 순서 검사도 없다
+async function load(query) {
+  const data = await fetchList(query);
+  setRows(data);                 // 느린 이전 요청이 나중에 도착해 덮어쓴다
+}
+
+// 좋음: 토큰으로 최신 요청만 반영
+let seq = 0;
+async function load2(query) {
+  const my = ++seq;
+  const data = await fetchList(query);
+  if (my === seq) setRows(data);
+}
+```
+
+*조용히 삼켜진 예외를 드러낸다*
+
+```js
+// 나쁨: catch 가 비어 화면만 빈다
+try { setRows(parse(await res.json())); } catch {}
+
+// 좋음: 보고 + 사용자에게 보이는 상태
+try {
+  setRows(parse(await res.json()));
+} catch (err) {
+  report("list_parse_failed", { err: String(err) });
+  setError("목록을 불러오지 못했습니다");
+}
+```
 
 - ✅ **좋은 신호** — 네트워크 성공/화면 실패를 경계로 나눠 좁히고 예외 일시정지 같은 실측 수단을 쓴다.
 - ⚠️ **약한 신호** — 서버 탓으로 돌리거나 새로고침으로 넘어간다.
@@ -2642,6 +4148,36 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 이펙트가 자기 의존성을 갱신하는 순환. 정규화된 값으로 의존성을 좁히거나 상태를 하나로 합친다.
 - 확인: React DevTools Profiler 의 렌더 원인, 의존성 배열을 로그로 찍어 무엇이 바뀌는지 본다.
 - 즉시 처방은 메모이제이션이 아니라 데이터 흐름 수정이다.
+
+*무엇이 매 렌더 바뀌는지 찍는다*
+
+```jsx
+function useWhyRender(name, deps) {
+  const prev = useRef(deps);
+  useEffect(() => {
+    const changed = deps
+      .map((d, i) => (Object.is(d, prev.current[i]) ? null : i))
+      .filter((i) => i !== null);
+    if (changed.length) console.log(name, "changed deps:", changed);
+    prev.current = deps;
+  });
+}
+```
+
+*대표 원인 두 가지*
+
+```jsx
+// ① 렌더 중 setState — 조건 없이 호출하면 즉시 루프
+function Bad({ items }) {
+  setCount(items.length);              // 금지
+  return null;
+}
+const count = items.length;            // 파생 계산으로 대체
+
+// ② 매 렌더 새 객체를 의존성에 넣는다
+useEffect(() => { load(filter); }, [{ ...filter }]);   // 항상 새 참조 → 무한
+useEffect(() => { load(filter); }, [filter.status, filter.page]);  // 원시값으로
+```
 
 - ✅ **좋은 신호** — 후보를 나열하고 '무엇이 매 렌더 바뀌는가' 를 로그로 확정한다.
 - ⚠️ **약한 신호** — useCallback·useMemo 를 무작정 감싸 증상만 덮는다.
@@ -2679,6 +4215,26 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 처방 순서: 표준 대체 문법 → 기능 탐지 후 폴백 → 최후에 벤더 우회. 브라우저 감지(UA 분기)는 회피한다.
 - 지원 정책을 팀의 browserslist 같은 단일 출처로 확인해 대응 범위를 결정한다.
 
+*UA 분기 대신 기능 탐지*
+
+```js
+// 나쁨: 브라우저 감지
+if (/Safari/.test(navigator.userAgent)) applyHack();
+
+// 좋음: 기능 탐지
+if (!("anchorName" in document.documentElement.style)) usePopoverFallback();
+```
+
+*CSS 는 @supports 로*
+
+```css
+.panel { position: absolute; }              /* 폴백 먼저 */
+
+@supports (position-area: bottom span-right) {
+  .panel { position-area: bottom span-right; }   /* 지원하는 곳만 */
+}
+```
+
 - ✅ **좋은 신호** — 지원 범위 확인 → 최소 재현 → 기능 탐지 폴백 순서로 간다. UA 분기를 마지막 수단으로 둔다.
 - ⚠️ **약한 신호** — UA 스니핑으로 분기하거나 벤더 접두사를 무작위로 추가한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2686,7 +4242,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: CSS 는 @supports, JS 는 해당 API 존재 확인. 버전 비교로 판단하지 않는다.
   2. 그 브라우저 사용자가 2% 면 어떻게 결정하나?
      - 기대 답: 사업 영향 확인 후 축소 기능 제공 또는 지원 종료 공지. 전원에게 폴리필을 주는 선택은 피한다.
-- 📖 **레퍼런스** — [web.dev Baseline](https://web.dev/baseline) · [browserslist](https://github.com/browserslist/browserslist)
+- 📖 **레퍼런스** — [web.dev Baseline](https://web.dev/baseline) · [browserslist](https://github.com/browserslist/browserslist) · [MDN @supports](https://developer.mozilla.org/en-US/docs/Web/CSS/@supports)
 
 #### [시니어] [실습] 배포 후에만 재현되는 버그다. 로컬은 정상이다.
 
@@ -2696,6 +4252,29 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 캐시 의심: 옛 청크·서비스워커·CDN. 버전 정보를 응답에서 직접 확인한다.
 - 프로덕션 전용 코드 경로(압축·DCE·NODE_ENV 분기)와 소스맵 복원으로 스택을 읽는다.
 - 가설을 세우면 프로덕션 유사 빌드를 로컬에서 만들어 재현한다.
+
+*무엇이 서빙되는지부터 확인한다*
+
+```bash
+# 캐시를 우회해 실제 응답을 본다
+curl -s -H 'Cache-Control: no-cache' https://app.example.com/ | grep -o 'assets/[^"]*\.js'
+
+# 배포 버전 엔드포인트와 대조
+curl -s https://app.example.com/version.json
+
+# hosts 하이재킹·프록시 의심이면 IP 를 고정해 직접
+curl -s --resolve app.example.com:443:203.0.113.10 https://app.example.com/version.json
+```
+
+*프로덕션 전용 분기를 로컬에서 재현*
+
+```bash
+# dev 서버가 아니라 프로덕션 빌드를 띄워 확인한다
+npm run build && npx serve dist
+
+# 소스맵으로 스택 복원 (소스맵은 공개 배포하지 않는다)
+npx source-map-cli resolve dist/assets/app-a1b2c3.js.map 1 45213
+```
 
 - ✅ **좋은 신호** — 서빙되는 산출물부터 확인하고 캐시·플래그·빌드 모드를 하나씩 배제한다.
 - ⚠️ **약한 신호** — 로컬에서 같은 코드니 문제 없다고 결론 내린다.
@@ -2715,6 +4294,33 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 측정은 CLS. 어떤 요소가 이동했는지 DevTools 의 레이아웃 이동 영역으로 확인한다.
 - 사용자 상호작용 후 500ms 안의 이동은 CLS 에서 제외된다는 점도 안다.
 
+*자리 확보로 이동을 없앤다*
+
+```css
+/* 이미지·임베드: 비율로 공간을 먼저 잡는다 */
+.thumb { aspect-ratio: 16 / 9; width: 100%; height: auto; }
+
+/* 나중에 삽입되는 배너: 최소 높이를 예약 */
+.banner-slot { min-height: 72px; }
+
+/* 스크롤바 등장으로 인한 가로 이동 */
+html { scrollbar-gutter: stable; }
+```
+
+*어떤 요소가 움직였는지 필드에서 확인*
+
+```js
+import { onCLS } from "web-vitals/attribution";
+
+onCLS(({ value, attribution }) => {
+  report("cls", {
+    value,
+    largestShiftTarget: attribution.largestShiftTarget,   // 선택자로 지목된다
+    largestShiftTime: attribution.largestShiftTime,
+  });
+});
+```
+
 - ✅ **좋은 신호** — 원인별 수정을 짝지어 말하고 측정으로 이동 요소를 특정한다.
 - ⚠️ **약한 신호** — 애니메이션으로 부드럽게 만들면 된다고 답한다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2722,7 +4328,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 최소 높이를 예약하고 초과 시에만 확장. 예약 없이 삽입하면 매번 이동한다.
   2. 폰트 교체로 인한 이동을 0 으로 만들려면?
      - 기대 답: 폴백과 메트릭을 맞추거나 font-display: optional 로 첫 방문 교체를 포기한다.
-- 📖 **레퍼런스** — [web.dev CLS](https://web.dev/articles/cls) · [MDN font-display](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display)
+- 📖 **레퍼런스** — [web.dev CLS](https://web.dev/articles/cls) · [MDN font-display](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display) · [web-vitals 라이브러리(attribution)](https://github.com/GoogleChrome/web-vitals) · [MDN scrollbar-gutter](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-gutter)
 
 ### 코드 리뷰 라운드 (5)
 
@@ -2753,6 +4359,25 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 서버 저장 시점 정화만으로 안전하다고 보지 않는다. 출력 컨텍스트별 인코딩이 본질.
 - CSP 는 2차 방어선이며 이 결함을 대체하지 않는다.
 
+*리뷰 코멘트에 붙일 수정 예시*
+
+```jsx
+// 받은 diff (차단)
+- <div dangerouslySetInnerHTML={{ __html: comment.body }} />
+
+// 제안 ①: 서식이 필요 없으면 텍스트
++ <div className="comment-body">{comment.body}</div>
+
+// 제안 ②: 서식이 필요하면 허용 목록 sanitizer (raw HTML 차단)
++ import DOMPurify from "dompurify";
++ const clean = DOMPurify.sanitize(comment.body, {
++   ALLOWED_TAGS: ["b", "i", "em", "strong", "a", "p", "br", "ul", "ol", "li"],
++   ALLOWED_ATTR: ["href"],
++   ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,
++ });
++ <div dangerouslySetInnerHTML={{ __html: clean }} />
+```
+
 - ✅ **좋은 신호** — 차단 사유를 위험으로 설명하고 대안과 2차 방어를 구분한다.
 - ⚠️ **약한 신호** — "sanitize 하면 됩니다" 한 줄로 끝내거나 통과시킨다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2770,6 +4395,30 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 그대로 둘 수 없다면 동시성 제한·취소·캐시가 필수. 스크롤 중 마운트·언마운트 반복이면 요청 폭주가 난다.
 - 성능 문제이자 비용 문제다. 실제 수치(요청 수·INP 영향)를 붙여 지적한다.
 - 즉시 차단할지는 화면 규모에 달렸다. 목록이 항상 5개면 과잉 지적일 수 있다.
+
+*N+1 을 배치·프리페치로 바꾼다*
+
+```jsx
+// 받은 diff: 행마다 요청 (100행 = 100요청, 취소도 없다)
+function Row({ id }) {
+  const [detail, setDetail] = useState(null);
+  useEffect(() => { fetch("/api/case/" + id).then(r => r.json()).then(setDetail); }, [id]);
+}
+
+// 제안 ①: 목록 응답에 필요한 필드를 포함 (서버와 계약 변경)
+// 제안 ②: 배치 엔드포인트
+const details = useQuery({
+  queryKey: ["cases", "detail", ids],
+  queryFn: ({ signal }) => fetchDetails(ids, { signal }),   // 1요청
+});
+
+// 그대로 둘 수밖에 없다면: 동시성 제한 + 취소 + 캐시
+useEffect(() => {
+  const c = new AbortController();
+  limit(() => fetchDetail(id, { signal: c.signal })).then(setDetail).catch(ignoreAbort);
+  return () => c.abort();
+}, [id]);
+```
 
 - ✅ **좋은 신호** — 규모 조건을 확인한 뒤 지적 강도를 조절하고 수치를 근거로 댄다.
 - ⚠️ **약한 신호** — 패턴만 보고 무조건 차단하거나 반대로 그냥 통과시킨다.
@@ -2789,6 +4438,33 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 포커스 표시가 사라지지 않는지도 함께 확인한다.
 - 같은 패턴이 반복되면 공용 버튼 컴포넌트 부재 신호.
 
+*가장 싼 수정은 태그 교체*
+
+```jsx
+// 받은 diff: 키보드로 접근·실행 불가, 스크린리더가 버튼으로 읽지 않는다
+- <div className="btn" onClick={save}>저장</div>
+
+// 제안: 네이티브 버튼 (포커스·Enter/Space·disabled 를 공짜로 얻는다)
++ <button type="button" className="btn" onClick={save}>저장</button>
+
+// 이동 동작이면 링크로
++ <a className="btn" href={"/cases/" + id}>상세 보기</a>
+```
+
+*불가피하게 div 를 써야 한다면 전부 직접*
+
+```jsx
+<div
+  role="button"
+  tabIndex={0}
+  aria-disabled={busy || undefined}
+  onClick={busy ? undefined : save}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!busy) save(); }
+  }}
+>저장</div>
+```
+
 - ✅ **좋은 신호** — 무엇을 잃는지 구체적으로 나열하고 가장 싼 수정을 제안한다.
 - ⚠️ **약한 신호** — "접근성 고려 필요" 처럼 모호하게 남긴다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2806,6 +4482,28 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 대안 제시: 타입 가드, 판별 유니온, 제네릭, 경계 스키마 파싱, `satisfies`.
 - 급하면 범위를 좁힌 단언 + 이유 주석 + 후속 이슈를 조건으로 통과시킬 수 있다. 무조건 차단이 정답은 아니다.
 - 같은 패턴이 여러 곳이면 타입 설계·계약 문제다.
+
+*as any 대신 원인별 처방*
+
+```ts
+// 받은 diff
+- const rows = (res.data as any).items;
+
+// ① 응답이 불확실하면 경계에서 파싱
++ const { items } = ListResponse.parse(res.data);
+
+// ② 유니온 좁히기
++ if (node.kind === "case") node.caseId;       // 판별 유니온
+
+// ③ 서드파티 타입이 틀렸다면 한 곳에 격리
++ // ponytail: @vendor/sdk v3 의 listCases 반환 타입이 실제와 다르다(items 누락)
++ function listCases(): Promise<CaseListResponse> {
++   return sdk.listCases() as unknown as Promise<CaseListResponse>;
++ }
+
+// ④ 정말 급하면 범위를 좁힌 단언 + 제거 조건이 적힌 이슈
++ const items = (res.data as { items: unknown[] }).items;   // TODO(FE-1234)
+```
 
 - ✅ **좋은 신호** — 원인을 묻고 대안을 비용과 함께 제시한다. 조건부 통과 기준이 있다.
 - ⚠️ **약한 신호** — 규칙 위반이라고만 쓰거나 그냥 통과시킨다.
@@ -2955,6 +4653,45 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
 - 찾은 결함은 '왜 생기는지 + 어떤 입력에서 드러나는지 + 수정' 세 조각으로 말한다.
 - 수정 후 그 결함을 잡는 테스트를 쓰는 것이 가장 강한 마무리.
 
+*그럴듯하지만 틀린 코드 — 결함 5개를 찾아라*
+
+```js
+// AI 가 생성했다고 가정한 코드
+async function loadPage(page) {
+  const res = await fetch("/api/items?page=" + page);
+  const data = res.json();                       // ① await 누락 → Promise 가 들어간다
+  const items = data.items;
+  for (let i = 0; i <= items.length; i++) {      // ② off-by-one → undefined 접근
+    render(items[i]);
+  }
+  const copy = { ...state };
+  copy.filters.status = "open";                  // ③ 얕은 복사 → 원본 상태 변경
+  setState(copy);
+  if (total == "0") showEmpty();                 // ④ 느슨한 비교 + 타입 혼동
+  return items;                                  // ⑤ 실패(!res.ok)를 처리하지 않는다
+}
+```
+
+*수정 + 결함을 잡는 테스트*
+
+```js
+async function loadPage(page, signal) {
+  const res = await fetch("/api/items?page=" + page, { signal });
+  if (!res.ok) throw new Error("items failed: " + res.status);     // ⑤
+  const data = await res.json();                                    // ①
+  for (const item of data.items) render(item);                      // ②
+  setState((s) => ({ ...s, filters: { ...s.filters, status: "open" } }));  // ③
+  if (data.total === 0) showEmpty();                                // ④
+  return data.items;
+}
+
+test("서버가 500이면 던지고 빈 상태를 그리지 않는다", async () => {
+  server.use(http.get("/api/items", () => new Response(null, { status: 500 })));
+  await expect(loadPage(1)).rejects.toThrow(/items failed: 500/);
+  expect(showEmpty).not.toHaveBeenCalled();
+});
+```
+
 - ✅ **좋은 신호** — 결함마다 재현 입력을 대고 수정 + 테스트로 닫는다.
 - ⚠️ **약한 신호** — 스타일 지적에 머물거나 실행해 보지 않고 넘어간다.
 - ↪️ **꼬리질문** — 면접관이 파고드는 순서
@@ -2962,7 +4699,7 @@ node tools/export.mjs   # 문항을 고친 뒤 실행
      - 기대 답: 응답 지연을 인위적으로 넣어 순서를 뒤집는다. 정상 속도에서는 숨는다.
   2. 결함이 여러 개면 무엇을 먼저 말하나?
      - 기대 답: 데이터 손상·보안 → 기능 오류 → 성능 → 가독성 순.
-- 📖 **레퍼런스** — [AI 코딩 면접 가이드(PracHub)](https://prachub.com/resources/ai-coding-interview-guide) · [Chrome DevTools 자바스크립트 디버깅](https://developer.chrome.com/docs/devtools/javascript)
+- 📖 **레퍼런스** — [AI 코딩 면접 가이드(PracHub)](https://prachub.com/resources/ai-coding-interview-guide) · [Chrome DevTools 자바스크립트 디버깅](https://developer.chrome.com/docs/devtools/javascript) · [MSW 철학(경계 모킹)](https://mswjs.io/docs/philosophy)
 
 #### [시니어] AI 도구를 팀에 도입할 때 무엇을 정하나?
 

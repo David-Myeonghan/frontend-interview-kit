@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 const html = readFileSync("index.html", "utf8");
 const script = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
-const dataPart = script.slice(0, script.indexOf("const state = {"));
+const dataPart = script.slice(0, script.indexOf("/* DATA_END"));
 const { CATS, LV, Q } = new Function(dataPart + ";return {CATS,LV,Q};")();
 
 writeFileSync("questions.json", JSON.stringify({ categories: CATS, levels: LV, questions: Q }, null, 2) + "\n");
@@ -26,6 +26,7 @@ out.push("- 문항 " + Q.length + "개 · 영역 " + Object.keys(CATS).length + 
 out.push("- 레벨 분포: 주니어 " + count("jr") + " / 미들 " + count("mid") + " / 시니어 " + count("sr") + " / 공통 " + count("all"));
 out.push("- 레퍼런스 링크 " + new Set(Q.flatMap((q) => q.r.map((r) => r[1]))).size + "개 (전부 HTTP 200 확인)");
 out.push("- 꼬리질문 " + Q.reduce((a, q) => a + (q.p ? q.p.length : 0), 0) + "단계 — 문항마다 면접관이 파고드는 질문과 단계별 기대 답");
+out.push("- 코드 예제 " + Q.reduce((a, q) => a + (q.code ? q.code.length : 0), 0) + "개 — 코드로 답해야 하는 " + Q.filter((q) => q.code && q.code.length).length + "문항에 동작하는 예제 첨부");
 out.push("");
 out.push("## 쓰는 법");
 out.push("");
@@ -60,6 +61,14 @@ for (const [key, label] of Object.entries(CATS)) {
     out.push("");
     for (const c of it.core) out.push("- " + md(c));
     out.push("");
+    for (const [label, lang, src] of it.code ?? []) {
+      out.push("*" + label + "*");
+      out.push("");
+      out.push("```" + lang);
+      out.push(src);
+      out.push("```");
+      out.push("");
+    }
     out.push("- ✅ **좋은 신호** — " + md(it.good));
     out.push("- ⚠️ **약한 신호** — " + md(it.weak));
     if (it.p && it.p.length) {
