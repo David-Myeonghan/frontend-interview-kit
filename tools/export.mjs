@@ -18,7 +18,7 @@ const count = (l) => Q.filter((q) => q.l === l).length;
 const out = [];
 out.push("# 프론트엔드 면접 문항집");
 out.push("");
-out.push("> **TL;DR** — 주니어·미들·시니어 프론트엔드 면접 문항 " + Q.length + "개. 문항마다 핵심 답, 면접관이 볼 좋은/약한 신호, 면접관이 파고드는 꼬리질문 2~3단계와 단계별 기대 답, 그리고 답을 검증할 공식 문서 레퍼런스가 붙어 있다.");
+out.push("> **TL;DR** — 프론트엔드 면접 문항 " + Q.length + "개. 지식 문답 + 라이브 코딩 + 프론트 시스템 디자인 + 디버깅/코드리뷰 라운드 + 과제 + AI 도구 활용. 문항마다 핵심 답, 면접관이 볼 좋은/약한 신호, 꼬리질문 2~3단계와 단계별 기대 답, 답을 검증할 공식 문서 레퍼런스가 붙어 있다.");
 out.push("> **출처 주의** — 출제 이력 기록이 아니다. 공개 정리글에서 반복 등장하는 **주제**를 기준으로 고른 문항이고, 문항 문장과 답은 직접 썼다. [출처](#출처) 참고.");
 out.push("> 필터·검색·셀프 퀴즈가 되는 웹 페이지: **https://david-myeonghan.github.io/frontend-interview-kit/**");
 out.push("");
@@ -92,6 +92,16 @@ for (const [t, u] of [
   ["프론트엔드 기술 면접 질문 리스트 (velog)", "https://velog.io/@doheek2/%ED%94%84%EB%A1%A0%ED%8A%B8%EC%97%94%EB%93%9C-%EA%B8%B0%EC%88%A0-%EB%A9%B4%EC%A0%91-%EC%A7%88%EB%AC%B8-%EB%A6%AC%EC%8A%A4%ED%8A%B8"],
   ["프론트엔드 기술 면접 질문 정리 — hyunwoo.dev", "https://www.chahyunwoo.dev/blog/frontend-technical-interview"],
   ["프론트엔드 면접 질문 리스트 (Browser) — dev and dev", "https://joontae-kim.github.io/2020/10/26/interview-question-fe/"],
+  ["Front End Interview Handbook — 프론트 시스템 디자인(RADIO)", "https://www.frontendinterviewhandbook.com/front-end-system-design"],
+  ["Front End Interview Handbook — 유틸 함수 머신코딩", "https://www.frontendinterviewhandbook.com/coding/javascript-utility-function"],
+  ["FrontendInterviews.dev — 시스템 디자인 문제 목록", "https://frontendinterviews.dev/frontend-system-design-interview-questions"],
+  ["Scrimba — 2026 프론트 면접 준비 가이드(5단계 구성)", "https://scrimba.com/articles/frontend-interview-prep-guide-2026/"],
+  ["DesignGurus — 프론트 면접 라운드 구성", "https://www.designgurus.io/answers/detail/what-does-a-frontend-interview-look-like"],
+  ["hackajob — 기술 평가 준비 가이드", "https://hackajob.com/talent/technical-assessment/frontend-developer-interview-questions-preparation-guide"],
+  ["dev.to — take-home 과제 리뷰 관점", "https://dev.to/gergelyorosz/9-insider-tips-to-ace-your-next-takehome-project-for-frontend-fullstack-and-mobile-interviews-41nn"],
+  ["Formation — AI 보조 코딩 면접(Direct·Explain·Verify)", "https://formation.dev/blog/ai-assisted-coding-interviews"],
+  ["Exponent — Google AI 보조 코딩 면접 가이드", "https://www.tryexponent.com/blog/google-ai-coding-interview"],
+  ["PracHub — AI 코딩 면접 가이드", "https://prachub.com/resources/ai-coding-interview-guide"],
   ["How the Core Web Vitals metrics thresholds were defined — web.dev", "https://web.dev/articles/defining-core-web-vitals-thresholds"],
 ]) out.push("- [" + t + "](" + u + ")");
 out.push("");
