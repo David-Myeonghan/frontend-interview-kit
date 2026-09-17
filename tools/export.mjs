@@ -5,6 +5,17 @@ import { readFileSync, writeFileSync } from "node:fs";
 const html = readFileSync("index.html", "utf8");
 const script = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
 const dataPart = script.slice(0, script.indexOf("/* DATA_END"));
+
+// 인라인 <script> 안에서 이 시퀀스들은 파서를 조기 종료시키거나 escaped 상태로 밀어 넣는다.
+// 코드 예제에 HTML 을 넣을 때 반드시 역슬래시로 escape 해야 한다: <\/script>, <\!--
+for (const [seq, fix] of [["</scr" + "ipt>", "<\\/script>"], ["<!" + "--", "<\\!--"]]) {
+  if (dataPart.includes(seq)) {
+    throw new Error(
+      "index.html 데이터 영역에 이스케이프되지 않은 " + seq + " 가 있다 — " + fix + " 로 바꿔라. " +
+      "그대로 두면 브라우저가 스크립트를 조기 종료해 페이지가 통째로 깨진다."
+    );
+  }
+}
 const { CATS, LV, Q } = new Function(dataPart + ";return {CATS,LV,Q};")();
 
 writeFileSync("questions.json", JSON.stringify({ categories: CATS, levels: LV, questions: Q }, null, 2) + "\n");

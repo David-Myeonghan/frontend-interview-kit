@@ -1831,11 +1831,11 @@ addEventListener("popstate", () => navigate(location.pathname));`],
   main.focus();                              // main 에 tabindex="-1"
   scrollTo({ top: view.restoreScroll ?? 0 });
 }`]],
-129:[["기본은 속성 하나","html",`<!-- 첫 화면(LCP) 이미지: 지연 로딩 금지, 우선순위 부여 -->
+129:[["기본은 속성 하나","html",`<\!-- 첫 화면(LCP) 이미지: 지연 로딩 금지, 우선순위 부여 -->
 <img src="/hero-800.avif" width="800" height="450" alt="시술 전후 비교"
      fetchpriority="high" decoding="async">
 
-<!-- 화면 밖 이미지 -->
+<\!-- 화면 밖 이미지 -->
 <img src="/thumb-320.avif" width="320" height="180" alt="" loading="lazy" decoding="async">`],
     ["세밀한 제어가 필요할 때만 직접","js",`const io = new IntersectionObserver((entries, observer) => {
   for (const entry of entries) {
@@ -2274,9 +2274,9 @@ iframe.contentWindow.postMessage({ type: "init", locale }, "https://widget.examp
 50:[["LCP 자원에 우선순위를 준다","html",`<link rel="preload" as="image" href="/hero-800.avif" fetchpriority="high">
 <img src="/hero-800.avif" width="800" height="450" alt="" fetchpriority="high">
 
-<!-- 렌더 블로킹을 줄인다 -->
-<link rel="stylesheet" href="/app.css">                 <!-- 임계 CSS 는 인라인 -->
-<script src="/app.js" defer></script>`],
+<\!-- 렌더 블로킹을 줄인다 -->
+<link rel="stylesheet" href="/app.css">                 <\!-- 임계 CSS 는 인라인 -->
+<script src="/app.js" defer><\/script>`],
     ["필드에서 LCP 구간을 분해한다","js",`import { onLCP } from "web-vitals/attribution";
 
 onLCP(({ value, attribution }) => {
