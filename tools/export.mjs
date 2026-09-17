@@ -8,6 +8,15 @@ const dataPart = script.slice(0, script.indexOf("/* DATA_END"));
 
 // 인라인 <script> 안에서 이 시퀀스들은 파서를 조기 종료시키거나 escaped 상태로 밀어 넣는다.
 // 코드 예제에 HTML 을 넣을 때 반드시 역슬래시로 escape 해야 한다: <\/script>, <\!--
+// innerHTML 로 삽입되는 텍스트 필드(문항·꼬리질문·심층 답·대본)에 태그 시작이 있으면 뒤 내용을 삼킨다.
+// 코드 예제(CODE)는 esc() 로 이스케이프되므로 제외하고, 그 밖의 텍스트에서만 검사한다.
+{
+  const codeStart = dataPart.indexOf("const CODE = {");
+  const codeEnd = dataPart.indexOf("Q.forEach((q,i)=>{ q.p = q.p ||");
+  const textOnly = codeStart >= 0 ? dataPart.slice(0, codeStart) + dataPart.slice(codeEnd) : dataPart;
+  const m = textOnly.match(/<(script|link|style|iframe|img|input)\b/i);
+  if (m) throw new Error("텍스트 필드에 이스케이프되지 않은 태그 시작 " + m[0] + " 이 있다 — &lt; 로 바꿔라. innerHTML 삽입 시 뒤 내용이 사라진다.");
+}
 for (const [seq, fix] of [["</scr" + "ipt>", "<\\/script>"], ["<!" + "--", "<\\!--"]]) {
   if (dataPart.includes(seq)) {
     throw new Error(
@@ -16,9 +25,9 @@ for (const [seq, fix] of [["</scr" + "ipt>", "<\\/script>"], ["<!" + "--", "<\\!
     );
   }
 }
-const { CATS, LV, Q } = new Function(dataPart + ";return {CATS,LV,Q};")();
+const { CATS, LV, Q, TRACKS } = new Function(dataPart + ";return {CATS,LV,Q,TRACKS};")();
 
-writeFileSync("questions.json", JSON.stringify({ categories: CATS, levels: LV, questions: Q }, null, 2) + "\n");
+writeFileSync("questions.json", JSON.stringify({ categories: CATS, levels: LV, questions: Q, tracks: TRACKS }, null, 2) + "\n");
 
 const md = (s) => String(s)
   .replace(/<code>([\s\S]*?)<\/code>/g, (_, c) => "`" + c.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&") + "`")
@@ -29,7 +38,7 @@ const count = (l) => Q.filter((q) => q.l === l).length;
 const out = [];
 out.push("# 프론트엔드 면접 문항집");
 out.push("");
-out.push("> **TL;DR** — 프론트엔드 면접 문항 " + Q.length + "개. 지식 문답 + 라이브 코딩 + 프론트 시스템 디자인 + 디버깅/코드리뷰 라운드 + 과제 + AI 도구 활용. 문항마다 핵심 답, 면접관이 볼 좋은/약한 신호, 꼬리질문 2~3단계와 단계별 기대 답, 답을 검증할 공식 문서 레퍼런스가 붙어 있다.");
+out.push("> **TL;DR** — 프론트엔드 면접 문항 " + Q.length + "개 + 한 주제를 20~45분 파는 딥다이브 대본 " + TRACKS.length + "개. 지식 문답 + 라이브 코딩 + 시스템 디자인 + 디버깅/코드리뷰 라운드 + 과제 + AI 도구 활용. 문항마다 핵심 답, 좋은/약한 신호, 꼬리질문과 기대 답, 코드 예제, 심층 답(원리·증상·측정·반례·스펙 근거), 공식 문서 레퍼런스.");
 out.push("> **출처 주의** — 출제 이력 기록이 아니다. 공개 정리글에서 반복 등장하는 **주제**를 기준으로 고른 문항이고, 문항 문장과 답은 직접 썼다. [출처](#출처) 참고.");
 out.push("> 필터·검색·셀프 퀴즈가 되는 웹 페이지: **https://david-myeonghan.github.io/frontend-interview-kit/**");
 out.push("");
@@ -38,6 +47,8 @@ out.push("- 레벨 분포: 주니어 " + count("jr") + " / 미들 " + count("mid
 out.push("- 레퍼런스 링크 " + new Set(Q.flatMap((q) => q.r.map((r) => r[1]))).size + "개 (전부 HTTP 200 확인)");
 out.push("- 꼬리질문 " + Q.reduce((a, q) => a + (q.p ? q.p.length : 0), 0) + "단계 — 문항마다 면접관이 파고드는 질문과 단계별 기대 답");
 out.push("- 코드 예제 " + Q.reduce((a, q) => a + (q.code ? q.code.length : 0), 0) + "개 — 코드로 답해야 하는 " + Q.filter((q) => q.code && q.code.length).length + "문항에 동작하는 예제 첨부");
+out.push("- 딥다이브 대본 " + TRACKS.length + "개(" + TRACKS.reduce((a, t) => a + t.steps.length, 0) + "단계) — 한 주제를 20~45분 파는 면접관 대본. 단계별 기대 답 · 레벨 기준선 · 분기(잘 답하면/막히면)");
+out.push("- 심층 답 " + Q.filter((q) => q.deep).length + "문항 — 원리 · 증상 · 측정 · 반례 · 스펙 근거(절 링크)");
 out.push("");
 out.push("## 쓰는 법");
 out.push("");
@@ -58,6 +69,33 @@ out.push("```bash");
 out.push("node tools/export.mjs   # 문항을 고친 뒤 실행");
 out.push("```");
 out.push("");
+out.push("## 딥다이브 대본");
+out.push("");
+out.push("한 주제를 20~45분 파는 면접관 대본. 각 단계에 기대 답, 레벨별 기준선(주니어/미들/시니어가 어디까지 답하면 되는지), 분기(잘 답하면 → 심화 / 막히면 → 힌트·우회)가 있다. 단계마다 연결된 문항의 핵심 답·코드·심층 답을 함께 본다. 웹 페이지 상단 `딥다이브 대본` 탭에서 문항과 왕복하며 볼 수 있다.");
+out.push("");
+for (const t of TRACKS) {
+  out.push("### " + t.title);
+  out.push("");
+  out.push("*" + t.minutes + "분 · " + t.lv.map((l) => LV[l]).join(" · ") + " · " + t.steps.length + "단계*");
+  out.push("");
+  out.push(md(t.intro));
+  out.push("");
+  out.push("근거: " + t.r.map(([a, u]) => "[" + a + "](" + u + ")").join(" · "));
+  out.push("");
+  t.steps.forEach((st, i) => {
+    const q = st.node != null ? Q[st.node] : null;
+    out.push("#### " + (i + 1) + ". [" + st.phase + "] " + md(st.q));
+    out.push("");
+    if (q) out.push("연결 문항: **" + md(q.q) + "**");
+    if (q) out.push("");
+    out.push("- **기대 답** — " + md(st.expect));
+    out.push("- **기준선** — 주니어: " + md(st.bar.jr) + " / 미들: " + md(st.bar.mid) + " / 시니어: " + md(st.bar.sr));
+    out.push("- **잘 답하면 →** " + md(st.good));
+    out.push("- **막히면 →** 힌트: " + md(st.weak.hint) + " / 우회: " + md(st.weak.detour));
+    if (q) out.push("- **레퍼런스** — " + q.r.map(([a, u]) => "[" + a + "](" + u + ")").join(" · "));
+    out.push("");
+  });
+}
 out.push("## 문항");
 out.push("");
 for (const [key, label] of Object.entries(CATS)) {
@@ -78,6 +116,19 @@ for (const [key, label] of Object.entries(CATS)) {
       out.push("```" + lang);
       out.push(src);
       out.push("```");
+      out.push("");
+    }
+    if (it.deep) {
+      out.push("<details><summary><b>심층 답</b> — 원리 · 증상 · 측정 · 반례 · 스펙 근거</summary>");
+      out.push("");
+      out.push("- **왜 그렇게 동작하나** — " + md(it.deep.why));
+      out.push("- **실무에서 어떻게 드러나나** — " + md(it.deep.symptom));
+      out.push("- **어떻게 확인하나** — " + md(it.deep.measure));
+      out.push("- **안 맞는 경우** — " + md(it.deep.counter));
+      out.push("- **스펙·문서 근거**");
+      for (const [t, u, note] of it.deep.spec) out.push("  - [" + t + "](" + u + ") — " + md(note));
+      out.push("");
+      out.push("</details>");
       out.push("");
     }
     out.push("- ✅ **좋은 신호** — " + md(it.good));

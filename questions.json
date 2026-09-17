@@ -61,7 +61,8 @@
           "js",
           "function createCounter() {\n  let count = 0;                      // 외부에서 접근 불가, 함수만 기억한다\n  return { inc: () => ++count, get: () => count };\n}\n\n// 누수: 클로저가 큰 객체·DOM 을 붙잡은 채 리스너가 남는다\nfunction attach(node, hugeData) {\n  const onClick = () => console.log(hugeData.length);  // hugeData 를 계속 참조\n  node.addEventListener(\"click\", onClick);\n  return () => node.removeEventListener(\"click\", onClick);  // 해제 함수 필수\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "js",
@@ -91,7 +92,8 @@
           "`NaN`(Object.is 가 true), `+0/-0`(Object.is 가 false). 나머지는 같다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "js",
@@ -121,7 +123,8 @@
           "실행 순서를 숨기므로 의존하지 않는다. 읽는 순서와 실행 순서를 맞추는 편이 낫다는 판단이 나와야 한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "js",
@@ -170,7 +173,30 @@
           "js",
           "// 나쁨: 마이크로태스크가 자기를 재등록 → 렌더 기회가 오지 않는다\nfunction drain(queue) {\n  if (!queue.length) return;\n  process(queue.pop());\n  Promise.resolve().then(() => drain(queue));\n}\n\n// 좋음: 프레임에 양보한다\nasync function drainYielding(queue) {\n  while (queue.length) {\n    process(queue.pop());\n    if (navigator.scheduling?.isInputPending?.()) await scheduler.yield();\n  }\n}"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "HTML 표준의 이벤트 루프 처리 모델은 '태스크 하나 실행 → 마이크로태스크 체크포인트(큐가 빌 때까지) → 렌더링 업데이트 기회' 순서로 정의된다. Promise 반응은 ECMAScript 의 Job 이고, 호스트(브라우저)는 이를 마이크로태스크 큐에 넣는다. setTimeout 콜백은 타이머 태스크 소스의 태스크라 다음 순번을 기다린다.",
+        "symptom": "then 안에서 화면이 갱신되길 기대했는데 안 보이거나, 무한 마이크로태스크 재등록으로 탭이 멈춘다. await 뒤 코드가 'setTimeout 0 보다 먼저' 실행돼 순서 가정이 깨진다.",
+        "measure": "Performance 패널에서 Long Task 로 잡히고 프레임이 비어 있다. 마이크로태스크 기아는 호출 스택 상단에 같은 함수가 반복 등장한다. console.log 순서 실험으로 즉시 재현 가능.",
+        "counter": "Node.js 는 process.nextTick 큐가 Promise 큐보다 먼저 비워져 순서가 브라우저와 다르다. 또 requestAnimationFrame 은 태스크가 아니라 렌더링 업데이트 단계에 묶여 있어 '매크로태스크'로 분류하면 틀린다.",
+        "spec": [
+          [
+            "HTML 표준 §8.1.7.3 — 이벤트 루프 처리 모델",
+            "https://html.spec.whatwg.org/multipage/webappapis.html#event-loop-processing-model",
+            "태스크 1개 실행 후 마이크로태스크 체크포인트를 수행하고, 이후 렌더링 업데이트 기회로 진행한다"
+          ],
+          [
+            "HTML 표준 — 타이머",
+            "https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#timers",
+            "setTimeout 은 타이머 태스크 소스에 태스크를 큐잉한다(중첩 5회 이상은 최소 4ms)"
+          ],
+          [
+            "ECMAScript — Jobs",
+            "https://tc39.es/ecma262/#sec-jobs-and-host-operations-to-enqueue-jobs",
+            "Promise 반응은 Job 으로 호스트가 큐잉한다"
+          ]
+        ]
+      }
     },
     {
       "c": "js",
@@ -206,7 +232,8 @@
           "js",
           "const timer = {\n  label: \"upload\",\n  report() { console.log(this.label); },\n};\n\ntimer.report();                       // \"upload\"  — 점 앞 객체가 this\nsetTimeout(timer.report, 0);          // undefined — 참조만 떼어 냈다\nsetTimeout(() => timer.report(), 0);  // \"upload\"  — 호출 형태를 유지\nsetTimeout(timer.report.bind(timer), 0);  // \"upload\""
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "js",
@@ -251,7 +278,8 @@
           "js",
           "// 전량 복사 대신 구조적 공유 — 참조 비교로 리렌더를 가를 수 있다\nconst next = {\n  ...state,\n  user: { ...state.user, name: \"다윗\" },\n};\nnext.tags === state.tags;   // true — 바뀌지 않은 가지는 같은 참조"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "js",
@@ -305,7 +333,30 @@
           "js",
           "// race 로 타임아웃을 만들면 원 요청이 계속 살아 있다\nconst res = await fetch(\"/api/cases\", { signal: AbortSignal.timeout(5000) });\n\n// 여러 신호를 합칠 때\nconst signal = AbortSignal.any([userCancel.signal, AbortSignal.timeout(5000)]);"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "Promise 조합자는 '결과를 어떻게 모을지'만 정한다. all 은 첫 거부에서 즉시 거부되지만 나머지 Promise 의 실행을 멈출 수단이 없다(Promise 는 취소 불가). 취소는 fetch 같은 API 가 받아 주는 AbortSignal 의 책임이다.",
+        "symptom": "대시보드 위젯 하나가 죽으면 전체가 에러 화면. race 로 만든 타임아웃 후에도 원 요청이 계속 대역폭을 쓴다.",
+        "measure": "네트워크 패널에서 타임아웃 이후에도 요청이 pending 인지 확인. 부분 실패 시 화면 상태를 e2e 로 고정한다.",
+        "counter": "전부 성공해야만 의미 있는 트랜잭션형 화면(결제 확인)은 all 이 맞다. 부분 성공을 보여 주면 오히려 오해를 만든다.",
+        "spec": [
+          [
+            "MDN Promise.allSettled",
+            "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled",
+            "모든 Promise 가 settle 된 뒤 각 결과(status·value/reason)를 반환한다"
+          ],
+          [
+            "MDN AbortSignal.timeout()",
+            "https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static",
+            "지정 시간 후 자동으로 abort 되는 신호"
+          ],
+          [
+            "MDN AbortSignal.any()",
+            "https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/any_static",
+            "여러 신호 중 하나라도 abort 되면 abort"
+          ]
+        ]
+      }
     },
     {
       "c": "js",
@@ -346,7 +397,25 @@
           "js",
           "// 1) await 누락 → unhandled rejection\nsave(payload);                 // 실패해도 호출부는 모른다\nawait save(payload);\n\n// 2) forEach + async → 반환된 Promise 가 버려진다\nitems.forEach(async (i) => await save(i));          // 나쁨\nawait Promise.all(items.map((i) => save(i)));       // 좋음\n\n// 3) 타이머 콜백의 throw 는 바깥 try/catch 가 못 잡는다\ntry { setTimeout(() => { throw new Error(\"boom\"); }, 0); } catch { /* 안 잡힌다 */ }\n\n// 4) 마지막 그물\naddEventListener(\"unhandledrejection\", (e) => report(e.reason));\naddEventListener(\"error\", (e) => report(e.error));"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "Promise 거부는 예외가 아니라 '값'이다. 호출부가 await/then/catch 로 소비하지 않으면 그 거부는 어디에도 전달되지 않고 호스트의 unhandledrejection 추적으로만 남는다. forEach 는 콜백 반환값을 버리므로 async 콜백의 Promise 도 버려진다. 타이머 콜백은 새 태스크에서 실행되어 호출 시점의 try/catch 스택과 무관하다.",
+        "symptom": "저장 실패가 화면에 안 보이고 콘솔에만 'Uncaught (in promise)' 가 남는다. 목록 일괄 처리가 일부만 되고 조용히 끝난다.",
+        "measure": "window.onunhandledrejection 핸들러에 카운터·리포팅을 달아 발생 빈도를 본다. DevTools 의 'Pause on uncaught exceptions' 로 발생 지점을 잡는다.",
+        "counter": "의도적으로 결과를 기다리지 않는 fire-and-forget(분석 이벤트 전송)은 있다. 그때도 .catch(report) 를 붙여 거부를 소비해야 전역 핸들러 노이즈와 구분된다.",
+        "spec": [
+          [
+            "MDN unhandledrejection 이벤트",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Window/unhandledrejection_event",
+            "거부 핸들러 없이 reject 된 Promise 를 전역으로 알린다"
+          ],
+          [
+            "MDN Array.prototype.forEach",
+            "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach",
+            "forEach 는 Promise 를 기다리지 않는다 — 콜백 반환값을 사용하지 않는다"
+          ]
+        ]
+      }
     },
     {
       "c": "js",
@@ -390,7 +459,8 @@
           "js",
           "const meta = new WeakMap();\n\nfunction track(node, info) {\n  meta.set(node, info);          // 강한 Map 이면 노드 제거 후에도 회수되지 않는다\n}\n\n// 노드가 DOM 에서 사라지고 다른 참조가 없으면 엔트리도 회수 대상\n// 단, 회수 시점은 보장되지 않는다 → 정리 로직의 유일한 수단으로 쓰지 않는다"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "render",
@@ -424,7 +494,30 @@
           "async 는 순서 보장이 없어 의존 스크립트가 먼저 실행되면 깨진다. 의존 관계가 있으면 defer 나 모듈을 쓴다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "HTML 파서는 스크립트를 만나면 실행이 끝날 때까지 멈춘다(스크립트가 document.write 로 문서를 바꿀 수 있어서). CSSOM 이 완성돼야 렌더 트리를 만들 수 있어 CSS 는 렌더를 막는다. defer 는 파싱 후 순서대로, async 는 다운로드 즉시 순서 없이 실행된다.",
+        "symptom": "head 의 큰 스크립트 때문에 첫 페인트가 늦다. async 스크립트 간 의존 순서가 뒤바뀌어 간헐 실패.",
+        "measure": "Performance 패널의 Parse HTML 이 스크립트 실행에 끊기는 구간, Coverage 로 사용되지 않는 CSS 비율, LCP 요소의 렌더 지연.",
+        "counter": "type=module 스크립트는 기본이 defer 동작이다. 인라인 임계 CSS 는 렌더 블로킹을 줄이지만 HTML 크기를 키워 TTFB 이후 첫 바이트 전달을 늦출 수 있다.",
+        "spec": [
+          [
+            "MDN Critical rendering path",
+            "https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Critical_rendering_path",
+            "DOM·CSSOM → 렌더 트리 → 레이아웃 → 페인트"
+          ],
+          [
+            "MDN script — defer/async",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script",
+            "defer 는 문서 파싱 후 순서대로, async 는 사용 가능 즉시 실행"
+          ],
+          [
+            "MDN 브라우저는 어떻게 동작하나",
+            "https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/How_browsers_work",
+            "내비게이션부터 컴포지팅까지의 단계"
+          ]
+        ]
+      }
     },
     {
       "c": "render",
@@ -458,7 +551,25 @@
           "페인트 영역 크기, 레이어 승격 여부, 같은 프레임의 JS 작업(레이아웃 강제 읽기)과 큰 DOM."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "스타일 변경이 기하(크기·위치)에 영향을 주면 레이아웃을 다시 계산하고 그 아래 단계가 모두 다시 실행된다. 색만 바뀌면 레이아웃을 건너뛰고 페인트부터, transform/opacity 는 컴포지터가 레이어를 합성만 하면 된다. 레이아웃 값을 읽을 때 대기 중인 스타일 변경이 있으면 브라우저는 즉시 레이아웃을 계산해야 한다(강제 동기 레이아웃).",
+        "symptom": "스크롤·애니메이션 중 프레임 드랍. 프로파일에 보라색 Layout 이 매 프레임 반복.",
+        "measure": "Performance 패널 Rendering 구간, 'Forced reflow' 경고, Layers 패널로 레이어 승격 상태.",
+        "counter": "transform 애니메이션도 레이어가 승격되지 않았거나 페인트 영역이 크면 느리다. will-change 를 상시 두면 GPU 메모리를 먹어 모바일에서 역효과.",
+        "spec": [
+          [
+            "web.dev 렌더링 성능",
+            "https://web.dev/articles/rendering-performance",
+            "스타일→레이아웃→페인트→컴포지트 파이프라인과 속성별 영향"
+          ],
+          [
+            "web.dev layout thrashing 피하기",
+            "https://web.dev/articles/avoid-large-complex-layouts-and-layout-thrashing",
+            "읽기-쓰기 교차가 강제 동기 레이아웃을 만든다"
+          ]
+        ]
+      }
     },
     {
       "c": "render",
@@ -488,7 +599,8 @@
           "target 이 내부 도형 노드라 선택자 매칭이 실패한다. closest 로 올려 판별해야 한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "render",
@@ -519,7 +631,8 @@
           "개발 모드에서 구독 수를 계측·단정하는 테스트, StrictMode 이중 마운트, 린트로 클린업 누락 검출."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "render",
@@ -549,7 +662,8 @@
           "주사율에 따라 속도가 달라진다. 경과 시간(delta) 기준으로 계산해야 한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "render",
@@ -591,7 +705,30 @@
           "입력·출력이 작고 기기 성능 분산이 큰 경우. 반대로 네트워크 왕복이 지배하면 클라이언트가 낫다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "메인 스레드는 JS 실행·스타일·레이아웃·페인트·입력 처리를 한 줄에서 처리한다. 50ms 를 넘는 태스크는 Long Task 로 정의되며 그동안 입력에 응답할 수 없다. Web Worker 는 별도 스레드지만 메시지 전달이 구조화 복제라 큰 데이터는 복사 비용이 든다. Transferable 은 소유권을 넘겨 복사를 피한다.",
+        "symptom": "클릭 후 화면이 잠깐 얼어붙고 INP 가 악화된다. 워커 도입 후 큰 배열을 매번 넘기면 오히려 느려진다.",
+        "measure": "Performance 패널의 Long Task 표시, PerformanceObserver('longtask') 로 필드 수집. 워커 왕복 시간을 performance.mark 로 측정.",
+        "counter": "작업이 DOM 에 강하게 결합되어 있으면 워커로 못 옮긴다. 이때는 청크 분할과 scheduler.yield 로 프레임에 양보하는 것이 맞다. 입력·출력이 작고 기기 편차가 크면 서버 이관이 더 낫다.",
+        "spec": [
+          [
+            "Long Tasks API (W3C)",
+            "https://w3c.github.io/longtasks/",
+            "50ms 를 초과하는 태스크를 long task 로 보고한다"
+          ],
+          [
+            "MDN Web Workers 사용",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers",
+            "postMessage 는 구조화 복제, Transferable 로 소유권 이전 가능"
+          ],
+          [
+            "MDN scheduler.yield()",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Scheduler/yield",
+            "메인 스레드에 양보한 뒤 우선순위를 유지하며 재개"
+          ]
+        ]
+      }
     },
     {
       "c": "css",
@@ -631,7 +768,8 @@
           "css",
           "*, *::before, *::after { box-sizing: border-box; }\n/* content-box: width 200 + padding 32 + border 2 = 실제 234 */\n/* border-box:  지정한 200 이 최종 너비 */\n\n.card { width: 200px; padding: 16px; border: 1px solid; }\n\n/* 마진 병합: 인접 형제의 수직 마진이 합쳐지지 않고 큰 값만 남는다 */\n.a { margin-bottom: 24px; }\n.b { margin-top: 16px; }            /* 간격은 40px 이 아니라 24px */\n\n/* 병합을 피하는 가장 단순한 방법 = 레이아웃이 간격을 소유한다 */\n.stack { display: flex; flex-direction: column; gap: 24px; }"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "css",
@@ -672,7 +810,8 @@
           "jsx",
           "// overflow:hidden 부모 밖으로 렌더\ncreatePortal(<Dropdown />, document.body);"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "css",
@@ -706,7 +845,8 @@
           "min-width:0 과 overflow-wrap 을 함께. flex 자식 기본 min-width:auto 가 원인이라는 답이 나와야 한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "css",
@@ -747,7 +887,8 @@
           "css",
           ".wrap { overflow: hidden; }       /* ① 조상 overflow → 스크롤 컨테이너가 바뀐다 */\n\n.header {\n  position: sticky;\n  /* top 미지정 → 임계점이 없어 붙지 않는다 ② */\n  top: env(safe-area-inset-top, 0px);\n}\n\n.section { height: auto; }        /* ③ 부모 높이에 여유가 없으면 고정 구간이 없다 */\n\n/* 앵커가 헤더에 가려지는 문제 */\n:target { scroll-margin-top: var(--header-h, 56px); }"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "css",
@@ -787,7 +928,8 @@
           "css",
           ".a { display: grid; place-items: center; }              /* 부모 높이 필요 */\n.b { display: flex; align-items: center; justify-content: center; }\n.c { position: absolute; inset: 0; margin: auto; width: 120px; height: 40px; }\n.d { position: absolute; top: 50%; left: 50%; translate: -50% -50%; }  /* 크기 몰라도 됨 */\n\n/* 모바일 뷰포트: 100vh 는 주소창을 포함해 잘린다 */\n.screen { min-height: 100dvh; }"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "css",
@@ -836,7 +978,8 @@
           "css",
           ":root {                          /* 완전한 라이트 팔레트 */\n  --bg: #ffffff; --fg: #131a24; --accent: #1f4d7a;\n}\n@media (prefers-color-scheme: dark) {\n  :root:not([data-theme=\"light\"]) {        /* 명시적 라이트 선택이 이긴다 */\n    --bg: #0f141a; --fg: #e7ecf2; --accent: #7fb3e0;\n  }\n}\n:root[data-theme=\"dark\"] { --bg: #0f141a; --fg: #e7ecf2; --accent: #7fb3e0; }\n\nbody { background: var(--bg); color: var(--fg); }   /* 컴포넌트는 토큰만 참조 */\n\n/* 안티패턴: 미디어 쿼리 안에만 정의된 색 → 조건이 어긋난 상태에서 미정의 */"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "net",
@@ -881,7 +1024,30 @@
           "http",
           "# 콘텐츠 해시가 붙은 정적 자산 — 1년 + immutable\nCache-Control: public, max-age=31536000, immutable\n\n# HTML 엔트리 — 매번 검증(새 배포 즉시 반영)\nCache-Control: no-cache\n\n# API 응답 — 짧게 캐시 + 재검증 허용\nCache-Control: private, max-age=0, stale-while-revalidate=60\nETag: \"c-42-7\"\n\n# CDN 만 더 오래 (브라우저와 분리)\nCache-Control: max-age=0, s-maxage=600"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "HTTP 캐싱(RFC 9111)은 응답의 신선도(max-age)와 재검증(ETag/Last-Modified → 304)으로 동작한다. immutable 은 신선 기간 중 재검증 요청조차 생략하게 한다. 콘텐츠 해시 파일명은 내용이 바뀌면 URL 이 바뀌므로 무기한 캐시가 안전하고, HTML 은 URL 이 고정이라 매번 검증해야 새 배포가 보인다.",
+        "symptom": "배포 후 사용자가 옛 HTML 로 새 청크를 요청해 404. 반대로 HTML 을 오래 캐시해 새 배포가 며칠간 안 보임.",
+        "measure": "네트워크 패널의 Size 열(memory/disk cache), 응답 헤더 Cache-Control·ETag, CDN 히트율.",
+        "counter": "개인화된 API 응답은 private 로 두고 공유 캐시를 막아야 한다. s-maxage 로 CDN 만 길게 두는 것은 무효화 경로가 있을 때만.",
+        "spec": [
+          [
+            "RFC 9111 — HTTP Caching",
+            "https://www.rfc-editor.org/rfc/rfc9111",
+            "신선도·재검증·Cache-Control 지시어 정의"
+          ],
+          [
+            "MDN HTTP 캐싱",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching",
+            "캐시 종류와 헤더 조합"
+          ],
+          [
+            "MDN ETag",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/ETag",
+            "조건부 요청과 304"
+          ]
+        ]
+      }
     },
     {
       "c": "net",
@@ -918,7 +1084,25 @@
           "http",
           "# 이 요청은 단순 요청이 아니다 → OPTIONS 가 먼저 나간다\nPOST /api/cases HTTP/1.1\nContent-Type: application/json          # 단순 요청 허용 타입이 아니다\nX-Request-Id: abc                        # 커스텀 헤더 하나로도 트리거\n\n# 서버 preflight 응답\nAccess-Control-Allow-Origin: https://app.example.com   # credentials 면 * 불가\nAccess-Control-Allow-Methods: POST, GET\nAccess-Control-Allow-Headers: Content-Type, X-Request-Id\nAccess-Control-Allow-Credentials: true\nAccess-Control-Max-Age: 600              # preflight 결과 캐시"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "CORS 는 Fetch 표준이 정의하는 브라우저 규칙이다. 동일 출처 정책을 완화해 서버가 응답 헤더로 허용 출처를 알린다. 요청이 '단순 요청' 조건(메서드·헤더·콘텐츠 타입)을 벗어나면 브라우저가 OPTIONS preflight 로 먼저 허가를 묻는다. 서버는 요청을 받지만 브라우저가 응답을 스크립트에 넘기지 않는다.",
+        "symptom": "curl 은 200, 브라우저는 'blocked by CORS policy'. OPTIONS 요청이 매 호출마다 나가 지연 두 배.",
+        "measure": "네트워크 패널에서 OPTIONS 요청과 그 응답 헤더(Allow-Origin·Allow-Headers·Max-Age). 본 응답에도 Allow-Origin 이 있는지.",
+        "counter": "CORS 는 보안 방어가 아니라 접근 허용 메커니즘이다. 서버 측 인증·CSRF 방어를 대체하지 않는다.",
+        "spec": [
+          [
+            "Fetch 표준 — CORS 프로토콜",
+            "https://fetch.spec.whatwg.org/#http-cors-protocol",
+            "preflight 조건과 응답 헤더 규칙"
+          ],
+          [
+            "MDN CORS",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS",
+            "단순 요청 조건·preflight·credentials 제약"
+          ]
+        ]
+      }
     },
     {
       "c": "net",
@@ -952,7 +1136,30 @@
           "큐에 모아 갱신 완료 후 재시도. 실패 시 일괄 로그아웃 경로를 정의한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "스크립트가 읽을 수 있는 저장소(localStorage·sessionStorage·일반 쿠키)는 XSS 한 번으로 탈취된다. HttpOnly 쿠키는 스크립트 접근을 차단하지만 요청에 자동 전송되므로 CSRF 대비가 필요하다. 짧은 액세스 토큰 + 회전 리프레시는 탈취 피해 창을 줄이고, 재사용 감지로 탈취를 드러낸다.",
+        "symptom": "XSS 사고 후 세션 대량 탈취. 다중 탭에서 리프레시 회전이 서로를 무효화해 랜덤 로그아웃.",
+        "measure": "토큰 저장 위치 인벤토리, 리프레시 재사용 감지 이벤트 수, 401 재시도 루프 발생 빈도.",
+        "counter": "서드파티 임베드 컨텍스트에서는 쿠키 정책(SameSite·파티셔닝) 때문에 쿠키 기반이 동작하지 않을 수 있어 흐름 자체를 바꿔야 한다.",
+        "spec": [
+          [
+            "OWASP 세션 관리 치트시트",
+            "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
+            "세션 ID 저장·쿠키 속성·만료 정책"
+          ],
+          [
+            "MDN Set-Cookie",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+            "HttpOnly·Secure·SameSite 속성"
+          ],
+          [
+            "OAuth 2.0 for Browser-Based Apps",
+            "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps",
+            "브라우저 앱의 토큰 저장·아키텍처 권고"
+          ]
+        ]
+      }
     },
     {
       "c": "net",
@@ -991,7 +1198,30 @@
           "메시지 브로커 기반 팬아웃, 세션 어피니티 또는 상태 외부화, 하트비트로 죽은 연결 정리."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "SSE 는 HTTP 위의 단방향 텍스트 스트림으로 자동 재연결과 Last-Event-ID 재개를 브라우저가 제공한다. WebSocket 은 양방향 저지연이지만 프록시·스케일아웃·하트비트를 직접 설계해야 한다. 폴링은 인프라가 단순하지만 지연과 빈 응답 비용이 있다.",
+        "symptom": "단방향 알림에 WebSocket 을 써서 로드밸런서 설정·재연결 로직을 직접 유지. 재접속 폭주로 서버 스파이크.",
+        "measure": "연결 수·재연결 빈도·유실 이벤트 수, 알림 도달 지연 분포.",
+        "counter": "HTTP/1.1 에서는 SSE 가 브라우저 동시 연결 한도를 하나 소모한다. HTTP/2 환경이면 문제가 줄어든다.",
+        "spec": [
+          [
+            "MDN Server-sent events 사용",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events",
+            "EventSource·자동 재연결·Last-Event-ID"
+          ],
+          [
+            "MDN WebSockets API",
+            "https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API",
+            "양방향 연결과 수명 관리"
+          ],
+          [
+            "MDN EventSource",
+            "https://developer.mozilla.org/en-US/docs/Web/API/EventSource",
+            "이벤트 스트림 클라이언트 API"
+          ]
+        ]
+      }
     },
     {
       "c": "net",
@@ -1026,7 +1256,8 @@
           "팝업·리다이렉트 방식 인증, Storage Access API, 또는 부모 도메인 하위 경로로 배치."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "sec",
@@ -1080,7 +1311,8 @@
           "js",
           "const SAFE = /^(https?:|mailto:|\\/)/i;\nconst href = SAFE.test(userUrl) ? userUrl : \"#\";   // javascript: 차단"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "sec",
@@ -1115,7 +1347,8 @@
           "요청마다 nonce 를 새로 발급해야 하므로 정적 캐시와 충돌한다. hash 방식이나 엣지에서 주입을 고려."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "sec",
@@ -1145,7 +1378,30 @@
           "자동 전송이 없어 위험은 크게 준다. 대신 XSS 노출과 토큰 저장 문제가 커진다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "SameSite=Lax 는 크로스 사이트 하위 요청(이미지·fetch·폼 POST)에 쿠키를 붙이지 않지만, 최상위 내비게이션 GET 에는 붙인다. 따라서 상태를 바꾸는 GET, 서브도메인 간 공격(same-site 로 취급), Lax 를 지원하지 않는 클라이언트, 쿠키가 아닌 인증 경로가 남는다.",
+        "symptom": "'브라우저가 막아 준다'고 CSRF 토큰을 제거한 뒤 서브도메인 XSS 가 CSRF 로 승격.",
+        "measure": "상태 변경 엔드포인트가 GET 을 받는지 스캔. Origin/Sec-Fetch-Site 검증 로그.",
+        "counter": "Authorization 헤더 기반 API 는 자동 전송이 없어 CSRF 위험이 크게 준다. 대신 토큰 저장 문제가 생긴다.",
+        "spec": [
+          [
+            "OWASP CSRF 방어 치트시트",
+            "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html",
+            "토큰 패턴·SameSite·Origin 검증의 조합"
+          ],
+          [
+            "RFC 6265bis (초안) — SameSite",
+            "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis",
+            "Strict/Lax/None 동작 정의"
+          ],
+          [
+            "web.dev SameSite 쿠키 설명",
+            "https://web.dev/articles/samesite-cookies-explained",
+            "Lax 기본값과 예외"
+          ]
+        ]
+      }
     },
     {
       "c": "sec",
@@ -1180,7 +1436,8 @@
           "iframe·워커 격리, 지연 로드, 실패 시 무시하는 경계. CSP·SRI 로 변조 차단."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "react",
@@ -1214,7 +1471,25 @@
           "커밋 비용이 작고 프레임 예산 안이면 문제 아니다. 지표(INP·프레임)로 판단한다는 답이 좋다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "React 렌더는 컴포넌트 함수를 호출해 다음 UI 를 계산하는 단계이고, 커밋은 그 차이를 DOM 에 적용하는 단계다. 부모가 렌더되면 자식 함수도 기본적으로 다시 호출되며, 결과가 같으면 커밋에서 DOM 변경은 없다. 따라서 '리렌더 = DOM 조작'이 아니다.",
+        "symptom": "Profiler 에 자식 전부가 렌더된다고 표시되지만 실제 화면 지연은 없음. 반대로 커밋이 큰 트리에서 프레임 드랍.",
+        "measure": "React DevTools Profiler 의 'Why did this render?', Highlight updates. 커밋 시간과 렌더 시간을 구분해 본다.",
+        "counter": "렌더 비용이 작으면 memo 로 끊는 비교 비용이 더 클 수 있다. 문제는 지표(INP·프레임)로 판단한다.",
+        "spec": [
+          [
+            "react.dev Render and Commit",
+            "https://react.dev/learn/render-and-commit",
+            "트리거 → 렌더 → 커밋 세 단계, 렌더는 순수해야 한다"
+          ],
+          [
+            "react.dev memo",
+            "https://react.dev/reference/react/memo",
+            "props 가 같으면 리렌더를 건너뛴다"
+          ]
+        ]
+      }
     },
     {
       "c": "react",
@@ -1254,7 +1529,25 @@
           "jsx",
           "// 나쁨: 앞에 항목을 추가하면 모든 key 가 밀린다\n{rows.map((row, i) => <Row key={i} row={row} />)}\n\n// 좋음: 안정적인 id\n{rows.map((row) => <Row key={row.id} row={row} />)}\n\n// 의도적 초기화: key 를 바꿔 서브트리를 재마운트\n<EditForm key={caseId} caseId={caseId} />"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "React 는 key 로 형제 사이에서 같은 요소를 식별해 상태와 DOM 을 재사용한다. 인덱스를 key 로 쓰면 데이터가 움직여도 key 는 위치에 고정되어 다른 데이터에 이전 상태가 붙는다. key 가 바뀌면 React 는 다른 요소로 보고 언마운트·재마운트한다.",
+        "symptom": "첫 항목을 삭제하면 다음 항목 입력창에 이전 값이 남는다. 정렬 시 애니메이션이 엉뚱한 행에 붙는다.",
+        "measure": "입력값이 있는 목록에서 삭제·정렬 후 값 위치를 e2e 로 검증. React DevTools 로 인스턴스 유지 여부 확인.",
+        "counter": "절대 재정렬되지 않는 정적 목록에서는 인덱스도 무해하다. key 변경은 상태 초기화 수단으로 유용하지만 이펙트가 재실행되고 스크롤·포커스가 초기화된다.",
+        "spec": [
+          [
+            "react.dev 리스트 렌더링 — key",
+            "https://react.dev/learn/rendering-lists",
+            "key 는 형제 간 유일·안정적이어야 하며 인덱스는 재정렬 시 버그를 만든다"
+          ],
+          [
+            "react.dev 상태 보존과 초기화",
+            "https://react.dev/learn/preserving-and-resetting-state",
+            "key 를 바꾸면 상태가 초기화된다"
+          ]
+        ]
+      }
     },
     {
       "c": "react",
@@ -1304,7 +1597,30 @@
           "jsx",
           "// 나쁨: 파생 값을 이펙트로 동기화\nuseEffect(() => setFullName(first + \" \" + last), [first, last]);\n\n// 좋음: 렌더 중 계산\nconst fullName = first + \" \" + last;"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "이펙트는 렌더 시점의 값을 클로저로 잡는다. 의존성을 비우면 첫 렌더의 값에 고정된다. 비동기 응답은 언마운트·재실행 이후에 도착할 수 있어, 클린업에서 취소하지 않으면 오래된 응답이 최신 상태를 덮는다. React 는 이펙트 재실행 전과 언마운트 시 클린업을 호출한다.",
+        "symptom": "검색어를 빠르게 바꾸면 이전 결과가 나중에 표시된다. 언마운트된 컴포넌트에 setState 경고. StrictMode 에서 구독이 두 개 붙는다.",
+        "measure": "네트워크 스로틀링으로 응답 순서를 뒤집어 재현. React DevTools 로 이펙트 재실행 횟수 확인. AbortError 카운트를 로깅해 취소가 실제로 일어나는지 본다.",
+        "counter": "파생 값 계산이나 이벤트 대응은 이펙트가 아니다(렌더 중 계산·핸들러). 데이터 페칭은 쿼리 라이브러리로 올리면 컴포넌트에서 취소 코드를 반복하지 않는다.",
+        "spec": [
+          [
+            "react.dev useEffect — 클린업과 의존성",
+            "https://react.dev/reference/react/useEffect",
+            "의존성이 바뀌면 이전 이펙트의 클린업을 실행한 뒤 새 이펙트를 실행한다"
+          ],
+          [
+            "react.dev You Might Not Need an Effect",
+            "https://react.dev/learn/you-might-not-need-an-effect",
+            "렌더 중 계산 가능한 것과 이벤트로 처리할 것은 이펙트가 아니다"
+          ],
+          [
+            "MDN AbortController",
+            "https://developer.mozilla.org/en-US/docs/Web/API/AbortController",
+            "fetch 에 signal 을 넘겨 진행 중 요청을 중단"
+          ]
+        ]
+      }
     },
     {
       "c": "react",
@@ -1344,7 +1660,25 @@
           "jsx",
           "const Row = memo(function Row({ item, onSelect }) { /* … */ });\n\nfunction List({ items }) {\n  // onSelect 를 매 렌더 새로 만들면 memo(Row) 가 전부 무효화된다\n  const onSelect = useCallback((id) => select(id), []);\n  // 비싼 계산만 메모\n  const sorted = useMemo(() => [...items].sort(byName), [items]);\n\n  return sorted.map((item) => <Row key={item.id} item={item} onSelect={onSelect} />);\n}"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "useMemo/useCallback 은 의존성이 같으면 이전 값을 재사용해 참조 동일성을 유지한다. 참조가 의미 있는 곳(memo 자식의 props, 이펙트 의존성)에서만 효과가 있고, 그 외에는 비교·저장 비용만 든다. 의존성이 틀리면 오래된 값을 쓰는 버그가 된다.",
+        "symptom": "memo 자식이 인라인 콜백 때문에 매번 렌더. 반대로 과도한 메모로 코드가 읽기 어렵고 stale 값 버그.",
+        "measure": "Profiler 에서 memo 가 실제로 렌더를 막는지(props 변경 사유) 확인. 메모 제거 전후 렌더 시간 비교.",
+        "counter": "React Compiler 가 자동 메모이제이션을 하면 수동 메모의 필요가 크게 줄지만, 외부 라이브러리에 넘기는 참조 안정성이나 비싼 계산 판단은 남는다.",
+        "spec": [
+          [
+            "react.dev useMemo",
+            "https://react.dev/reference/react/useMemo",
+            "비싼 계산 결과를 캐시; 성능 최적화로만 취급"
+          ],
+          [
+            "react.dev useCallback",
+            "https://react.dev/reference/react/useCallback",
+            "memo 된 자식이나 이펙트 의존성에 넘길 함수 참조를 유지"
+          ]
+        ]
+      }
     },
     {
       "c": "react",
@@ -1386,7 +1720,25 @@
           "jsx",
           "// 새 배열을 반환하는 selector → 매 렌더 변경 판정(루프 위험)\nconst open = useStore((s) => s.items.filter((i) => i.open));           // 나쁨\nconst openCount = useStore((s) => s.items.reduce((n, i) => n + (i.open ? 1 : 0), 0));  // 원시값"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "Context 는 값이 바뀌면 그 Context 를 읽는 모든 컴포넌트를 리렌더한다. 부분 구독이 없다. Provider value 가 매 렌더 새 객체면 '항상 바뀐 것'이다. selector 기반 외부 스토어는 useSyncExternalStore 로 선택한 값이 바뀔 때만 리렌더한다.",
+        "symptom": "전역 Context 하나에 사용자·테마·알림을 넣었는데 알림 하나 바뀔 때 앱 전체 렌더.",
+        "measure": "Profiler 로 리렌더 범위와 사유(context changed). value 참조 변경 여부를 로그로 확인.",
+        "counter": "자주 안 바뀌는 값(테마·로케일)은 Context 가 적절하다. 스토어로 옮겨도 selector 가 새 참조를 반환하면 같은 문제가 재발한다.",
+        "spec": [
+          [
+            "react.dev Reducer 와 Context 로 확장",
+            "https://react.dev/learn/scaling-up-with-reducer-and-context",
+            "상태와 dispatch 를 별도 Context 로 분리"
+          ],
+          [
+            "react.dev useSyncExternalStore",
+            "https://react.dev/reference/react/useSyncExternalStore",
+            "외부 스토어 구독; 스냅샷이 바뀔 때만 리렌더"
+          ]
+        ]
+      }
     },
     {
       "c": "react",
@@ -1420,7 +1772,25 @@
           "리페치 폭증과 깜빡임. 필요한 범위만 갱신하는 키 설계가 답."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "서버 데이터는 원본이 서버에 있는 사본이다. 사본의 문제는 수명·재검증·무효화·경합이며, 이는 UI 상태(열림/선택)와 성격이 다르다. 사본을 전역 스토어에 다시 복사하면 진실이 두 개가 되어 동기화 코드가 늘어난다.",
+        "symptom": "목록 수정 후 상세가 옛 값. 새로고침하면 맞는데 SPA 이동 중엔 어긋남.",
+        "measure": "같은 엔티티가 저장된 위치를 세어 본다. 수정 후 다른 화면 값을 e2e 로 검증.",
+        "counter": "오프라인 우선 앱은 로컬 DB 가 원본이고 서버가 사본인 역전 구조다. 이때는 캐시 라이브러리보다 동기화 엔진이 필요하다.",
+        "spec": [
+          [
+            "TanStack Query — 쿼리 키",
+            "https://tanstack.com/query/latest/docs/framework/react/guides/query-keys",
+            "서버 데이터를 키로 식별하고 캐시·재검증을 관리"
+          ],
+          [
+            "react.dev 상태 관리",
+            "https://react.dev/learn/managing-state",
+            "상태를 어디에 둘지와 구조화 원칙"
+          ]
+        ]
+      }
     },
     {
       "c": "react",
@@ -1451,7 +1821,8 @@
           "일시적 UI 상태(열림·호버), 민감 값, 복원 의미 없는 입력 중간값."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "react",
@@ -1486,7 +1857,8 @@
           "셸 이전에 판정해 리다이렉트한다. 스트림 시작 후에는 상태 코드를 바꿀 수 없다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "react",
@@ -1522,7 +1894,8 @@
           "jsx",
           "// 나쁨: 멱등하지 않다 — 개발에서 이벤트가 두 번 간다\nuseEffect(() => { track(\"case_opened\", { caseId }); }, [caseId]);\n\n// 좋음: 전송 계층에서 중복 제거 키를 쓴다\nuseEffect(() => {\n  const key = \"case_opened:\" + caseId;\n  if (sentOnce.has(key)) return;\n  sentOnce.add(key);\n  track(\"case_opened\", { caseId });\n}, [caseId]);\n\n// 구독형은 클린업만 제대로 두면 이중 호출에 안전하다\nuseEffect(() => {\n  const sub = socket.subscribe(caseId, onMessage);\n  return () => sub.unsubscribe();\n}, [caseId]);"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "react",
@@ -1552,7 +1925,8 @@
           "상태 소유권이 잘못 배치된 신호. 선언적 props 로 표현 가능한지 다시 본다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "react",
@@ -1599,7 +1973,8 @@
           "서버에서 최종 검증하고 결과를 상태로 돌려준다. 클라이언트 검증은 UX 용 선행 검사."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "react",
@@ -1630,7 +2005,8 @@
           "경계 위치가 잘못됐다는 신호. 데이터 로딩을 상위로 올리고 상호작용 단위를 다시 자른다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "state",
@@ -1665,7 +2041,30 @@
           "이후 항목의 전제가 깨질 수 있어 중단하고 사용자에게 알린다. 자동 스킵은 데이터 불일치를 만든다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "낙관적 업데이트는 서버 확정 전에 UI 를 바꾸는 것이라 실패·경합·재시도 세 가지를 설계해야 안전하다. 롤백 스냅샷은 실패용, 서버 응답 재조정은 서버가 부여한 값(id·시각)용, 멱등 키는 재시도 중복 방지용이다.",
+        "symptom": "두 번 눌러 좋아요가 3이 되거나, 실패했는데 UI 는 성공 상태로 남음.",
+        "measure": "실패 주입(네트워크 차단) 후 UI 복귀 e2e, 연속 클릭 시 최종 상태 검증, 서버 중복 생성 카운트.",
+        "counter": "결제·삭제처럼 되돌릴 수 없는 작업은 낙관적으로 표시하지 않는다. 확정 후 반영이 맞다.",
+        "spec": [
+          [
+            "TanStack Query — 낙관적 업데이트",
+            "https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates",
+            "onMutate 스냅샷·onError 롤백·onSettled 재검증"
+          ],
+          [
+            "react.dev useOptimistic",
+            "https://react.dev/reference/react/useOptimistic",
+            "액션 진행 중 임시 상태 표시"
+          ],
+          [
+            "IETF Idempotency-Key 헤더 초안",
+            "https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header",
+            "재시도 중복 방지 키"
+          ]
+        ]
+      }
     },
     {
       "c": "state",
@@ -1700,7 +2099,25 @@
           "구독 기반으로 밀어 넣고 캐시는 그 결과를 받는 저장소로 둔다. 폴링 주기를 줄이는 것은 비용만 늘린다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "캐시 무효화는 키 설계에 달렸다. 계층 키(엔티티 → 파라미터)를 쓰면 접두 일치로 부분 무효화가 가능하다. 변경 응답으로 캐시를 직접 갱신(write-through)하면 리페치 없이 일관성을 얻고, 무효화는 응답이 모르는 파생 데이터에만 쓴다.",
+        "symptom": "수정 후 전량 invalidate 로 요청 폭증과 깜빡임. 반대로 무효화 누락으로 옛 값.",
+        "measure": "수정 1회당 발생 요청 수, 캐시 히트율, 화면 일관성 e2e.",
+        "counter": "서버가 변경의 파생 효과(집계·정렬)를 함께 돌려주지 않으면 write-through 만으로 부족해 관련 키 무효화가 필요하다.",
+        "spec": [
+          [
+            "TanStack Query — 쿼리 무효화",
+            "https://tanstack.com/query/latest/docs/framework/react/guides/query-invalidation",
+            "키 접두 일치로 관련 쿼리를 stale 처리하고 재페치"
+          ],
+          [
+            "TanStack Query — 쿼리 키",
+            "https://tanstack.com/query/latest/docs/framework/react/guides/query-keys",
+            "계층 키 설계"
+          ]
+        ]
+      }
     },
     {
       "c": "state",
@@ -1730,7 +2147,25 @@
           "커서 기준 값이 사라지면 서버가 다음 유효 지점으로 보정해야 한다. 클라이언트는 중복·누락 판정 로직을 둔다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "페이지 단위 캐시에서 항목 하나를 바꾸면 해당 페이지 배열의 그 항목만 교체하면 된다. 정규화 캐시면 엔티티만 바꾸면 모든 페이지가 따라온다. 정렬 키가 바뀌는 수정은 페이지 경계를 흔들어 서버 커서와 어긋난다.",
+        "symptom": "수정 후 전체 리페치로 스크롤이 맨 위로. 정렬 기준 수정 뒤 항목이 두 페이지에 동시에 보임.",
+        "measure": "수정 1회당 요청 수, 스크롤 위치 유지 여부 e2e, 페이지 간 id 중복 검사.",
+        "counter": "수정이 드물고 목록이 짧으면 전체 리페치가 가장 단순하고 안전하다. 최적화는 빈도와 길이가 정당화할 때.",
+        "spec": [
+          [
+            "TanStack Query — 무한 쿼리",
+            "https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries",
+            "페이지 배열 구조와 setQueryData 갱신"
+          ],
+          [
+            "TanStack Query — 쿼리 무효화",
+            "https://tanstack.com/query/latest/docs/framework/react/guides/query-invalidation",
+            "부분 무효화와 재페치"
+          ]
+        ]
+      }
     },
     {
       "c": "ts",
@@ -1770,7 +2205,8 @@
           "ts",
           "function handle(input: unknown) {\n  // input.trim();            // 컴파일 에러 — 검사 없이는 아무 연산도 못 한다\n  if (typeof input === \"string\") input.trim();      // 여기서만 string\n}\n\nfunction isCase(v: unknown): v is { id: string; state: string } {\n  return typeof v === \"object\" && v !== null\n    && typeof (v as Record<string, unknown>).id === \"string\"\n    && typeof (v as Record<string, unknown>).state === \"string\";\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "ts",
@@ -1816,7 +2252,8 @@
           "ts",
           "const stub = Object.assign({}, base, { state: \"DESIGNED\" }) satisfies Partial<Case>;"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "ts",
@@ -1856,7 +2293,8 @@
           "ts",
           "type CaseId = string;\ntype UserId = string;\nfunction open(id: CaseId) {}\nopen(\"u_1\" as UserId);                      // 통과 — 모양이 같다\n\n// branded 타입으로 분리\ndeclare const brand: unique symbol;\ntype Branded<T, B> = T & { readonly [brand]: B };\ntype CaseId2 = Branded<string, \"CaseId\">;\n\nconst toCaseId = (s: string): CaseId2 => s as CaseId2;   // 변환 함수만 통과\nfunction open2(id: CaseId2) {}\n// open2(\"u_1\");                            // 컴파일 에러"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "ts",
@@ -1897,7 +2335,8 @@
           "ts",
           "import { z } from \"zod\";\n\nconst Case = z.object({\n  id: z.string(),\n  state: z.enum([\"IMPORTED\", \"DESIGNED\"]),\n  updatedAt: z.coerce.date(),\n});\ntype Case = z.infer<typeof Case>;           // 스키마가 단일 출처\n\nexport async function fetchCase(id: string): Promise<Case> {\n  const res = await fetch(\"/api/case/\" + id);\n  const parsed = Case.safeParse(await res.json());\n  if (!parsed.success) {\n    report(\"case_parse_failed\", parsed.error.issues);   // 조용히 넘기지 않는다\n    throw new Error(\"invalid case payload\");\n  }\n  return parsed.data;\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "perf",
@@ -1939,7 +2378,8 @@
           "기기·네트워크·지역·라우트별. 평균 하나로는 악화 구간이 숨는다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "perf",
@@ -1993,7 +2433,30 @@
           "js",
           "import { onLCP } from \"web-vitals/attribution\";\n\nonLCP(({ value, attribution }) => {\n  report(\"lcp\", {\n    value,\n    element: attribution.element,\n    ttfb: attribution.timeToFirstByte,\n    loadDelay: attribution.resourceLoadDelay,\n    loadTime: attribution.resourceLoadDuration,\n    renderDelay: attribution.elementRenderDelay,\n  });\n});"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "LCP 는 뷰포트 안 가장 큰 콘텐츠 요소의 렌더 시점이다. 이미지라면 '요청 시작 지연 → 다운로드 → 렌더' 각 구간이 합산되고, HTML 파싱 순서·우선순위 힌트·지연 로딩 여부가 요청 시작 시점을 좌우한다.",
+        "symptom": "히어로 이미지가 다른 이미지 뒤에 요청된다. lazy 가 걸려 뷰포트 판정 후에야 로드. 폰트 대기로 텍스트 LCP 지연.",
+        "measure": "web-vitals attribution 의 timeToFirstByte·resourceLoadDelay·resourceLoadDuration·elementRenderDelay. 네트워크 워터폴에서 LCP 자원의 시작 순번.",
+        "counter": "preload 를 여러 개 걸면 대역폭 경쟁으로 정작 중요한 자원이 늦어진다. 라우트마다 LCP 요소가 다르면 공통 원인(셸 렌더·폰트)을 먼저 본다.",
+        "spec": [
+          [
+            "Largest Contentful Paint API (W3C)",
+            "https://w3c.github.io/largest-contentful-paint/",
+            "뷰포트 내 최대 콘텐츠 요소의 렌더 시각을 보고"
+          ],
+          [
+            "web.dev LCP 최적화",
+            "https://web.dev/articles/optimize-lcp",
+            "LCP 를 네 하위 구간으로 분해해 최적화"
+          ],
+          [
+            "web.dev fetchpriority",
+            "https://web.dev/articles/fetch-priority",
+            "리소스 우선순위를 명시적으로 지정"
+          ]
+        ]
+      }
     },
     {
       "c": "perf",
@@ -2028,7 +2491,8 @@
           "변경 빈도와 진입 경로. 공통 라이브러리와 기능 코드를 섞으면 캐시 히트율이 떨어진다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "perf",
@@ -2067,7 +2531,30 @@
           "성능 예산과 CI 측정, 배포별 필드 지표 알림. 수치 없는 합의는 유지되지 않는다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "성능은 분포다. 실험실 측정은 한 기기·한 네트워크의 한 시점이고, 필드 값은 사용자 기기·네트워크·캐시 상태의 분포다. Core Web Vitals 판정은 75퍼센타일이며, 개선이 특정 세그먼트를 악화시킬 수 있어 분포 전체를 봐야 한다.",
+        "symptom": "로컬 Lighthouse 90점인데 필드 LCP 는 '개선 필요'. 평균은 좋아졌는데 저사양 사용자 이탈 증가.",
+        "measure": "RUM(web-vitals) 으로 p50/p75/p95 와 기기·네트워크·라우트 세그먼트. 배포 버전별 비교. 성능 예산을 CI 에 걸어 회귀를 자동 검출.",
+        "counter": "필드 데이터는 트래픽이 적은 페이지에서 노이즈가 크다. 그때는 실험실 측정을 통제 조건으로 보조한다.",
+        "spec": [
+          [
+            "web.dev — Core Web Vitals 임계값 정의",
+            "https://web.dev/articles/defining-core-web-vitals-thresholds",
+            "75퍼센타일을 판정 기준으로 삼는 이유"
+          ],
+          [
+            "web.dev — 실험실 vs 필드 데이터",
+            "https://web.dev/articles/lab-and-field-data-differences",
+            "두 데이터가 다른 이유와 각 용도"
+          ],
+          [
+            "web.dev 성능 예산 101",
+            "https://web.dev/articles/performance-budgets-101",
+            "예산 설정과 회귀 감시"
+          ]
+        ]
+      }
     },
     {
       "c": "perf",
@@ -2098,7 +2585,25 @@
           "브라우저 검색이 안 되고 스크린리더 탐색이 끊긴다. 페이징 제공이나 전체 보기 옵션으로 보완."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "DOM 노드 수는 스타일 계산·레이아웃·메모리에 선형 이상으로 영향을 준다. 윈도잉은 보이는 범위만 DOM 에 두어 이를 상수로 만든다. 대신 브라우저가 제공하던 것(찾기·인쇄·보조기기 탐색·스크롤 앵커링)을 잃는다. content-visibility: auto 는 DOM 을 유지한 채 화면 밖 렌더링을 건너뛰는 브라우저 수준 대안이다.",
+        "symptom": "스크롤 프레임 드랍, 초기 렌더 수 초, 메모리 급증.",
+        "measure": "Elements 패널 노드 수, Performance 의 Recalculate Style·Layout 시간, 스크롤 시 프레임 타임라인.",
+        "counter": "수백 행 이하면 가상화가 오히려 복잡도만 늘린다. 행 높이 가변·검색 필수·인쇄 필요면 페이징이나 content-visibility 가 낫다.",
+        "spec": [
+          [
+            "web.dev 긴 목록 가상화",
+            "https://web.dev/articles/virtualize-long-lists-react-window",
+            "보이는 항목만 렌더해 DOM 노드를 제한"
+          ],
+          [
+            "MDN content-visibility",
+            "https://developer.mozilla.org/en-US/docs/Web/CSS/content-visibility",
+            "화면 밖 요소의 렌더링을 건너뛰되 DOM 은 유지"
+          ]
+        ]
+      }
     },
     {
       "c": "perf",
@@ -2142,7 +2647,8 @@
           "html",
           "<img\n  src=\"/case-800.avif\"\n  srcset=\"/case-400.avif 400w, /case-800.avif 800w, /case-1600.avif 1600w\"\n  sizes=\"(max-width: 600px) 100vw, 800px\"\n  width=\"800\" height=\"450\"\n  alt=\"상악 우측 제1대구치 크라운\"\n  loading=\"lazy\" decoding=\"async\">\n\n<picture>\n  <source type=\"image/avif\" srcset=\"/case.avif\">\n  <source type=\"image/webp\" srcset=\"/case.webp\">\n  <img src=\"/case.jpg\" width=\"800\" height=\"450\" alt=\"\">\n</picture>"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "perf",
@@ -2187,7 +2693,25 @@
           "html",
           "<link rel=\"preload\" href=\"/brand.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "웹폰트는 다운로드 완료 전까지 텍스트를 숨기거나(FOIT) 폴백으로 그린다(FOUT). font-display 가 그 정책을 정한다. 폴백과 실제 폰트의 메트릭(x-height·자간)이 다르면 교체 순간 줄바꿈이 바뀌어 레이아웃이 이동한다. size-adjust·ascent-override 는 폴백을 실제 폰트 메트릭에 맞춘다.",
+        "symptom": "텍스트가 잠깐 안 보이다 나타남, 또는 교체 순간 문단이 밀려 CLS 상승.",
+        "measure": "Performance 패널 Layout Shift 이벤트, web-vitals CLS attribution 의 largestShiftTarget 이 텍스트 요소인지 확인. 네트워크에서 폰트 요청 시작 시각.",
+        "counter": "font-display: optional 은 CLS 를 없애지만 첫 방문에 브랜드 폰트가 안 보일 수 있다. 사업 요구와 교환해야 한다.",
+        "spec": [
+          [
+            "MDN font-display",
+            "https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display",
+            "block/swap/fallback/optional 정책 정의"
+          ],
+          [
+            "web.dev 웹폰트 로딩 최적화",
+            "https://web.dev/articles/optimize-webfont-loading",
+            "preload·서브셋·폴백 메트릭 정렬"
+          ]
+        ]
+      }
     },
     {
       "c": "test",
@@ -2221,7 +2745,8 @@
           "대개 경계 통합(네트워크·권한·상태 전이). 순수 유닛으로는 안 잡히는 종류라는 판단이 필요하다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "test",
@@ -2255,7 +2780,8 @@
           "쿼리 비용보다 유지 비용이 크다. 병목이면 렌더 범위를 줄이는 쪽으로 해결한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "test",
@@ -2286,7 +2812,8 @@
           "불안정 원인을 숨겨 실패율이 지표에서 사라진다. 재시도는 계측과 함께, 기한을 두고 쓴다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "test",
@@ -2316,7 +2843,8 @@
           "핵심 엔드포인트만 실제 서버로 스모크 검증. 전면 e2e 보다 값이 싸다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "build",
@@ -2347,7 +2875,8 @@
           "번들 분석으로 최종 산출물에 남았는지 본다. 이론이 아니라 산출물로 판정."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "build",
@@ -2377,7 +2906,8 @@
           "싱글턴이 두 개가 되어 컨텍스트·전역 상태가 어긋난다. 번들에 같은 패키지가 두 번 들어간다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "build",
@@ -2408,7 +2938,8 @@
           "규칙이 현실과 안 맞는 신호. 경계를 다시 자르거나 공유 레이어를 신설하는 쪽이 낫다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "build",
@@ -2438,7 +2969,8 @@
           "코드 구조·내부 로직이 노출된다. 업로드는 하되 공개 경로에서는 제거한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "a11y",
@@ -2472,7 +3004,30 @@
           "role=button, tabindex=0, Enter/Space 처리, 비활성 상태 전달. 포커스 표시도 직접 준다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "button 요소는 암묵적 role=button, 포커스 가능성, Enter/Space 활성화, disabled 상태 전달을 브라우저가 제공한다. div 는 이 중 아무것도 없다. WCAG 4.1.2 는 모든 UI 컴포넌트의 이름·역할·상태가 프로그램적으로 결정 가능해야 한다고 요구한다.",
+        "symptom": "Tab 으로 도달 불가, 스크린리더가 '저장' 텍스트만 읽고 클릭 가능함을 알리지 않음.",
+        "measure": "키보드만으로 조작 시도, Accessibility 패널에서 role/name 확인, axe 류 자동 검사.",
+        "counter": "role=button + tabindex + 키 핸들러 + aria-disabled 를 전부 붙이면 동작은 하지만, 매번 그 비용을 내는 것보다 스타일만 초기화한 button 이 낫다.",
+        "spec": [
+          [
+            "WCAG 2.2 — 4.1.2 Name, Role, Value",
+            "https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html",
+            "UI 컴포넌트의 이름·역할·상태·값을 프로그램적으로 결정 가능하게"
+          ],
+          [
+            "ARIA APG — 키보드 인터페이스 개발",
+            "https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/",
+            "포커스 가능성과 키보드 조작 규약"
+          ],
+          [
+            "MDN ARIA 기법",
+            "https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Techniques",
+            "ARIA 첫 규칙: 네이티브 요소가 있으면 ARIA 대신 쓴다"
+          ]
+        ]
+      }
     },
     {
       "c": "a11y",
@@ -2503,7 +3058,30 @@
           "배경에 aria-hidden 또는 inert 를 적용한다. aria-modal 만으로는 구현체마다 다르다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "모달은 배경을 비활성화하는 대화상자다. APG 패턴은 열릴 때 포커스를 안으로, Tab 순환 유지, Esc 닫기, 닫힐 때 트리거로 복귀, aria-modal 로 배경 제외를 요구한다. 네이티브 dialog.showModal() 은 top layer 배치·포커스 트랩·Esc·배경 inert 를 브라우저가 처리한다.",
+        "symptom": "Tab 이 모달 뒤 페이지로 새어 나감. 닫은 뒤 포커스가 문서 맨 위로 튀어 위치를 잃음.",
+        "measure": "키보드만으로 열기→조작→닫기 수행, 닫은 뒤 document.activeElement 확인, 스크린리더로 배경 낭독 여부.",
+        "counter": "aria-modal 만으로는 구현체마다 배경 처리가 달라 inert 나 aria-hidden 을 함께 둔다. 비모달 대화상자(토스트·비차단 패널)는 트랩을 걸면 안 된다.",
+        "spec": [
+          [
+            "ARIA APG — Dialog (Modal) 패턴",
+            "https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/",
+            "포커스 관리·키보드·역할 요건"
+          ],
+          [
+            "MDN dialog 요소",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog",
+            "showModal() 의 모달 동작과 top layer"
+          ],
+          [
+            "MDN inert",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/inert",
+            "서브트리를 포커스·보조기기에서 제외"
+          ]
+        ]
+      }
     },
     {
       "c": "a11y",
@@ -2538,7 +3116,30 @@
           "포커스 순서·라벨 의미·상태 변화 알림(live region), 색만으로 정보 전달."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "ARIA 는 접근성 트리를 덮어쓴다. 잘못된 role 은 원래 의미를 지우고, aria-label 은 보이는 텍스트를 대체해 음성 제어와 어긋난다. aria-hidden 은 포커스 가능성을 제거하지 않아 '닿지만 안 읽히는' 요소를 만든다. ARIA in HTML 은 요소별 허용 role 을 제한한다.",
+        "symptom": "링크에 role=button 을 붙여 '버튼'으로 읽히지만 Space 로 눌리지 않음. 라벨이 두 번 낭독.",
+        "measure": "Accessibility 패널의 computed role/name 을 보이는 것과 대조. 자동 검사의 aria-allowed-role·aria-hidden-focus 규칙.",
+        "counter": "네이티브에 없는 위젯(트리·그리드·탭)은 ARIA 가 필수다. 문제는 ARIA 자체가 아니라 네이티브를 대체하는 남용이다.",
+        "spec": [
+          [
+            "ARIA in HTML",
+            "https://www.w3.org/TR/html-aria/",
+            "요소별 허용 role·속성 제약"
+          ],
+          [
+            "MDN ARIA 기법",
+            "https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Techniques",
+            "ARIA 사용 규칙과 흔한 실수"
+          ],
+          [
+            "WAI-ARIA 1.2",
+            "https://www.w3.org/TR/wai-aria-1.2/",
+            "aria-hidden·aria-label 의미 정의"
+          ]
+        ]
+      }
     },
     {
       "c": "arch",
@@ -2569,7 +3170,8 @@
           "차단 대신 경고 후 단계적 제한. 제거 책임자와 재협상 기록을 남긴다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -2600,7 +3202,8 @@
           "공용화를 되돌리는 결정도 선택지다. 두 개의 구현이 하나의 잘못된 추상보다 낫다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -2635,7 +3238,30 @@
           "샘플링과 필드 마스킹, 보존 기간 정책. 무엇을 수집하는지 문서화한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "장애는 실패 경로에서 일어나지만 계측은 대개 성공 경로에 있다. '네트워크 200 인데 화면이 빈' 유형은 응답 도착과 렌더 사이(파싱·경합·조건부 렌더)의 로그가 없으면 재현 조건을 좁힐 수 없다. 릴리스 태깅이 있어야 어느 배포에서 시작됐는지 갈린다.",
+        "symptom": "제보는 있는데 에러 트래킹엔 아무것도 없음. 재현 불가로 종결.",
+        "measure": "실패 경로 로그 커버리지(요청 실패·빈 상태·파싱 실패·취소), 릴리스별 에러율, 세션 리플레이 존재 여부.",
+        "counter": "전부 계측하면 비용·프라이버시 문제가 생긴다. 샘플링·마스킹·보존 기간 정책이 함께 있어야 한다.",
+        "spec": [
+          [
+            "Sentry — 소스맵 업로드",
+            "https://docs.sentry.io/platforms/javascript/sourcemaps/",
+            "난독화 스택 복원과 릴리스 연결"
+          ],
+          [
+            "MDN sendBeacon",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon",
+            "페이지 이탈 시 계측 전송"
+          ],
+          [
+            "Chrome DevTools — 네트워크 패널",
+            "https://developer.chrome.com/docs/devtools/network",
+            "응답 본문·타이밍 확인"
+          ]
+        ]
+      }
     },
     {
       "c": "arch",
@@ -2678,7 +3304,8 @@
           "서버가 메시지 상태 기계를 소유하고 클라이언트는 그 스냅샷을 따른다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -2708,7 +3335,8 @@
           "지표가 예측대로 악화됐을 때 재승인 근거가 된다. 결과를 추적했는지가 신호."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -2739,7 +3367,8 @@
           "차단 기준 명문화, 스타일 자동화, 라운드 묶기. 리뷰 지연 시간을 지표로 본다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -2769,7 +3398,8 @@
           "해당 변경을 되돌리면 증상이 사라지는 A/B, 또는 로그·프로파일의 직접 증거."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -2799,7 +3429,8 @@
           "플래그·단계 배포로 노출을 제한하고 복구를 먼저 했는지가 신호."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -2829,7 +3460,8 @@
           "가장 위험한 가정이 검증되는 시점. 일정 절반 같은 형식적 지점이 아니다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "js",
@@ -2865,7 +3497,8 @@
           "js",
           "let a = 1, b = a; b = 2;        // a === 1 (값 복사)\n\nconst o1 = { n: 1 };\nconst o2 = o1; o2.n = 2;        // o1.n === 2 (주소 복사)\n\nfunction mutate(obj) { obj.n = 99; }   // 인자 변경이 호출부에 보인다\nmutate(o1); o1.n;               // 99\n\n({ n: 1 }) === ({ n: 1 });      // false — 내용이 같아도 참조가 다르다"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "js",
@@ -2895,7 +3528,8 @@
           "0·빈 문자열이 유효값이면 반드시 `??`. `||` 는 그 값을 덮어쓴다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "js",
@@ -2935,7 +3569,8 @@
           "js",
           "const settings = { retries: 0, label: \"\" };\n\nsettings.retries || 3;   // 3   ← 0 이 falsy 라서 기본값이 끼어든다 (버그)\nsettings.retries ?? 3;   // 0   ← null/undefined 일 때만 기본값\nsettings.label   ?? \"무제\";  // \"\"\n\n// 옵셔널 체이닝은 \"없을 수 있는\" 값에만\nuser.profile?.avatar?.url         // 선택 필드\norder?.total.toFixed(2)           // 필수 값을 가리면 원인 추적이 늦어진다"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "js",
@@ -2971,7 +3606,8 @@
           "js",
           "// 나쁨: 매 회 새 객체를 만든다\nconst byId = items.reduce((acc, it) => ({ ...acc, [it.id]: it }), {});\n\n// 좋음: 누적 객체를 직접 채우거나 Map\nconst byId2 = items.reduce((acc, it) => { acc[it.id] = it; return acc; }, {});\nconst byId3 = new Map(items.map((it) => [it.id, it]));\n\n// 중간 탈출이 필요하면 for...of — reduce 로 억지로 만들지 않는다\nfor (const it of items) if (it.broken) { report(it); break; }"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "js",
@@ -3020,7 +3656,8 @@
           "css",
           ".pan-area { touch-action: pan-y; }   /* 가로 제스처만 차단, JS 개입 없음 */"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "net",
@@ -3054,7 +3691,30 @@
           "캐시로 네트워크 구간이 줄고 JS 파싱·실행이 남는다. HTML 은 매번 검증하도록 설정한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "내비게이션은 이름 해석(DNS) → 전송 연결(TCP, HTTPS 면 TLS 핸드셰이크) → HTTP 요청/응답 → 파싱 → 하위 자원 요청 → 렌더의 사슬이다. 각 단계는 캐시(DNS 캐시·연결 재사용·HTTP 캐시·서비스워커)로 건너뛸 수 있고, 리다이렉트는 사슬을 처음부터 다시 돈다.",
+        "symptom": "첫 방문은 느리고 재방문은 빠른데 원인을 모름. 리다이렉트 체인으로 TTFB 가 두 배.",
+        "measure": "Navigation Timing 으로 DNS·연결·TTFB 구간을 분해. 네트워크 패널에서 리다이렉트 수와 캐시 히트 여부.",
+        "counter": "HTTP/2·3 에서는 연결 재사용과 다중화로 '요청 수'의 비용이 줄어 옛 최적화(스프라이트·과도한 인라인)가 필요 없어졌다.",
+        "spec": [
+          [
+            "MDN 인터넷은 어떻게 동작하나",
+            "https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Web_mechanics/How_does_the_Internet_work",
+            "클라이언트-서버 통신의 기본 사슬"
+          ],
+          [
+            "MDN 브라우저는 어떻게 동작하나",
+            "https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/How_browsers_work",
+            "내비게이션·응답·파싱·렌더 단계"
+          ],
+          [
+            "MDN DNS",
+            "https://developer.mozilla.org/en-US/docs/Glossary/DNS",
+            "도메인 이름을 IP 로 해석"
+          ]
+        ]
+      }
     },
     {
       "c": "net",
@@ -3089,7 +3749,8 @@
           "재시도 안전성이 달라진다. 비멱등 요청은 중복 생성 위험이 있어 요청 키가 필요하다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "net",
@@ -3120,7 +3781,8 @@
           "재인증으로 해결되지 않는다. 권한 안내 화면으로 보내고 재시도하지 않는다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "net",
@@ -3154,7 +3816,8 @@
           "캐시된 서버 데이터와 로컬 저장 상태, 열린 구독. 다음 사용자가 이전 데이터를 보는 사고를 막는다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "css",
@@ -3194,7 +3857,8 @@
           "css",
           "#app .btn.primary { color: red; }    /* id 1, class 2 */\n.btn.primary      { color: blue; }   /* 짐 */\n\n/* :where() 안은 명시도 0 → 덮어쓰기 쉬운 기본값 */\n:where(.btn) { padding: 8px 12px; }\n\n/* 레이어로 출처 순서를 정하면 명시도 경쟁이 필요 없다 */\n@layer reset, base, components, overrides;\n@layer components { .btn { color: blue; } }\n@layer overrides  { .btn { color: red; } }   /* 명시도가 낮아도 이긴다 */"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "css",
@@ -3231,7 +3895,8 @@
           "css",
           ".inline  { display: inline; width: 200px; height: 40px; }  /* width·height 무시 */\n.iblock  { display: inline-block; }                        /* 줄 안 + 크기 적용 */\n.block   { display: block; }\n.gone    { display: none; }        /* 접근성 트리에서도 사라진다 */\n\n/* 화면에서만 감추고 스크린리더에는 남긴다 */\n.visually-hidden {\n  position: absolute; width: 1px; height: 1px;\n  margin: -1px; padding: 0; overflow: hidden;\n  clip-path: inset(50%); white-space: nowrap;\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "css",
@@ -3272,7 +3937,8 @@
           "css",
           "html { font-size: 100%; }              /* 사용자 설정 기준 = 16px 가정 금지 */\n\n.title  { font-size: 1.5rem; }          /* 루트 기준 — 타이포·간격 기본 */\n.icon   { width: 1em; height: 1em; }    /* 요소 폰트 비례 — 중첩되면 누적 */\n.col    { width: 50%; }                 /* 부모 기준 */\n.hero   { padding-block: clamp(24px, 5vw, 64px); }   /* 뷰포트 기준 + 상·하한 */\n.border { border-width: 1px; }          /* 확대와 무관해야 하는 곳은 px */\n\n/* 고정 높이 + px 폰트는 200% 확대에서 잘린다 */\n.chip { min-height: 2.5rem; height: auto; }"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "react",
@@ -3306,7 +3972,8 @@
           "가장 가까운 공통 부모. 그 부모가 너무 멀면 컨텍스트나 스토어를 검토한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "react",
@@ -3346,7 +4013,8 @@
           "jsx",
           "// 나쁨: 렌더마다 새 컴포넌트 타입 → 서브트리 언마운트·재마운트, 상태 소실\nfunction Page() {\n  function Panel() { return <input />; }     // 매 렌더 새 함수 = 새 타입\n  return <Panel />;\n}\n\n// 좋음: 컴포넌트는 모듈 스코프에 정의\nfunction Panel() { return <input />; }\nfunction Page() { return <Panel />; }"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "react",
@@ -3395,7 +4063,8 @@
           "jsx",
           "function onSubmit(e) {\n  e.preventDefault();\n  const data = Object.fromEntries(new FormData(e.currentTarget));\n  save(data);                    // 키 입력마다 리렌더하지 않는다\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "react",
@@ -3431,7 +4100,8 @@
           "jsx",
           "// 나쁨: count 가 0 이면 && 가 0 을 반환하고 React 는 숫자 0 을 렌더한다\n{count && <Badge count={count} />}\n\n// 좋음: 명시적 비교\n{count > 0 && <Badge count={count} />}\n{count > 0 ? <Badge count={count} /> : null}\n\n// false·null·undefined 는 렌더되지 않지만 0·NaN 은 렌더된다"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "a11y",
@@ -3466,7 +4136,25 @@
           "동작을 그대로. \"편집\" 같은 동사. 아이콘 모양(\"연필\")을 설명하지 않는다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "WCAG 1.1.1 은 모든 비텍스트 콘텐츠에 동등한 목적의 텍스트 대체를 요구하고, 순수 장식은 보조기기가 무시할 수 있게 구현하라고 한다. alt=\"\" 는 '장식'을 선언하고, 속성 누락은 대체 텍스트가 없다는 뜻이라 일부 스크린리더가 파일명을 읽는다. 링크·버튼 안 유일 콘텐츠가 이미지면 alt 가 그 컨트롤의 접근 가능한 이름이 된다.",
+        "symptom": "'IMG_2041.jpg' 낭독. 아이콘 버튼이 '버튼'으로만 읽힘.",
+        "measure": "Accessibility 패널의 computed name, 스크린리더 낭독 확인, 자동 검사의 image-alt 규칙.",
+        "counter": "차트·다이어그램은 짧은 alt 로 다 담을 수 없다. 짧은 alt + 인접 텍스트나 표로 데이터를 제공한다.",
+        "spec": [
+          [
+            "WCAG 2.2 — 1.1.1 Non-text Content",
+            "https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html",
+            "비텍스트 콘텍스트의 텍스트 대체와 장식 예외"
+          ],
+          [
+            "MDN img — alt",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/img#alt",
+            "alt 작성 규칙과 빈 alt 의 의미"
+          ]
+        ]
+      }
     },
     {
       "c": "a11y",
@@ -3496,7 +4184,30 @@
           "섹셔닝 요소 안이면 허용되지만 실제 구현체 지원이 고르지 않다. 주제 제목 하나를 h1 으로 두는 편이 안전하다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "시맨틱 요소는 접근성 트리에 역할(role)과 이름을 제공한다. 보조기기는 이 트리를 읽어 제목·랜드마크·목록 단위로 탐색한다. WCAG 1.3.1 은 시각적으로 전달되는 구조·관계가 프로그램적으로도 결정 가능해야 한다고 요구한다.",
+        "symptom": "스크린리더로 '다음 제목' 이동이 안 됨. 폼 필드가 라벨 없이 '편집 가능' 으로만 읽힘.",
+        "measure": "DevTools Accessibility 패널의 접근성 트리, 스크린리더로 제목·랜드마크 탐색 실제 수행.",
+        "counter": "ARIA 로 시맨틱을 덧씌울 수는 있지만 기본 동작(키보드·폼 제출)은 따라오지 않는다. 네이티브 요소가 항상 더 싸다.",
+        "spec": [
+          [
+            "WCAG 2.2 — 1.3.1 Info and Relationships",
+            "https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html",
+            "구조와 관계는 프로그램적으로 결정 가능해야 한다"
+          ],
+          [
+            "MDN 시맨틱",
+            "https://developer.mozilla.org/en-US/docs/Glossary/Semantics",
+            "의미 있는 요소가 접근성·SEO·유지보수에 주는 이점"
+          ],
+          [
+            "ARIA in HTML",
+            "https://www.w3.org/TR/html-aria/",
+            "HTML 요소의 암묵적 role 과 허용 ARIA"
+          ]
+        ]
+      }
     },
     {
       "c": "build",
@@ -3530,7 +4241,8 @@
           "빌드 스크립트 실행과 전이 의존성 교체. 승인 절차와 변경 로그 확인이 필요하다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "perf",
@@ -3560,7 +4272,8 @@
           "로그인 후 상호작용 중심 화면. 첫 화면 지표가 사업 지표와 무관한 내부 도구도 해당."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -3591,7 +4304,8 @@
           "개인화 구간이 있으면 캐시 단위를 셸로 제한한다. 전체 응답 캐시는 불가."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -3626,7 +4340,8 @@
           "런타임 공유 설정과 CI 버전 검사. 합의만으로는 유지되지 않는다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -3661,7 +4376,8 @@
           "롤백 경로가 곧 이관 속도를 올린다. 제거 시점을 미리 못 박아 영구 이중 유지비를 막는다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -3692,7 +4408,8 @@
           "현재 요건 기준으로 재결정하고 위험을 명시. 알 수 없는 제약이 있을 수 있어 단계적으로 바꾼다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -3727,7 +4444,8 @@
           "메이저 버전 + 마이그레이션 가이드 + 코드모드, 구·신 공존 기간. 앱별 채택 현황을 계측한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -3762,7 +4480,8 @@
           "방향 고정 여백·아이콘·차트 축. 논리 속성으로 바꾸고 RTL 스냅샷을 본다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -3797,7 +4516,8 @@
           "되돌려도 안전한 변경에만 적용하고 임계·관측 창을 명시. 데이터 마이그레이션이 얽히면 수동 판단."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "arch",
@@ -3832,7 +4552,8 @@
           "환경 구축 자동화와 대표 작업 목록. 문서보다 실행 가능한 스크립트가 효과가 크다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "sec",
@@ -3894,7 +4615,30 @@
           "js",
           "// 같은 리프레시 토큰을 두 탭이 동시에 쓰면 회전 정책이 서로를 무효화한다\nexport const refresh = () => navigator.locks.request(\"token-refresh\", async () => {\n  if (Date.now() < expiresAt - 5000) return accessToken;   // 다른 탭이 이미 갱신\n  const res = await fetch(\"/auth/refresh\", { method: \"POST\", credentials: \"include\" });\n  if (!res.ok) { logout(); throw new Error(\"refresh failed\"); }  // 루프 차단\n  ({ accessToken, expiresAt } = await res.json());\n  return accessToken;\n});"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "브라우저 앱은 클라이언트 시크릿을 지킬 수 없는 public client 다. Authorization Code 흐름에 PKCE(code_verifier/challenge)를 더하면 코드 탈취만으로는 토큰을 못 받는다. implicit 흐름은 토큰을 URL 조각으로 받아 히스토리·리퍼러로 유출되고 재생 공격에 약해 OAuth 보안 BCP(RFC 9700)가 사용을 권고하지 않는다.",
+        "symptom": "URL 에 토큰이 남아 로그·브라우저 히스토리에 노출. 리다이렉트 조작으로 코드 가로채기.",
+        "measure": "인증 요청 파라미터에 code_challenge_method=S256 와 state 가 있는지, 토큰이 URL 에 노출되지 않는지 확인.",
+        "counter": "백엔드가 있는 앱(BFF)은 서버가 confidential client 로 토큰을 보관하고 브라우저엔 세션 쿠키만 두는 편이 더 안전하다.",
+        "spec": [
+          [
+            "RFC 7636 — PKCE",
+            "https://datatracker.ietf.org/doc/html/rfc7636",
+            "code_verifier·code_challenge(S256) 정의"
+          ],
+          [
+            "RFC 6749 — OAuth 2.0",
+            "https://datatracker.ietf.org/doc/html/rfc6749",
+            "Authorization Code 흐름"
+          ],
+          [
+            "RFC 9700 — OAuth 2.0 Security BCP",
+            "https://datatracker.ietf.org/doc/html/rfc9700",
+            "implicit 흐름 비권고, PKCE·정확한 redirect_uri 비교 권고"
+          ]
+        ]
+      }
     },
     {
       "c": "sec",
@@ -3934,7 +4678,8 @@
           "js",
           "const ALLOWED = new Set([\"https://widget.example.com\"]);\n\naddEventListener(\"message\", (e) => {\n  if (!ALLOWED.has(e.origin)) return;              // ① 출처 확인\n  const msg = WidgetMessage.safeParse(e.data);     // ② 스키마 확인\n  if (!msg.success) return;\n  handle(msg.data);\n});\n\n// 송신: 대상 오리진을 정확히 지정한다(\"*\" 금지)\niframe.contentWindow.postMessage({ type: \"init\", locale }, \"https://widget.example.com\");"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "perf",
@@ -3988,7 +4733,30 @@
           "js",
           "import { onINP } from \"web-vitals/attribution\";\n\nonINP(({ value, attribution }) => {\n  report(\"inp\", {\n    value,\n    target: attribution.interactionTarget,\n    inputDelay: attribution.inputDelay,             // 실행 중 긴 작업\n    processingDuration: attribution.processingDuration,  // 핸들러·렌더\n    presentationDelay: attribution.presentationDelay,    // 표현 지연\n  });\n});"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "INP 는 Event Timing API 기반으로 상호작용의 입력 지연·처리 시간·표현 지연 합을 측정하고, 페이지 수명 중 최악에 가까운 값(상위 백분위)을 보고한다. 세 구간의 원인이 다르므로 처방도 다르다.",
+        "symptom": "p75 INP 200ms 초과. 특정 상호작용(필터 변경·탭 전환)에서만 악화.",
+        "measure": "web-vitals attribution 빌드로 interactionTarget·inputDelay·processingDuration·presentationDelay 를 필드에서 수집. 로컬은 Performance 패널 Interactions 트랙.",
+        "counter": "메모이제이션은 처리 시간 구간 중 렌더 비용에만 영향이 있다. 입력 지연(다른 긴 작업)이나 표현 지연(거대 DOM)이 지배하면 효과가 없다.",
+        "spec": [
+          [
+            "Event Timing API (W3C)",
+            "https://w3c.github.io/event-timing/",
+            "상호작용의 입력→다음 페인트 지연을 측정하는 기반 API"
+          ],
+          [
+            "web.dev INP",
+            "https://web.dev/articles/inp",
+            "좋음 200ms 이하, 75퍼센타일 기준"
+          ],
+          [
+            "web.dev INP 최적화",
+            "https://web.dev/articles/optimize-inp",
+            "입력 지연·처리 시간·표현 지연 구간별 처방"
+          ]
+        ]
+      }
     },
     {
       "c": "perf",
@@ -4038,7 +4806,8 @@
           "js",
           "const controller = new AbortController();\ncancelBtn.onclick = () => controller.abort();\n// 청크 완료마다 진행률 갱신(요청 단위 이벤트가 파일 단위보다 정확하다)"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "perf",
@@ -4073,7 +4842,8 @@
           "공통 청크에 자주 바뀌는 코드가 섞여 있다. 의존 그래프로 실제 포함물을 확인한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "net",
@@ -4123,7 +4893,30 @@
           "js",
           "// 페이지: 새 워커가 대기 중이면 사용자에게 알린 뒤 적용\nconst reg = await navigator.serviceWorker.register(\"/sw.js\");\nreg.addEventListener(\"updatefound\", () => {\n  reg.installing?.addEventListener(\"statechange\", (e) => {\n    if (e.target.state === \"installed\" && navigator.serviceWorker.controller) {\n      showReloadBanner(() => { reg.waiting?.postMessage(\"SKIP_WAITING\"); });\n    }\n  });\n});\nnavigator.serviceWorker.addEventListener(\"controllerchange\", () => location.reload());"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "서비스워커는 페이지와 독립된 수명 주기(install → waiting → activate)를 가진다. 새 버전은 기존 클라이언트가 모두 닫힐 때까지 waiting 에 머물러, 사용자가 옛 버전에 갇힌다. fetch 이벤트를 가로채므로 자원별 전략을 정하지 않으면 인증 응답·HTML 까지 캐시된다.",
+        "symptom": "배포 후 며칠간 옛 UI 가 보임. 로그아웃 후 다른 사용자가 이전 사용자 데이터를 캐시에서 봄.",
+        "measure": "Application 패널의 Service Workers 상태(waiting 여부)·Cache Storage 항목. navigator.serviceWorker.controller 버전 로깅.",
+        "counter": "업데이트가 빈번하고 오프라인 요구가 없으면 서비스워커 없이 HTTP 캐시만으로 충분하다. 도입은 오프라인·푸시 요구가 있을 때.",
+        "spec": [
+          [
+            "Service Workers (W3C)",
+            "https://www.w3.org/TR/service-workers/",
+            "수명 주기·waiting·skipWaiting·clients.claim"
+          ],
+          [
+            "MDN Service Worker API",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API",
+            "등록·업데이트·fetch 가로채기"
+          ],
+          [
+            "web.dev 서비스워커 캐시 전략",
+            "https://web.dev/articles/service-workers-cache-storage",
+            "캐시 우선·네트워크 우선·SWR 전략"
+          ]
+        ]
+      }
     },
     {
       "c": "state",
@@ -4158,7 +4951,8 @@
           "상태가 연산 이력으로 표현돼 스냅샷만으로 원인 추적이 안 된다. 이력 조회 도구가 필요하다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "react",
@@ -4199,7 +4993,25 @@
           "jsx",
           "// 나쁨: 경계가 너무 넓다 — 화면 전체가 사라졌다 나타난다\n<Suspense fallback={<FullPageSpinner />}>\n  <Header /><Feed /><Sidebar />\n</Suspense>\n\n// 좋음: 느린 부분만 감싼다\n<Header />\n<Suspense fallback={<FeedSkeleton />}><Feed /></Suspense>\n<Suspense fallback={<SidebarSkeleton />}><Sidebar /></Suspense>"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "동시성 렌더에서 React 는 렌더를 중단·재개할 수 있다. transition 으로 표시된 업데이트는 긴급 업데이트(입력 반영)에 양보한다. Suspense 는 데이터·코드 로딩 경계를 선언해 로딩 상태를 트리 구조와 맞춘다.",
+        "symptom": "타이핑마다 무거운 목록 재렌더로 입력 지연. 경계가 넓어 화면 전체 깜빡임.",
+        "measure": "INP attribution 의 processingDuration, Profiler 의 transition 표시. 경계별 fallback 표시 빈도.",
+        "counter": "transition 은 렌더 비용 자체를 줄이지 않는다. 총 작업량이 크면 여전히 느리고, 순서 보장이 필요한 업데이트는 transition 으로 내리면 안 된다.",
+        "spec": [
+          [
+            "react.dev useTransition",
+            "https://react.dev/reference/react/useTransition",
+            "UI 를 막지 않고 상태를 업데이트"
+          ],
+          [
+            "react.dev Suspense",
+            "https://react.dev/reference/react/Suspense",
+            "자식이 로드될 때까지 fallback 을 표시"
+          ]
+        ]
+      }
     },
     {
       "c": "build",
@@ -4234,7 +5046,8 @@
           "사전 공지·안내 페이지·계측으로 잔존 확인 후 단계적 차단."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "build",
@@ -4269,7 +5082,8 @@
           "동시 활성 플래그 상한과 제거 기한을 정책으로 둔다. 조합 폭발은 관리 실패의 증상."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "a11y",
@@ -4304,7 +5118,25 @@
           "게이트가 없기 때문이다. 자동 검사와 리뷰 기준을 강제 경로에 넣는다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "접근성은 기능이 아니라 품질 속성이라 게이트 없이는 회귀한다. W3C WAI 는 조직 도입을 '착수 → 계획 → 구현 → 유지'로 나누고, 정책·역할·검사·교육을 함께 두라고 권고한다. 자동 검사는 규칙화 가능한 결함만 잡는다(대체 텍스트 존재·대비·role 허용). 포커스 순서·의미·live 알림은 사람이 봐야 한다.",
+        "symptom": "린트 통과인데 키보드로 못 쓰는 화면. 컴포넌트 수정 때마다 접근성이 다시 깨짐.",
+        "measure": "접근성 결함 유입률(신규 PR 중 결함 비율), 공용 컴포넌트 커버리지, 보조기기 테스트 수행 여부.",
+        "counter": "전 화면을 한 번에 고치려는 계획은 실패한다. 공용 컴포넌트와 신규 코드 게이트부터 시작해 존량은 우선순위로.",
+        "spec": [
+          [
+            "W3C WAI — 접근성 계획과 관리",
+            "https://www.w3.org/WAI/planning-and-managing/",
+            "조직 차원 접근성 도입 단계와 활동"
+          ],
+          [
+            "WCAG 2.2 — 2.4.3 Focus Order",
+            "https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html",
+            "자동 검사가 못 잡는 대표 요건"
+          ]
+        ]
+      }
     },
     {
       "c": "test",
@@ -4339,7 +5171,8 @@
           "우회 사용 건수와 사후 보완 이행률을 계측한다."
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "live",
@@ -4384,7 +5217,8 @@
           "js",
           "function throttle(fn, interval = 200) {\n  let last = 0, timer = null, lastArgs = null;\n  return function throttled(...args) {\n    const now = Date.now();\n    const remain = interval - (now - last);\n    lastArgs = args;\n    if (remain <= 0) {\n      last = now;\n      fn.apply(this, args);\n    } else if (!timer) {          // 마지막 입력을 버리지 않는다\n      timer = setTimeout(() => {\n        last = Date.now(); timer = null;\n        fn.apply(this, lastArgs);\n      }, remain);\n    }\n  };\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4429,7 +5263,8 @@
           "html",
           "<ul id=\"list\">\n  <li data-id=\"42\">\n    <button type=\"button\" data-action=\"open\">보고서 열기</button>\n    <button type=\"button\" data-action=\"delete\" aria-label=\"보고서 42 삭제\">삭제</button>\n  </li>\n</ul>"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4482,7 +5317,30 @@
           "html",
           "<label for=\"q\">도시 검색</label>\n<input id=\"q\" role=\"combobox\" aria-expanded=\"true\" aria-controls=\"q-list\"\n       aria-autocomplete=\"list\" aria-activedescendant=\"q-opt-2\" autocomplete=\"off\">\n<ul id=\"q-list\" role=\"listbox\">\n  <li id=\"q-opt-1\" role=\"option\" aria-selected=\"false\">서울</li>\n  <li id=\"q-opt-2\" role=\"option\" aria-selected=\"true\">성남</li>\n</ul>\n<p aria-live=\"polite\">2개 결과</p>"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "combobox 패턴은 입력 요소가 role=combobox 로 팝업(listbox)을 제어하고, 포커스는 입력에 남긴 채 aria-activedescendant 로 활성 옵션을 가리킨다. 그래서 타이핑과 방향키 탐색이 동시에 된다. 결과 변화는 시각 외에는 전달되지 않으므로 live region 이 필요하다.",
+        "symptom": "방향키로 옵션을 옮겨도 스크린리더가 아무 말도 안 함. 결과 개수 변화를 모름.",
+        "measure": "Accessibility 패널에서 combobox/listbox/option 트리와 activedescendant 참조 확인, 스크린리더로 옵션 이동 낭독.",
+        "counter": "옵션이 자유 입력을 허용하지 않는 '선택 전용'이면 select-only combobox 나 listbox 패턴이 더 적합하다.",
+        "spec": [
+          [
+            "ARIA APG — Combobox 패턴",
+            "https://www.w3.org/WAI/ARIA/apg/patterns/combobox/",
+            "역할·속성·키보드 상호작용 규약"
+          ],
+          [
+            "MDN aria-activedescendant",
+            "https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-activedescendant",
+            "포커스는 유지하고 활성 자손을 가리킨다"
+          ],
+          [
+            "WAI-ARIA 1.2",
+            "https://www.w3.org/TR/wai-aria-1.2/",
+            "combobox·listbox·option 역할 정의"
+          ]
+        ]
+      }
     },
     {
       "c": "live",
@@ -4531,7 +5389,30 @@
           "html",
           "<div id=\"sentinel\" aria-hidden=\"true\"></div>\n<button type=\"button\" id=\"load-more\">더 보기</button>"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "IntersectionObserver 는 요소의 뷰포트 교차를 비동기로 알려 스크롤 이벤트 계산 없이 진입을 감지한다. 커서 페이징은 '마지막으로 본 항목 이후'를 서버가 해석해 삽입·삭제에도 중복·누락이 없다. 오프셋은 위치 기반이라 데이터가 움직이면 어긋난다.",
+        "symptom": "스크롤 중 같은 글이 두 번 보임(오프셋 중복). 마지막 페이지에서 요청이 계속 나감(종료 판정 누락).",
+        "measure": "페이지 경계에서 id 중복 여부 e2e, 요청 수/스크롤 거리 비율, 진행 중 플래그 없이 중복 요청이 나가는지.",
+        "counter": "정렬 기준이 자주 바뀌는 목록(인기순 실시간)은 커서도 흔들린다. 스냅샷 시각을 커서에 포함하거나 재정렬 시 목록을 리셋한다.",
+        "spec": [
+          [
+            "MDN Intersection Observer API",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API",
+            "교차 감지·rootMargin·threshold"
+          ],
+          [
+            "TanStack Query — 무한 쿼리",
+            "https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries",
+            "getNextPageParam 으로 커서 전달"
+          ],
+          [
+            "web.dev 긴 목록 가상화",
+            "https://web.dev/articles/virtualize-long-lists-react-window",
+            "항목이 많아질 때의 DOM 제한"
+          ]
+        ]
+      }
     },
     {
       "c": "live",
@@ -4580,7 +5461,8 @@
           "html",
           "<dialog id=\"confirm\" aria-labelledby=\"confirm-title\">\n  <h2 id=\"confirm-title\">케이스를 삭제할까요?</h2>\n  <form method=\"dialog\">\n    <button value=\"cancel\">취소</button>\n    <button value=\"delete\" autofocus>삭제</button>\n  </form>\n</dialog>"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4633,7 +5515,8 @@
           "js",
           "nextBtn.addEventListener(\"click\", () => {\n  track.scrollBy({ left: track.clientWidth, behavior: prefersReduced ? \"auto\" : \"smooth\" });\n});\n\n// 현재 위치는 스크롤에서 읽는다(계산 중복 금지)\ntrack.addEventListener(\"scroll\", throttle(() => {\n  const index = Math.round(track.scrollLeft / track.clientWidth);\n  status.textContent = (index + 1) + \" / \" + total;   // aria-live 영역\n}, 100));"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4678,7 +5561,8 @@
           "html",
           "<label for=\"email\">이메일</label>\n<input id=\"email\" name=\"email\" type=\"email\" required\n       aria-describedby=\"email-error\" aria-invalid=\"true\">\n<p id=\"email-error\" role=\"alert\">이메일 형식이 아닙니다.</p>"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4727,7 +5611,8 @@
           "js",
           "function pLimit(concurrency) {\n  let active = 0;\n  const queue = [];\n  const next = () => {\n    if (active >= concurrency || queue.length === 0) return;\n    active++;\n    const { fn, resolve, reject } = queue.shift();\n    fn().then(resolve, reject).finally(() => {   // 실패에도 카운터를 되돌린다\n      active--;\n      next();\n    });\n  };\n  return (fn) => new Promise((resolve, reject) => {\n    queue.push({ fn, resolve, reject });\n    next();\n  });\n}\n\nconst limit = pLimit(4);\nawait Promise.all(urls.map((u) => limit(() => fetch(u))));"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4772,7 +5657,8 @@
           "css",
           "/* 목록이 크지만 DOM 을 유지해야 한다면(검색·인쇄·스크린리더 탐색) */\n.row {\n  content-visibility: auto;\n  contain-intrinsic-size: auto 36px;   /* 추정 높이 → 스크롤바 안정 */\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4825,7 +5711,8 @@
           "js",
           "row.addEventListener(\"keydown\", (e) => {\n  if (!e.altKey) return;                       // Alt+↑/↓ 로 순서 변경\n  if (e.key === \"ArrowUp\")   { e.preventDefault(); moveBy(-1); }\n  if (e.key === \"ArrowDown\") { e.preventDefault(); moveBy(+1); }\n});"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4870,7 +5757,8 @@
           "html",
           "<div role=\"tablist\" aria-label=\"케이스 상세\">\n  <button role=\"tab\" id=\"t1\" aria-controls=\"p1\" aria-selected=\"true\"  tabindex=\"0\">요약</button>\n  <button role=\"tab\" id=\"t2\" aria-controls=\"p2\" aria-selected=\"false\" tabindex=\"-1\">로그</button>\n</div>\n<div role=\"tabpanel\" id=\"p1\" aria-labelledby=\"t1\">…</div>\n<div role=\"tabpanel\" id=\"p2\" aria-labelledby=\"t2\" hidden>…</div>"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4911,7 +5799,8 @@
           "jsx",
           "import { useSyncExternalStore } from \"react\";\n\nexport function useStore(selector) {\n  return useSyncExternalStore(\n    store.subscribe,\n    () => selector(store.getState()),      // 새 객체를 만들면 무한 리렌더\n    () => selector(serverSnapshot)         // SSR 스냅샷\n  );\n}\n\n// 좋음: 원시값 구독\nconst count = useStore((s) => s.items.length);\n// 나쁨: 매번 새 배열 → 렌더마다 변경으로 판정\n// const items = useStore((s) => s.items.filter((i) => i.open));"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -4956,7 +5845,8 @@
           "js",
           "async function navigate(path) {\n  const view = await resolve(path);          // 코드 분할 로드\n  main.replaceChildren(view.node);\n  document.title = view.title;               // 제목 갱신\n  liveRegion.textContent = view.title + \" 페이지로 이동했습니다\";\n  main.focus();                              // main 에 tabindex=\"-1\"\n  scrollTo({ top: view.restoreScroll ?? 0 });\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -5005,7 +5895,8 @@
           "js",
           "const io = new IntersectionObserver((entries, observer) => {\n  for (const entry of entries) {\n    if (!entry.isIntersecting) continue;\n    const img = entry.target;\n    img.src = img.dataset.src;\n    observer.unobserve(img);        // 로드 후 해제 — 안 하면 관찰 대상이 쌓인다\n  }\n}, { rootMargin: \"300px\" });\n\ndocument.querySelectorAll(\"img[data-src]\").forEach((img) => io.observe(img));"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "live",
@@ -5054,7 +5945,8 @@
           "html",
           "<table>\n  <thead>\n    <tr>\n      <th aria-sort=\"ascending\"><button type=\"button\">케이스명</button></th>\n      <th aria-sort=\"none\"><button type=\"button\">생성일</button></th>\n    </tr>\n  </thead>\n</table>\n<p aria-live=\"polite\">케이스명 오름차순, 42건</p>"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "sysdesign",
@@ -5088,7 +5980,25 @@
           "https://frontendinterviews.dev/frontend-system-design-interview-questions"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": {
+        "why": "프론트 시스템 디자인은 '무엇을 만들지'가 아니라 '무엇을 포기할지'를 말하는 라운드다. 요구 탐색 없이 구조를 그리면 평가 기준(규모·실시간·기기)이 없어 트레이드오프를 말할 수 없다. RADIO 는 그 순서를 강제하는 틀이다.",
+        "symptom": "바로 컴포넌트 트리를 그리고 15분 뒤 '실시간은 필요한가요?'를 묻는다.",
+        "measure": "면접관은 요구 질문 개수·비기능 요구 언급·시간 배분·트레이드오프 문장 수를 본다.",
+        "counter": "짧은 라운드(20분)면 RADIO 를 전부 돌 수 없다. 요구·데이터·실패 처리만 남기고 최적화는 한 줄로 끝낸다.",
+        "spec": [
+          [
+            "Front End Interview Handbook — 시스템 디자인(RADIO)",
+            "https://www.frontendinterviewhandbook.com/front-end-system-design",
+            "Requirements→Architecture→Data→Interface→Optimizations"
+          ],
+          [
+            "FrontendInterviews.dev — 시스템 디자인 문제",
+            "https://frontendinterviews.dev/frontend-system-design-interview-questions",
+            "자주 나오는 프롬프트와 평가 축"
+          ]
+        ]
+      }
     },
     {
       "c": "sysdesign",
@@ -5142,7 +6052,30 @@
           "js",
           "// 목록은 id 배열만, 본문은 엔티티 한 곳\nconst state = {\n  entities: { posts: { c_1042: { id: \"c_1042\", liked: false, likes: 12 } } },\n  feed: { ids: [\"c_1042\", \"c_1041\"], nextCursor: \"eyJ...\" },\n};\n\n// 좋아요는 엔티티 한 곳만 갱신 → 피드·상세가 동시에 맞는다\nfunction toggleLike(id) {\n  const prev = state.entities.posts[id];\n  patchEntity(id, { liked: !prev.liked, likes: prev.likes + (prev.liked ? -1 : 1) });\n  return save(id, { idempotencyKey: crypto.randomUUID() })\n    .catch(() => patchEntity(id, prev));      // 실패 롤백\n}"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "피드는 '무한히 늘어나는 서버 사본 + 잦은 부분 갱신'이다. 목록을 id 배열로, 게시물을 정규화 엔티티로 나누면 같은 게시물이 여러 화면에 있어도 갱신이 한 곳에서 끝난다. 강제 삽입은 사용자 위치를 잃게 하므로 실시간 갱신은 알림으로만.",
+        "symptom": "피드에서 좋아요 눌렀는데 상세에선 반영 안 됨. 새 글이 자동 삽입돼 읽던 위치가 밀림.",
+        "measure": "엔티티 저장 위치 개수, 갱신 1회당 리렌더 범위, 새 글 도착 시 스크롤 위치 변화(CLS).",
+        "counter": "엔티티가 화면 하나에만 있고 갱신이 없다면 정규화는 과설계다. 갱신·공유가 생기는 순간 도입한다.",
+        "spec": [
+          [
+            "Front End Interview Handbook — 애플리케이션 설계",
+            "https://www.frontendinterviewhandbook.com/front-end-system-design/applications",
+            "뉴스 피드 설계 예제와 데이터 모델"
+          ],
+          [
+            "TanStack Query — 무한 쿼리",
+            "https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries",
+            "페이지 단위 캐시와 커서"
+          ],
+          [
+            "web.dev CLS",
+            "https://web.dev/articles/cls",
+            "동적 삽입이 만드는 레이아웃 이동"
+          ]
+        ]
+      }
     },
     {
       "c": "sysdesign",
@@ -5196,7 +6129,8 @@
           "js",
           "const controller = new AbortController();\nstopBtn.onclick = () => controller.abort();          // 비용이 계속 발생하지 않게\n\nawait fetch(\"/api/chat\", {\n  method: \"POST\",\n  signal: controller.signal,\n  headers: { \"Content-Type\": \"application/json\" },\n  body: JSON.stringify({ sessionId, prompt }),\n});"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "sysdesign",
@@ -5230,7 +6164,8 @@
           "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "sysdesign",
@@ -5269,7 +6204,8 @@
           "https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "sysdesign",
@@ -5307,7 +6243,8 @@
           "https://developer.mozilla.org/en-US/docs/Web/API/AbortController"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "sysdesign",
@@ -5341,7 +6278,8 @@
           "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "sysdesign",
@@ -5391,7 +6329,8 @@
           "js",
           "const NEXT = {\n  idle:       { submit: \"submitting\" },\n  submitting: { ok: \"done\", conflict: \"already_paid\", fail: \"failed\", timeout: \"unknown\" },\n  unknown:    { confirmed_paid: \"done\", confirmed_unpaid: \"failed\" },\n  done:       {},                       // 뒤로 가기로 재진입해도 재결제 불가\n};"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "sysdesign",
@@ -5429,7 +6368,8 @@
           "https://martinfowler.com/bliki/ParallelChange.html"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "sysdesign",
@@ -5467,7 +6407,8 @@
           "https://web.dev/articles/service-workers-cache-storage"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "sysdesign",
@@ -5501,7 +6442,8 @@
           "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "debug",
@@ -5558,7 +6500,30 @@
           "js",
           "// 나쁨: 읽기와 쓰기를 번갈아 → 프레임마다 레이아웃 재계산\nfor (const el of items) {\n  const h = el.offsetHeight;              // 읽기(강제 레이아웃)\n  el.style.height = h * 2 + \"px\";         // 쓰기\n}\n\n// 좋음: 읽기 전부 → 쓰기 전부\nconst heights = items.map((el) => el.offsetHeight);\nitems.forEach((el, i) => { el.style.height = heights[i] * 2 + \"px\"; });"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "멈춤은 메인 스레드가 한 태스크에 오래 묶인 결과다. 원인은 JS 실행(핸들러·렌더), 강제 동기 레이아웃, 거대한 DOM 커밋 중 하나이고, 어느 쪽인지는 프로파일의 호출 스택과 이벤트 종류가 알려 준다. 코드 읽기로는 어느 구간인지 알 수 없다.",
+        "symptom": "클릭 후 수 초간 입력 무반응. 프로파일에 빨간 Long Task 막대, 하단에 'Forced reflow' 경고.",
+        "measure": "Performance 녹화 → Long Task 선택 → Bottom-Up 으로 self time 정렬. performance.mark/measure 로 의심 구간을 표시하면 Timings 트랙에 보인다. 필드는 INP attribution 으로 세 구간을 나눈다.",
+        "counter": "로컬에서 재현되지 않는 프리즈는 저사양 기기·확장 프로그램·서드파티 스크립트가 원인일 수 있다. CPU 스로틀링과 세그먼트별 필드 데이터가 필요하다.",
+        "spec": [
+          [
+            "Chrome DevTools — Performance 패널 레퍼런스",
+            "https://developer.chrome.com/docs/devtools/performance/reference",
+            "Long task·Forced reflow 표시와 Bottom-Up 분석"
+          ],
+          [
+            "MDN User Timing API",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/User_timing",
+            "performance.mark/measure 로 사용자 정의 구간 기록"
+          ],
+          [
+            "web.dev layout thrashing 피하기",
+            "https://web.dev/articles/avoid-large-complex-layouts-and-layout-thrashing",
+            "레이아웃 읽기·쓰기 교차가 강제 동기 레이아웃을 만든다"
+          ]
+        ]
+      }
     },
     {
       "c": "debug",
@@ -5607,7 +6572,8 @@
           "js",
           "// 나쁨: catch 가 비어 화면만 빈다\ntry { setRows(parse(await res.json())); } catch {}\n\n// 좋음: 보고 + 사용자에게 보이는 상태\ntry {\n  setRows(parse(await res.json()));\n} catch (err) {\n  report(\"list_parse_failed\", { err: String(err) });\n  setError(\"목록을 불러오지 못했습니다\");\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "debug",
@@ -5652,7 +6618,8 @@
           "jsx",
           "// ① 렌더 중 setState — 조건 없이 호출하면 즉시 루프\nfunction Bad({ items }) {\n  setCount(items.length);              // 금지\n  return null;\n}\nconst count = items.length;            // 파생 계산으로 대체\n\n// ② 매 렌더 새 객체를 의존성에 넣는다\nuseEffect(() => { load(filter); }, [{ ...filter }]);   // 항상 새 참조 → 무한\nuseEffect(() => { load(filter); }, [filter.status, filter.page]);  // 원시값으로"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "debug",
@@ -5686,7 +6653,8 @@
           "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "debug",
@@ -5735,7 +6703,8 @@
           "css",
           ".panel { position: absolute; }              /* 폴백 먼저 */\n\n@supports (position-area: bottom span-right) {\n  .panel { position-area: bottom span-right; }   /* 지원하는 곳만 */\n}"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "debug",
@@ -5784,7 +6753,8 @@
           "bash",
           "# dev 서버가 아니라 프로덕션 빌드를 띄워 확인한다\nnpm run build && npx serve dist\n\n# 소스맵으로 스택 복원 (소스맵은 공개 배포하지 않는다)\nnpx source-map-cli resolve dist/assets/app-a1b2c3.js.map 1 45213"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "debug",
@@ -5837,7 +6807,25 @@
           "js",
           "import { onCLS } from \"web-vitals/attribution\";\n\nonCLS(({ value, attribution }) => {\n  report(\"cls\", {\n    value,\n    largestShiftTarget: attribution.largestShiftTarget,   // 선택자로 지목된다\n    largestShiftTime: attribution.largestShiftTime,\n  });\n});"
         ]
-      ]
+      ],
+      "deep": {
+        "why": "레이아웃 이동은 렌더된 요소의 시작 위치가 프레임 간에 바뀔 때 발생하며 이동 거리와 영향 면적의 곱으로 점수화된다. 크기를 모르는 자원이 나중에 도착하면 그 아래 콘텐츠가 밀린다. 사용자 입력 후 500ms 안의 이동은 기대된 것으로 보고 제외한다.",
+        "symptom": "로딩 중 버튼이 밀려 잘못 클릭. CLS p75 0.1 초과.",
+        "measure": "web-vitals attribution 의 largestShiftTarget·largestShiftTime. Performance 패널 Experience 트랙의 Layout Shift 항목.",
+        "counter": "스켈레톤이 실제 콘텐츠와 높이가 다르면 스켈레톤 자체가 이동 원인이 된다. 광고처럼 크기를 모르는 임베드는 최소 높이 예약 + 초과 시 확장으로 절충한다.",
+        "spec": [
+          [
+            "Layout Instability API (WICG)",
+            "https://wicg.github.io/layout-instability/",
+            "레이아웃 이동 점수 정의와 입력 후 500ms 제외 규칙"
+          ],
+          [
+            "web.dev CLS 최적화",
+            "https://web.dev/articles/optimize-cls",
+            "크기 미지정 이미지·임베드·폰트·동적 삽입 대응"
+          ]
+        ]
+      }
     },
     {
       "c": "review",
@@ -5871,7 +6859,8 @@
           "https://martinfowler.com/bliki/ParallelChange.html"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "review",
@@ -5911,7 +6900,8 @@
           "jsx",
           "// 받은 diff (차단)\n- <div dangerouslySetInnerHTML={{ __html: comment.body }} />\n\n// 제안 ①: 서식이 필요 없으면 텍스트\n+ <div className=\"comment-body\">{comment.body}</div>\n\n// 제안 ②: 서식이 필요하면 허용 목록 sanitizer (raw HTML 차단)\n+ import DOMPurify from \"dompurify\";\n+ const clean = DOMPurify.sanitize(comment.body, {\n+   ALLOWED_TAGS: [\"b\", \"i\", \"em\", \"strong\", \"a\", \"p\", \"br\", \"ul\", \"ol\", \"li\"],\n+   ALLOWED_ATTR: [\"href\"],\n+   ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,\n+ });\n+ <div dangerouslySetInnerHTML={{ __html: clean }} />"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "review",
@@ -5951,7 +6941,8 @@
           "jsx",
           "// 받은 diff: 행마다 요청 (100행 = 100요청, 취소도 없다)\nfunction Row({ id }) {\n  const [detail, setDetail] = useState(null);\n  useEffect(() => { fetch(\"/api/case/\" + id).then(r => r.json()).then(setDetail); }, [id]);\n}\n\n// 제안 ①: 목록 응답에 필요한 필드를 포함 (서버와 계약 변경)\n// 제안 ②: 배치 엔드포인트\nconst details = useQuery({\n  queryKey: [\"cases\", \"detail\", ids],\n  queryFn: ({ signal }) => fetchDetails(ids, { signal }),   // 1요청\n});\n\n// 그대로 둘 수밖에 없다면: 동시성 제한 + 취소 + 캐시\nuseEffect(() => {\n  const c = new AbortController();\n  limit(() => fetchDetail(id, { signal: c.signal })).then(setDetail).catch(ignoreAbort);\n  return () => c.abort();\n}, [id]);"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "review",
@@ -5996,7 +6987,8 @@
           "jsx",
           "<div\n  role=\"button\"\n  tabIndex={0}\n  aria-disabled={busy || undefined}\n  onClick={busy ? undefined : save}\n  onKeyDown={(e) => {\n    if (e.key === \"Enter\" || e.key === \" \") { e.preventDefault(); if (!busy) save(); }\n  }}\n>저장</div>"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "review",
@@ -6036,7 +7028,8 @@
           "ts",
           "// 받은 diff\n- const rows = (res.data as any).items;\n\n// ① 응답이 불확실하면 경계에서 파싱\n+ const { items } = ListResponse.parse(res.data);\n\n// ② 유니온 좁히기\n+ if (node.kind === \"case\") node.caseId;       // 판별 유니온\n\n// ③ 서드파티 타입이 틀렸다면 한 곳에 격리\n+ // ponytail: @vendor/sdk v3 의 listCases 반환 타입이 실제와 다르다(items 누락)\n+ function listCases(): Promise<CaseListResponse> {\n+   return sdk.listCases() as unknown as Promise<CaseListResponse>;\n+ }\n\n// ④ 정말 급하면 범위를 좁힌 단언 + 제거 조건이 적힌 이슈\n+ const items = (res.data as { items: unknown[] }).items;   // TODO(FE-1234)"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "take",
@@ -6070,7 +7063,8 @@
           "https://www.designgurus.io/answers/detail/what-does-a-frontend-interview-look-like"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "take",
@@ -6100,7 +7094,8 @@
           "https://dev.to/gergelyorosz/9-insider-tips-to-ace-your-next-takehome-project-for-frontend-fullstack-and-mobile-interviews-41nn"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "take",
@@ -6130,7 +7125,8 @@
           "https://scrimba.com/articles/frontend-interview-prep-guide-2026/"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "take",
@@ -6164,7 +7160,8 @@
           "https://mswjs.io/docs/philosophy"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "take",
@@ -6198,7 +7195,8 @@
           "https://hackajob.com/talent/technical-assessment/frontend-developer-interview-questions-preparation-guide"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "ai",
@@ -6232,7 +7230,8 @@
           "https://prachub.com/resources/ai-coding-interview-guide"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "ai",
@@ -6266,7 +7265,8 @@
           "https://www.tryexponent.com/blog/google-ai-coding-interview"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
     },
     {
       "c": "ai",
@@ -6315,7 +7315,8 @@
           "js",
           "async function loadPage(page, signal) {\n  const res = await fetch(\"/api/items?page=\" + page, { signal });\n  if (!res.ok) throw new Error(\"items failed: \" + res.status);     // ⑤\n  const data = await res.json();                                    // ①\n  for (const item of data.items) render(item);                      // ②\n  setState((s) => ({ ...s, filters: { ...s.filters, status: \"open\" } }));  // ③\n  if (data.total === 0) showEmpty();                                // ④\n  return data.items;\n}\n\ntest(\"서버가 500이면 던지고 빈 상태를 그리지 않는다\", async () => {\n  server.use(http.get(\"/api/items\", () => new Response(null, { status: 500 })));\n  await expect(loadPage(1)).rejects.toThrow(/items failed: 500/);\n  expect(showEmpty).not.toHaveBeenCalled();\n});"
         ]
-      ]
+      ],
+      "deep": null
     },
     {
       "c": "ai",
@@ -6349,7 +7350,832 @@
           "https://www.tryexponent.com/blog/google-ai-coding-interview"
         ]
       ],
-      "code": []
+      "code": [],
+      "deep": null
+    }
+  ],
+  "tracks": [
+    {
+      "id": "event-loop",
+      "title": "이벤트 루프와 비동기 — 순서에서 프리즈 디버깅까지",
+      "lv": [
+        "mid",
+        "sr"
+      ],
+      "minutes": 25,
+      "intro": "실행 순서 하나로 시작해 에러 처리, 요청 경합, 메인 스레드 보호, 실제 프리즈 디버깅까지 한 줄로 판다. 지원자가 어느 단계에서 '외운 답'에서 '겪은 답'으로 바뀌는지가 관찰 포인트.",
+      "r": [
+        [
+          "HTML 표준 — 이벤트 루프 처리 모델",
+          "https://html.spec.whatwg.org/multipage/webappapis.html#event-loop-processing-model"
+        ],
+        [
+          "MDN Execution model",
+          "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model"
+        ]
+      ],
+      "steps": [
+        {
+          "phase": "진입",
+          "node": 3,
+          "q": "이 코드의 출력 순서를 말하고, 왜 그 순서인지 설명해 보라.",
+          "expect": "동기 → 마이크로태스크 전부 → (렌더 기회) → 매크로태스크 하나. 큐가 두 종류이고 우선순위가 다르다는 설명이 나와야 한다.",
+          "bar": {
+            "jr": "순서를 맞히고 '마이크로태스크가 먼저'까지",
+            "mid": "큐 구조와 렌더 기회의 위치까지",
+            "sr": "마이크로태스크 기아가 화면 멈춤으로 이어지는 경로까지"
+          },
+          "good": "바로 다음 단계로. 덧붙여 물을 것: await 뒤 코드는 어느 큐인가?",
+          "weak": {
+            "hint": "setTimeout 콜백과 Promise.then 콜백이 같은 줄에서 기다린다고 생각하나, 다른 줄인가?",
+            "detour": "코드를 두 줄로 줄여(setTimeout 하나, then 하나) 다시 묻는다. 여기서도 막히면 이 주제는 기초 확인으로 끝내고 다른 주제로 옮긴다."
+          }
+        },
+        {
+          "phase": "원리",
+          "node": 7,
+          "q": "async 함수 안에서 난 에러가 아무 데도 안 잡히는 경우를 만들어 보라.",
+          "expect": "await 누락, forEach+async, 타이머 콜백의 throw, 그리고 unhandledrejection 전역 핸들러. 최소 두 경로와 마지막 그물을 말해야 한다.",
+          "bar": {
+            "jr": "await 누락 하나",
+            "mid": "forEach 함정 + 전역 핸들러",
+            "sr": "에러 트래킹에 무엇을 같이 담는지(요청 id·릴리스)까지"
+          },
+          "good": "실제 사고 경험을 물어라: '조용히 사라진 에러를 나중에 어떻게 발견했나?'",
+          "weak": {
+            "hint": "forEach 에 async 콜백을 넘기면 반환된 Promise 는 어디로 가나?",
+            "detour": "try/catch 가 잡지 못하는 위치를 하나만 대 보라고 좁힌다."
+          }
+        },
+        {
+          "phase": "실무",
+          "node": 6,
+          "q": "대시보드 위젯 5개를 동시에 불러온다. 2개가 실패하면 화면은 어떻게 되어야 하고, 무엇으로 구현하나?",
+          "expect": "allSettled 로 부분 성공을 표시하고 실패 위젯만 재시도. all 은 하나 실패로 전체가 reject 되며 남은 요청이 취소되지는 않는다는 점.",
+          "bar": {
+            "jr": "all 과 allSettled 의 차이",
+            "mid": "부분 실패 UX + 재시도 위치",
+            "sr": "비멱등 요청 재시도의 중복 생성 위험과 요청 키"
+          },
+          "good": "'재시도가 서버에 위험할 수 있나?'로 멱등성으로 넘어간다.",
+          "weak": {
+            "hint": "all 이 reject 된 뒤 나머지 4개 요청은 어떻게 되나?",
+            "detour": "타임아웃 하나만 구현해 보라(race 가 아니라 AbortSignal.timeout). 취소 개념을 먼저 세운다."
+          }
+        },
+        {
+          "phase": "경합",
+          "node": 32,
+          "q": "검색어를 빠르게 바꾸면 예전 결과가 나중에 도착해 화면을 덮는다. 어디를 고치나?",
+          "expect": "AbortController 로 취소하거나 요청 시퀀스 비교. React 라면 useEffect 클린업에서 abort. 최종적으로는 데이터 페칭 계층으로 올려 한곳에서 처리.",
+          "bar": {
+            "jr": "증상을 이해하고 '마지막 요청만 반영'을 말함",
+            "mid": "AbortController + 클린업 구현",
+            "sr": "컴포넌트마다 쓰지 않고 페칭 계층으로 걷어내는 판단"
+          },
+          "good": "'취소했는데도 setState 경고가 나면?'으로 남은 비동기 경로를 묻는다.",
+          "weak": {
+            "hint": "두 요청이 출발한 순서와 도착한 순서가 항상 같나?",
+            "detour": "요청에 번호를 붙이고 마지막 번호만 반영하는 코드를 같이 쓴다. 취소는 그 다음."
+          }
+        },
+        {
+          "phase": "설계",
+          "node": 14,
+          "q": "3만 개 항목을 클라이언트에서 정렬·집계해야 한다. 화면이 멈추지 않게 하려면?",
+          "expect": "Web Worker 이전(구조화 복제 비용·transferable), 또는 청크 분할 + scheduler.yield 로 양보. 50ms 넘는 작업은 Long Task 로 잡힌다.",
+          "bar": {
+            "jr": "'백그라운드로 보낸다' 수준",
+            "mid": "워커 + 메시지 비용 인식",
+            "sr": "워커 경계 설계(프로토콜·취소·실패), 서버 이관과의 비교"
+          },
+          "good": "'워커 도입 후 오히려 느려졌다면?'으로 직렬화 비용을 캔다.",
+          "weak": {
+            "hint": "16ms 프레임 예산 안에 이 작업이 끝나나? 못 끝나면 브라우저는 무엇을 못 하나?",
+            "detour": "작업을 1000개씩 쪼개 setTimeout 으로 넘기는 가장 단순한 형태부터 쓰게 한다."
+          }
+        },
+        {
+          "phase": "디버깅",
+          "node": 142,
+          "q": "버튼을 누르면 2초 멈춘다. 지금 DevTools 를 열었다. 첫 클릭은 어디인가?",
+          "expect": "Performance 탭 녹화 → Long Task 와 호출 스택 → 핸들러/렌더/레이아웃 구간 분해. 추측으로 코드를 읽지 않는다. performance.mark 로 구간을 심는다.",
+          "bar": {
+            "jr": "콘솔·네트워크가 아니라 Performance 탭이라는 것",
+            "mid": "Long Task 스택 읽기와 구간 분해",
+            "sr": "필드 데이터(INP attribution)로 사용자 기기에서 재현 조건을 좁히는 것까지"
+          },
+          "good": "'로컬은 빠른데 사용자만 느리면?'으로 필드 계측으로 넘어간다.",
+          "weak": {
+            "hint": "멈춘 2초 동안 메인 스레드는 무엇을 하고 있었나? 그걸 보여 주는 도구는?",
+            "detour": "프로파일 스크린샷을 같이 보며 가장 긴 막대를 가리키게 한다."
+          }
+        },
+        {
+          "phase": "측정·회고",
+          "node": 106,
+          "q": "INP 가 p75 350ms 다. 어느 구간이 지배하는지 어떻게 알아내고, 처방은 어떻게 갈리나?",
+          "expect": "입력 지연 / 처리 시간 / 표현 지연 세 구간. web-vitals attribution 으로 필드에서 분해. 구간별로 처방이 다르다(긴 작업 쪼개기 / 상태 배치·transition / DOM 축소).",
+          "bar": {
+            "jr": "INP 가 무엇인지",
+            "mid": "세 구간과 각 처방",
+            "sr": "개선을 분포(p75·p95·세그먼트)로 증명하고 회귀 감시까지"
+          },
+          "good": "마무리 질문: '이 주제에서 최근에 생각이 바뀐 게 있나?'",
+          "weak": {
+            "hint": "클릭 → 화면 변화 사이에 시간이 쓰이는 지점을 셋으로 나눠 보라.",
+            "detour": "메모이제이션을 먼저 붙이겠다고 하면, 그게 세 구간 중 어디를 줄이는지 되묻는다."
+          }
+        }
+      ]
+    },
+    {
+      "id": "render-perf",
+      "title": "렌더링 파이프라인과 성능 — 첫 화면에서 회귀 감시까지",
+      "lv": [
+        "mid",
+        "sr"
+      ],
+      "minutes": 25,
+      "intro": "브라우저가 그리는 순서에서 출발해 LCP·폰트·CLS·대량 목록·개선 증명까지. '무엇이 비싼가'를 아는지, '어떻게 재는가'를 아는지를 갈라 본다.",
+      "r": [
+        [
+          "MDN Critical rendering path",
+          "https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Critical_rendering_path"
+        ],
+        [
+          "web.dev 렌더링 성능",
+          "https://web.dev/articles/rendering-performance"
+        ],
+        [
+          "web.dev Web Vitals",
+          "https://web.dev/articles/vitals"
+        ]
+      ],
+      "steps": [
+        {
+          "phase": "진입",
+          "node": 9,
+          "q": "HTML 을 받아 화면이 뜨기까지의 단계를 말하고, 각 단계에서 무엇이 막히는지 짚어 보라.",
+          "expect": "DOM/CSSOM → 스타일 → 레이아웃 → 페인트 → 컴포지트. 스크립트는 파서를 막고(defer/async 차이), CSS 는 렌더 블로킹, 폰트는 텍스트 표시를 미룬다.",
+          "bar": {
+            "jr": "단계 나열",
+            "mid": "defer/async 차이와 CSS 블로킹",
+            "sr": "첫 화면 지표에 어느 단계가 지배적인지 측정으로 말함"
+          },
+          "good": "'첫 화면을 빠르게 하려면 이 파이프라인의 어디를 건드리겠나?'",
+          "weak": {
+            "hint": "&lt;script> 태그를 만나면 브라우저는 HTML 파싱을 계속하나?",
+            "detour": "defer 와 async 둘 중 순서가 보장되는 쪽은? 하나만 확실히 하고 넘어간다."
+          }
+        },
+        {
+          "phase": "원리",
+          "node": 10,
+          "q": "reflow 와 repaint 중 무엇이 비싸고, 어떤 CSS 속성이 무엇을 유발하나? layout thrashing 은 무엇인가?",
+          "expect": "레이아웃 > 페인트 > 컴포지트. width/top 은 레이아웃, color 는 페인트, transform/opacity 는 컴포지트. 읽기·쓰기 교차가 강제 동기 레이아웃을 만든다.",
+          "bar": {
+            "jr": "transform 으로 애니메이션한다는 것",
+            "mid": "속성별 단계와 thrashing 개념",
+            "sr": "프로파일러에서 강제 레이아웃을 확인하고 읽기/쓰기 분리로 고친 경험"
+          },
+          "good": "'will-change 를 남용하면?'으로 레이어 비용을 묻는다.",
+          "weak": {
+            "hint": "요소의 offsetHeight 를 읽는 것이 왜 비쌀 수 있나?",
+            "detour": "for 문 안에서 읽고-쓰고를 반복하는 코드를 보여 주고 무엇이 문제인지 묻는다."
+          }
+        },
+        {
+          "phase": "실무",
+          "node": 50,
+          "q": "LCP 가 4.2초다. 점검 순서를 말해 보라.",
+          "expect": "TTFB → 리소스 로드 지연 → 로드 시간 → 렌더 지연 네 구간으로 분해. 히어로 이미지 fetchpriority/preload, 지연 로딩 해제, 렌더 블로킹 축소, 하이드레이션 비용.",
+          "bar": {
+            "jr": "이미지 압축·지연 로딩 주의",
+            "mid": "네 구간 분해와 우선순위 힌트",
+            "sr": "라우트별 LCP 요소 식별과 preload 남용의 역효과"
+          },
+          "good": "'preload 를 많이 걸면 왜 역효과가 나나?'",
+          "weak": {
+            "hint": "LCP 요소가 이미지라면, 그 이미지 요청이 시작되는 시점은 언제인가?",
+            "detour": "네트워크 워터폴을 같이 보며 히어로 이미지가 몇 번째로 시작되는지 찾게 한다."
+          }
+        },
+        {
+          "phase": "함정",
+          "node": 55,
+          "q": "브랜드 폰트를 쓰면서 깜빡임과 이동을 최소화하려면?",
+          "expect": "font-display 정책 선택(swap vs optional), preload, 서브셋, 폴백 메트릭 정렬(size-adjust·ascent-override).",
+          "bar": {
+            "jr": "preload 한다",
+            "mid": "font-display 트레이드오프",
+            "sr": "메트릭 정렬로 CLS 를 0 근처로 만든 경험"
+          },
+          "good": "'브랜드 폰트가 필수인데 CLS 가 기준을 넘으면?'",
+          "weak": {
+            "hint": "폰트가 늦게 오면 브라우저는 그동안 무엇을 보여 주나? 그 선택지는 누가 정하나?",
+            "detour": "font-display 값 셋의 차이만 정리하고 넘어간다."
+          }
+        },
+        {
+          "phase": "디버깅",
+          "node": 148,
+          "q": "로딩 중 콘텐츠가 위아래로 밀린다. 원인 후보와 수정, 그리고 어떤 요소가 움직였는지 확인하는 방법은?",
+          "expect": "크기 미지정 이미지·임베드, 폰트 교체, 상단 배너 삽입. aspect-ratio·자리 예약·메트릭 정렬. CLS attribution 으로 이동 요소 특정.",
+          "bar": {
+            "jr": "width/height 지정",
+            "mid": "원인별 수정 매핑",
+            "sr": "서드파티 임베드처럼 크기를 모르는 경우의 예약 전략"
+          },
+          "good": "'광고 임베드는 크기를 모르는데?'",
+          "weak": {
+            "hint": "이미지가 로드되기 전 브라우저는 그 자리를 얼마로 잡나?",
+            "detour": "img 태그에 무엇을 추가하면 자리가 확보되는지 하나만 답하게 한다."
+          }
+        },
+        {
+          "phase": "설계",
+          "node": 53,
+          "q": "1만 행 목록을 렌더해야 한다. 접근 방법과 각 방법의 대가는?",
+          "expect": "윈도잉(가상화) + memo + 안정 key. 대가: 검색·접근성·스크롤 앵커링 약화, 가변 높이 측정 비용. 페이징·서버 집계 대안과 비교.",
+          "bar": {
+            "jr": "페이징 또는 라이브러리 이름",
+            "mid": "가상화 원리와 대가",
+            "sr": "content-visibility 같은 CSS 대안을 먼저 검토하고 선택 근거를 댐"
+          },
+          "good": "'행 높이가 콘텐츠마다 다르면?'",
+          "weak": {
+            "hint": "1만 개 DOM 노드가 있을 때 스크롤 한 번에 브라우저가 하는 일은?",
+            "detour": "보이는 20행만 그린다면 스크롤바 길이는 어떻게 유지하나? 스페이서 개념을 세운다."
+          }
+        },
+        {
+          "phase": "측정·회고",
+          "node": 52,
+          "q": "성능을 개선했다고 어떻게 증명하나? p75 는 좋아졌는데 p95 가 나빠졌다면?",
+          "expect": "필드 RUM 분포, 세그먼트 분해, 동일 조건 전후 비교, 저사양·저속 프로파일 재현, 예산·CI 회귀 감시. p95 악화는 저사양 구간 악화 가능성 → 세그먼트로 확인.",
+          "bar": {
+            "jr": "Lighthouse 점수 비교",
+            "mid": "필드 분포와 전후 조건 통제",
+            "sr": "세그먼트 분해와 회귀 감시 장치까지"
+          },
+          "good": "마무리: '성능 작업에서 가장 크게 틀렸던 가설은?'",
+          "weak": {
+            "hint": "평균이 좋아졌다는 말로 충분한가? 누구의 경험이 나빠졌는지 어떻게 아나?",
+            "detour": "실험실(Lighthouse)과 필드(RUM)의 차이만 확정하고 마친다."
+          }
+        }
+      ]
+    },
+    {
+      "id": "react-state",
+      "title": "React 렌더와 상태 — 리렌더에서 캐시·동시성까지",
+      "lv": [
+        "jr",
+        "mid",
+        "sr"
+      ],
+      "minutes": 30,
+      "intro": "리렌더 조건에서 시작해 key, 메모이제이션, Context, 서버/클라이언트 상태 분리, 상태 배치 기준, 캐시 무효화, 동시성 렌더까지. 주니어는 앞 세 단계, 시니어는 뒤 네 단계가 본 무대.",
+      "r": [
+        [
+          "react.dev Render and Commit",
+          "https://react.dev/learn/render-and-commit"
+        ],
+        [
+          "react.dev 상태 구조 선택",
+          "https://react.dev/learn/choosing-the-state-structure"
+        ],
+        [
+          "react.dev 상태 관리",
+          "https://react.dev/learn/managing-state"
+        ]
+      ],
+      "steps": [
+        {
+          "phase": "진입",
+          "node": 30,
+          "q": "컴포넌트는 언제 다시 렌더되나? 렌더와 커밋은 같은 말인가?",
+          "expect": "state 변경·부모 렌더·context 변경·key 변경. 렌더(가상 트리 계산)와 커밋(DOM 변경)은 다르며 리렌더가 항상 성능 문제는 아니다.",
+          "bar": {
+            "jr": "state·props 변경",
+            "mid": "부모 렌더 전파와 렌더/커밋 구분",
+            "sr": "Profiler 로 렌더 원인을 확인하고 '문제 없는 리렌더'를 구분"
+          },
+          "good": "'불필요한 리렌더를 어떻게 확인하나?'",
+          "weak": {
+            "hint": "부모가 다시 렌더되면 props 가 같은 자식은 어떻게 되나?",
+            "detour": "부모-자식 두 컴포넌트 예제로 좁혀 다시 묻는다."
+          }
+        },
+        {
+          "phase": "원리",
+          "node": 31,
+          "q": "리스트 key 에 인덱스를 쓰면 무엇이 깨지나? 반대로 key 를 일부러 바꾸는 경우는?",
+          "expect": "삭제·정렬·앞 삽입에서 상태·입력값이 다른 행에 붙는다. 안정 id 사용. key 변경은 서브트리 재마운트로 상태 초기화 수단.",
+          "bar": {
+            "jr": "유일해야 한다는 것",
+            "mid": "깨지는 시나리오와 안정 id",
+            "sr": "key 변경을 초기화 수단으로 쓰는 것과 그 대가(이펙트 재실행)"
+          },
+          "good": "바로 다음으로.",
+          "weak": {
+            "hint": "첫 번째 행을 삭제하면 두 번째 행의 key 는 무엇이 되나?",
+            "detour": "입력창이 있는 목록에서 첫 행 삭제 시 입력값이 어디로 가는지 그림으로 설명하게 한다."
+          }
+        },
+        {
+          "phase": "함정",
+          "node": 33,
+          "q": "useMemo/useCallback 을 어디에 쓰고 어디서 빼나? 전부 감싸면 왜 나쁜가?",
+          "expect": "비싼 계산과 참조 동일성이 필요한 지점(memo 자식·의존성)만. 비교·메모리·복잡도 비용, 의존성 오류 위험. 측정 후 적용.",
+          "bar": {
+            "jr": "성능 최적화 훅이라는 인식",
+            "mid": "참조 동일성 개념과 비용",
+            "sr": "측정 근거로 빼고 넣은 경험, React Compiler 와의 관계"
+          },
+          "good": "'React Compiler 가 있으면 판단이 어떻게 바뀌나?'",
+          "weak": {
+            "hint": "useCallback 을 쓰면 함수 생성이 사라지나, 아니면 다른 것이 추가되나?",
+            "detour": "memo 로 감싼 자식에 인라인 함수를 넘기는 예제 하나로 좁힌다."
+          }
+        },
+        {
+          "phase": "실무",
+          "node": 34,
+          "q": "전역 상태를 Context 에 넣었더니 앱 전체가 리렌더된다. 원인과 처방을 순서대로.",
+          "expect": "value 새 객체 → 메모, Context 분할(상태/액션), 부분 구독이 필요하면 selector 스토어, 새 참조 selector 의 루프 위험.",
+          "bar": {
+            "jr": "Provider value 메모",
+            "mid": "Context 분할과 부분 구독 불가 한계",
+            "sr": "스토어 전환 근거와 selector 참조 동일성 관리"
+          },
+          "good": "'스토어로 옮긴 뒤에도 느리다면?'",
+          "weak": {
+            "hint": "Provider 의 value 가 매 렌더 새 객체인지 확인해 봤나?",
+            "detour": "value={{user, setUser}} 한 줄을 보여 주고 무엇이 문제인지 묻는다."
+          }
+        },
+        {
+          "phase": "설계",
+          "node": 35,
+          "q": "서버에서 받은 데이터를 전역 스토어에 복사해 두는 팀이 있다. 무엇이 문제이고 어떻게 나누나?",
+          "expect": "두 개의 진실 → 동기화 코드 증식. 서버 상태는 캐시 계층(수명·재검증·무효화), UI 상태는 로컬, 공유·복원은 URL.",
+          "bar": {
+            "jr": "서버/클라 상태라는 구분 인지",
+            "mid": "캐시 계층 도구의 역할",
+            "sr": "URL 을 상태 저장소로 쓰는 판단 기준과 부작용"
+          },
+          "good": "'목록을 수정했는데 상세가 옛 값을 보이면?'로 캐시 무효화로 넘어간다.",
+          "weak": {
+            "hint": "같은 데이터가 두 곳에 있으면 한쪽이 바뀔 때 무슨 일이 필요하나?",
+            "detour": "'서버 응답을 어디에 두는가'만 답하게 하고 다음 단계에서 다시 판다."
+          }
+        },
+        {
+          "phase": "확장",
+          "node": 43,
+          "q": "캐시 무효화를 설계해 보라. 키는 어떻게 짜고, 변경 후에는 무엇을 하나?",
+          "expect": "엔티티+파라미터 계층 키, 부분 무효화, 응답으로 write-through, 포커스·재연결 재검증 정책, 목록↔상세 일관성. 전량 무효화의 리페치 비용.",
+          "bar": {
+            "jr": "수정 후 다시 불러온다",
+            "mid": "키 계층과 부분 무효화",
+            "sr": "write-through 와 무효화 비용을 수치로 조정한 경험, 다중 탭 동기화"
+          },
+          "good": "'여러 탭이 열려 있으면?'",
+          "weak": {
+            "hint": "목록과 상세가 같은 데이터를 다른 키로 갖고 있으면 어떻게 되나?",
+            "detour": "'수정 후 전부 무효화'의 비용을 요청 수로 계산해 보게 한다."
+          }
+        },
+        {
+          "phase": "측정·회고",
+          "node": 111,
+          "q": "useTransition·Suspense 가 실제로 해결하는 문제는? 경계를 잘못 두면 어떤 증상이 나나?",
+          "expect": "긴 렌더가 입력을 막는 문제, 로딩 단위와 UI 구조 정렬. 잘못 두면 깜빡임·중복 요청·상태 되돌림. 지표는 INP 와 상호작용 후 첫 페인트.",
+          "bar": {
+            "jr": "로딩 UI 를 선언적으로 둔다",
+            "mid": "긴급/비긴급 업데이트 구분",
+            "sr": "경계 설계 실패 사례와 지표로 효과를 말함"
+          },
+          "good": "마무리: '이 주제에서 팀 컨벤션으로 만든 규칙이 있나?'",
+          "weak": {
+            "hint": "타이핑할 때마다 무거운 목록이 다시 그려진다. 입력 반응과 목록 갱신 중 무엇이 먼저 보여야 하나?",
+            "detour": "isPending 으로 진행 표시를 어디에 두는지 하나만 답하게 한다."
+          }
+        }
+      ]
+    },
+    {
+      "id": "network-auth",
+      "title": "네트워크·캐시·인증 — URL 입력에서 오프라인까지",
+      "lv": [
+        "mid",
+        "sr"
+      ],
+      "minutes": 25,
+      "intro": "주소창 입력부터 캐시 헤더, CORS, 토큰 저장, PKCE, CSRF, 서비스워커까지. 브라우저 규칙(CORS·SameSite)과 서버 규칙(캐시·인증)을 구분해 말하는지 본다.",
+      "r": [
+        [
+          "RFC 9111 — HTTP Caching",
+          "https://www.rfc-editor.org/rfc/rfc9111"
+        ],
+        [
+          "Fetch 표준 — CORS 프로토콜",
+          "https://fetch.spec.whatwg.org/#http-cors-protocol"
+        ],
+        [
+          "RFC 9700 — OAuth 2.0 Security BCP",
+          "https://datatracker.ietf.org/doc/html/rfc9700"
+        ]
+      ],
+      "steps": [
+        {
+          "phase": "진입",
+          "node": 81,
+          "q": "주소창에 URL 을 치면 화면이 뜨기까지 무슨 일이 일어나나? 어디서 캐시가 끼어드나?",
+          "expect": "DNS → TCP/TLS → HTTP → 파싱·하위 자원 → 렌더. 브라우저 캐시·CDN·서비스워커·리다이렉트가 중간에 개입.",
+          "bar": {
+            "jr": "네트워크와 렌더 두 구간 구분",
+            "mid": "캐시 개입 지점 3개",
+            "sr": "두 번째 방문에서 무엇이 달라지는지 측정으로 말함"
+          },
+          "good": "'두 번째 방문은 무엇이 달라지나?'로 캐시로 넘어간다.",
+          "weak": {
+            "hint": "도메인 이름은 어떻게 IP 가 되나?",
+            "detour": "DNS·연결·요청·응답 네 단어만 순서대로 놓게 한다."
+          }
+        },
+        {
+          "phase": "원리",
+          "node": 21,
+          "q": "해시 파일명 자산과 HTML 의 캐시 헤더를 각각 어떻게 주나? 왜 다르게 주나?",
+          "expect": "자산: max-age 1년 + immutable. HTML: no-cache 로 매번 검증. ETag/304, stale-while-revalidate, s-maxage 로 CDN 분리.",
+          "bar": {
+            "jr": "오래 캐시 vs 매번 검증 구분",
+            "mid": "immutable·ETag·SWR 역할",
+            "sr": "배포 직후 구버전 청크 요청 실패 처리까지"
+          },
+          "good": "'배포 직후 사용자가 옛 청크를 요청해 실패하면?'",
+          "weak": {
+            "hint": "HTML 을 1년 캐시하면 새 배포는 언제 사용자에게 도달하나?",
+            "detour": "'자산은 이름이 바뀌고 HTML 은 이름이 안 바뀐다'는 사실만 세우고 넘어간다."
+          }
+        },
+        {
+          "phase": "함정",
+          "node": 22,
+          "q": "curl 로는 되는데 브라우저만 실패한다. CORS 라면 preflight 가 왜 떴고 어떻게 줄이나?",
+          "expect": "CORS 는 브라우저 규칙. 커스텀 헤더·application/json 이 OPTIONS 트리거. Max-Age 캐시, 헤더 제거, credentials 면 와일드카드 불가.",
+          "bar": {
+            "jr": "브라우저 규칙이라는 것",
+            "mid": "preflight 조건과 응답 헤더",
+            "sr": "preflight 는 통과했는데 본 응답이 막히는 경우(프록시가 헤더 제거)까지"
+          },
+          "good": "'preflight 는 통과했는데 본 요청이 막히면?'",
+          "weak": {
+            "hint": "같은 요청을 curl 은 통과시키고 브라우저는 막는다. 규칙을 적용하는 쪽은 누구인가?",
+            "detour": "단순 요청 조건 세 가지만 확정하고 넘어간다."
+          }
+        },
+        {
+          "phase": "실무",
+          "node": 23,
+          "q": "액세스 토큰을 localStorage 에 두면 무엇이 위험하고, 대안은 어떤 위험을 새로 만드나?",
+          "expect": "XSS 시 즉시 탈취. HttpOnly 쿠키 + CSRF 대비, 또는 메모리 + 리프레시. 짧은 만료·회전·재사용 감지. 다중 탭 갱신 경합.",
+          "bar": {
+            "jr": "XSS 노출",
+            "mid": "쿠키 대안과 CSRF 트레이드오프",
+            "sr": "회전·재사용 감지·다중 탭 잠금까지 설계"
+          },
+          "good": "'여러 탭이 동시에 갱신하면?'",
+          "weak": {
+            "hint": "스크립트가 읽을 수 있는 저장소와 없는 저장소는?",
+            "detour": "HttpOnly 가 무엇을 막는지 하나만 확정한다."
+          }
+        },
+        {
+          "phase": "설계",
+          "node": 104,
+          "q": "브라우저 앱의 로그인 흐름을 설계하라. implicit 흐름을 쓰면 왜 안 되나?",
+          "expect": "Authorization Code + PKCE(RFC 7636), 토큰은 URL 로 받지 않음, state 로 CSRF. 리프레시 회전. 임베드 컨텍스트의 쿠키 정책.",
+          "bar": {
+            "jr": "OAuth 로그인 경험",
+            "mid": "PKCE 채택 이유",
+            "sr": "탈취 감지 시 세션 계열 무효화, 임베드·서드파티 컨텍스트 대응"
+          },
+          "good": "'리프레시 토큰이 탈취됐다고 판단되면?'",
+          "weak": {
+            "hint": "토큰이 URL 조각(#access_token=)에 오면 어디에 남나?",
+            "detour": "'비밀을 브라우저에 둘 수 없다'는 전제만 세우고 넘어간다."
+          }
+        },
+        {
+          "phase": "디버깅",
+          "node": 28,
+          "q": "SameSite=Lax 가 기본인데 CSRF 방어가 여전히 필요한가? 공용 API 에 CORS 와 함께 두면 무엇이 충돌하나?",
+          "expect": "top-level POST·서브도메인·구형 클라이언트·비쿠키 인증 경로. 토큰/Origin 검증 조합. credentials 면 와일드카드 불가, 토큰 헤더는 preflight 유발.",
+          "bar": {
+            "jr": "CSRF 정의",
+            "mid": "SameSite 가 못 막는 경로",
+            "sr": "CORS 정책과의 상호작용을 오리진별로 설계"
+          },
+          "good": "'쿠키 대신 Authorization 헤더면 CSRF 를 신경 안 써도 되나?'",
+          "weak": {
+            "hint": "Lax 는 어떤 요청에 쿠키를 붙이고 어떤 요청에 안 붙이나?",
+            "detour": "'GET 으로 상태를 바꾸면 안 된다'는 전제만 확정한다."
+          }
+        },
+        {
+          "phase": "측정·회고",
+          "node": 109,
+          "q": "서비스워커로 오프라인을 지원하려 한다. 함정은? 옛 버전에 갇힌 사용자는 어떻게 올리나?",
+          "expect": "버전 활성화 정책 먼저. 자원별 캐시 전략(앱 셸 캐시 우선, API 네트워크 우선, 인증 응답 캐시 금지). 업데이트 안내와 controllerchange 처리.",
+          "bar": {
+            "jr": "오프라인 캐시 개념",
+            "mid": "자원별 전략 분리",
+            "sr": "버전 고착 사고 경험과 강제 갱신 경로"
+          },
+          "good": "마무리: '이 영역에서 가장 아팠던 사고와 그 뒤 바뀐 규칙은?'",
+          "weak": {
+            "hint": "서비스워커를 배포하면 이미 열린 탭은 새 코드를 언제 받나?",
+            "detour": "인증 응답을 캐시하면 무엇이 위험한지 하나만 답하게 한다."
+          }
+        }
+      ]
+    },
+    {
+      "id": "a11y",
+      "title": "접근성 — 시맨틱 한 줄에서 조직 정착까지",
+      "lv": [
+        "jr",
+        "mid",
+        "sr"
+      ],
+      "minutes": 20,
+      "intro": "버튼 하나에서 시작해 alt, 모달, combobox, ARIA 남용, 조직 게이트까지. '접근성을 고려한다'는 말이 아니라 구체 요건을 말하는지 본다.",
+      "r": [
+        [
+          "WAI-ARIA 1.2",
+          "https://www.w3.org/TR/wai-aria-1.2/"
+        ],
+        [
+          "ARIA in HTML",
+          "https://www.w3.org/TR/html-aria/"
+        ],
+        [
+          "WCAG 2.2 — Name, Role, Value",
+          "https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html"
+        ]
+      ],
+      "steps": [
+        {
+          "phase": "진입",
+          "node": 93,
+          "q": "시맨틱 HTML 을 왜 쓰나? SEO 말고.",
+          "expect": "보조기기 탐색 구조(제목·랜드마크), 기본 동작(키보드·라벨), 기계 독자. div 만 있으면 건너뛸 지점이 없다.",
+          "bar": {
+            "jr": "접근성과 기본 동작 두 축",
+            "mid": "랜드마크와 제목 구조의 실제 사용",
+            "sr": "제목 레벨을 디자인 때문에 건너뛴 사고와 규칙화"
+          },
+          "good": "'제목 레벨을 디자인 크기 때문에 건너뛰면?'",
+          "weak": {
+            "hint": "스크린리더 사용자는 페이지를 어떻게 탐색하나? 제목 단위로 건너뛸 수 있나?",
+            "detour": "button 과 div 의 차이 하나로 좁혀 다음 단계로."
+          }
+        },
+        {
+          "phase": "원리",
+          "node": 64,
+          "q": "버튼을 div 로 만들면 무엇을 잃나? 불가피하면 무엇을 전부 붙여야 하나?",
+          "expect": "포커스·Enter/Space·role·disabled·포커스 표시. role=button, tabindex=0, 키 핸들러, aria-disabled 전부.",
+          "bar": {
+            "jr": "키보드로 못 누른다",
+            "mid": "잃는 항목 나열",
+            "sr": "공용 버튼 컴포넌트 부재 신호로 읽고 시스템 차원에서 막음"
+          },
+          "good": "'이동 동작이면 무엇으로?'",
+          "weak": {
+            "hint": "Tab 키로 그 div 에 도달할 수 있나?",
+            "detour": "button 태그로 바꾸면 공짜로 얻는 것 세 가지만 말하게 한다."
+          }
+        },
+        {
+          "phase": "함정",
+          "node": 92,
+          "q": "이미지 alt 는 언제 비우고 언제 채우나? 아이콘 버튼의 이름은?",
+          "expect": "정보 이미지는 문장, 장식은 alt=\"\", 속성 누락은 파일명 낭독. 컨트롤 안 유일 콘텐츠면 alt 가 이름. 아이콘 버튼은 동작 동사로 이름.",
+          "bar": {
+            "jr": "장식/정보 구분",
+            "mid": "빈 alt 와 누락의 차이",
+            "sr": "복잡한 차트의 대체 텍스트 전략(짧은 alt + 표)"
+          },
+          "good": "바로 다음으로.",
+          "weak": {
+            "hint": "alt 속성을 아예 빼면 스크린리더는 무엇을 읽나?",
+            "detour": "장식 이미지 하나, 정보 이미지 하나 예를 주고 각각 alt 를 쓰게 한다."
+          }
+        },
+        {
+          "phase": "실무",
+          "node": 65,
+          "q": "모달 접근성 체크리스트를 순서대로. 모달 안에 또 팝업이 열리면?",
+          "expect": "포커스 이동·트랩·복귀, Esc, role/aria-modal/labelledby, 배경 inert·스크롤 잠금, 실제 보조기기 검증. 중첩은 레이어 스택.",
+          "bar": {
+            "jr": "Esc 와 포커스 이동",
+            "mid": "복귀·배경 처리·라벨",
+            "sr": "네이티브 dialog 우선 판단과 중첩 레이어 관리"
+          },
+          "good": "'네이티브 dialog 를 쓰면 이 목록에서 무엇이 공짜가 되나?'",
+          "weak": {
+            "hint": "모달을 닫았을 때 포커스는 어디로 가야 하나?",
+            "detour": "열 때·닫을 때 두 시점의 포커스만 확정한다."
+          }
+        },
+        {
+          "phase": "설계",
+          "node": 118,
+          "q": "자동완성을 combobox 패턴으로 만들 때 무엇이 필요한가? 결과 개수는 어떻게 알리나?",
+          "expect": "role=combobox·aria-expanded·aria-controls, listbox/option, aria-activedescendant, 방향키·Enter·Esc, live region 으로 개수 안내.",
+          "bar": {
+            "jr": "키보드 이동",
+            "mid": "APG combobox 속성 세트",
+            "sr": "IME·live region·취소·캐시를 함께 다룸"
+          },
+          "good": "'스크린리더 사용자는 결과가 바뀐 걸 어떻게 아나?'",
+          "weak": {
+            "hint": "입력창에 포커스가 있는데 목록 항목이 '선택'됐다는 것을 어떻게 전달하나?",
+            "detour": "aria-activedescendant 하나만 개념을 세운다."
+          }
+        },
+        {
+          "phase": "디버깅",
+          "node": 66,
+          "q": "ARIA 를 붙였는데 접근성이 나빠지는 경우는? 자동 검사가 못 잡는 결함은?",
+          "expect": "첫 규칙: 가능하면 ARIA 안 쓴다. 잘못된 role 이 트리 파괴, aria-label 과 보이는 텍스트 불일치, 포커스 가능 요소의 aria-hidden. 자동 검사는 포커스 순서·라벨 의미·live 알림을 못 잡는다.",
+          "bar": {
+            "jr": "네이티브 우선 원칙",
+            "mid": "잘못된 ARIA 의 구체 부작용",
+            "sr": "자동 검사 한계와 실제 보조기기 테스트 루틴"
+          },
+          "good": "'디자인 시스템에서 접근성 회귀를 어떻게 막나?'",
+          "weak": {
+            "hint": "role=\"button\" 을 링크에 붙이면 스크린리더는 무엇이라고 읽나?",
+            "detour": "ARIA 첫 규칙 문장 하나만 확정한다."
+          }
+        },
+        {
+          "phase": "측정·회고",
+          "node": 114,
+          "q": "접근성을 팀에 정착시키려면? 린트 플러그인만으로 충분한가?",
+          "expect": "기준 명시(WCAG 2.2 AA), 감사 → 공용 컴포넌트 → 신규 게이트 → 정기 회귀. 자동 검사는 일부. 보조기기 테스트·교육·지표 공개.",
+          "bar": {
+            "jr": "린트·자동 검사 도입",
+            "mid": "게이트와 체크리스트",
+            "sr": "우선순위 기준(법적·사용자 영향)과 지표로 진행을 보고"
+          },
+          "good": "마무리: '접근성 때문에 디자인과 충돌한 경험은?'",
+          "weak": {
+            "hint": "자동 검사가 100% 통과한 페이지가 키보드로 쓸 수 없을 수 있나?",
+            "detour": "자동 검사가 못 잡는 결함 하나만 대게 한다."
+          }
+        }
+      ]
+    },
+    {
+      "id": "sysdesign-feed",
+      "title": "시스템 디자인 — 뉴스 피드를 45분에 설계하기",
+      "lv": [
+        "mid",
+        "sr"
+      ],
+      "minutes": 45,
+      "intro": "RADIO 순서로 뉴스 피드를 설계한다. 요구 탐색 → 구조 → 데이터 → 인터페이스 → 최적화. 정답 아키텍처가 아니라 트레이드오프를 말로 남기는지, 실패 경로를 설계하는지 본다.",
+      "r": [
+        [
+          "Front End Interview Handbook — 시스템 디자인",
+          "https://www.frontendinterviewhandbook.com/front-end-system-design"
+        ],
+        [
+          "Front End Interview Handbook — 애플리케이션 설계",
+          "https://www.frontendinterviewhandbook.com/front-end-system-design/applications"
+        ]
+      ],
+      "steps": [
+        {
+          "phase": "요구(R)",
+          "node": 131,
+          "q": "뉴스 피드를 설계하자. 시작하기 전에 나에게 무엇을 물을 건가?",
+          "expect": "규모·기기·실시간 요구·오프라인·인증·미디어 종류·상호작용(좋아요·댓글)·지원 브라우저. 범위를 좁히는 질문 3개 이상.",
+          "bar": {
+            "jr": "기능 목록 확인",
+            "mid": "비기능 요구(실시간·규모·기기) 질문",
+            "sr": "범위를 잘라 45분 배분을 스스로 제시"
+          },
+          "good": "답을 준다: 모바일 위주, 실시간은 새 글 알림만, 오프라인 첫 페이지 캐시. 다음으로.",
+          "weak": {
+            "hint": "이 피드를 보는 사람은 어떤 기기에서, 어떤 네트워크에서 보나?",
+            "detour": "요구를 내가 세 줄로 정리해 주고 구조 단계로 넘어간다."
+          }
+        },
+        {
+          "phase": "구조(A)",
+          "node": 132,
+          "q": "화면 구성 요소와 데이터 흐름을 그려 보라. 어디에 상태가 살고 무엇이 서버 사본인가?",
+          "expect": "피드 목록·게시물 카드·작성기·알림 배너. 서버 사본은 캐시 계층, UI 상태는 로컬. 목록은 id 배열, 엔티티는 정규화.",
+          "bar": {
+            "jr": "컴포넌트 트리",
+            "mid": "서버/클라 상태 분리와 정규화",
+            "sr": "같은 게시물이 두 화면에 있을 때 일관성을 구조로 보장"
+          },
+          "good": "'같은 게시물이 피드와 상세에 있으면 좋아요 상태를 어떻게 맞추나?'",
+          "weak": {
+            "hint": "게시물 하나의 데이터는 몇 곳에 저장되나?",
+            "detour": "목록과 상세가 다른 사본을 가질 때 생기는 버그를 하나 말하게 한다."
+          }
+        },
+        {
+          "phase": "데이터(D)",
+          "node": 119,
+          "q": "페이징을 설계하라. 오프셋인가 커서인가? 중간에 글이 삭제되면?",
+          "expect": "커서 페이징. 오프셋은 삽입·삭제 시 중복·누락. 서버가 다음 유효 커서로 보정, 클라이언트는 중복 판정. 센티넬 + IntersectionObserver 로 로드.",
+          "bar": {
+            "jr": "페이지 번호 vs 더 보기",
+            "mid": "커서 선택 근거",
+            "sr": "삭제·재정렬 시 커서 보정 규칙까지"
+          },
+          "good": "'뒤로 갔다 돌아오면 스크롤과 데이터는?'",
+          "weak": {
+            "hint": "페이지 2를 받는 사이에 새 글 3개가 앞에 들어오면 페이지 2는 무엇을 보여 주나?",
+            "detour": "오프셋의 중복 문제만 확정하고 커서로 넘어간다."
+          }
+        },
+        {
+          "phase": "인터페이스(I)",
+          "node": 42,
+          "q": "좋아요를 누르면 즉시 반영되어야 한다. 안전하게 만드는 조건은?",
+          "expect": "스냅샷 롤백, 서버 응답 재조정, 연속 조작 경합(마지막만 반영/직렬화), 멱등 키, 되돌릴 수 없는 작업엔 미적용.",
+          "bar": {
+            "jr": "먼저 바꾸고 실패하면 되돌린다",
+            "mid": "경합과 재조정",
+            "sr": "멱등 키와 오프라인 큐 재생까지"
+          },
+          "good": "'오프라인에서 쌓인 좋아요를 복귀 후 어떻게 반영하나?'",
+          "weak": {
+            "hint": "두 번 빠르게 눌러 두 요청이 나갔고 순서가 뒤바뀌어 도착했다. 최종 상태는?",
+            "detour": "실패 시 롤백 하나만 구현하게 한다."
+          }
+        },
+        {
+          "phase": "최적화(O)",
+          "node": 44,
+          "q": "항목 하나를 수정하면 캐시를 어떻게 다루나? 스크롤 위치는?",
+          "expect": "페이지 캐시 부분 갱신 또는 정규화 단일 소스. 정렬 변경은 커서 흔들림. 안정 key + 상단 삽입 높이 보정, 가상화면 앵커 항목 기준 재계산.",
+          "bar": {
+            "jr": "목록 다시 불러오기",
+            "mid": "부분 갱신과 정규화",
+            "sr": "스크롤 앵커링과 가상화 오프셋 재계산"
+          },
+          "good": "'사용자가 중간을 보는 중 새 글 20개가 오면?'",
+          "weak": {
+            "hint": "전체를 다시 불러오면 사용자는 어디를 보고 있게 되나?",
+            "detour": "수정된 항목 하나만 캐시에서 바꾸는 코드를 같이 쓴다."
+          }
+        },
+        {
+          "phase": "실시간",
+          "node": 24,
+          "q": "새 글을 실시간으로 알려야 한다. polling/SSE/WebSocket 중 무엇을, 왜?",
+          "expect": "단방향 저빈도 → SSE(또는 폴링). 새 글 수만 받고 본문은 사용자 동작 후 로드. 재연결 시 Last-Event-ID 로 재개, 지터 백오프.",
+          "bar": {
+            "jr": "실시간=WebSocket 이라는 반사에서 벗어남",
+            "mid": "SSE 선택 근거와 유실 보정",
+            "sr": "팬아웃·스케일아웃 비용과 UX(강제 삽입 금지) 결합"
+          },
+          "good": "'연결이 30초 끊겼다 붙으면?'",
+          "weak": {
+            "hint": "서버가 클라이언트에 밀어 주기만 하면 되는 경우 양방향 채널이 필요한가?",
+            "detour": "폴링 주기 하나만 정하고 그 비용을 계산하게 한다."
+          }
+        },
+        {
+          "phase": "관측·회고",
+          "node": 69,
+          "q": "배포 후 이 피드가 '가끔 비어 보인다'는 제보가 온다. 무엇이 있어야 추적 가능한가?",
+          "expect": "실패 경로 로그(요청 시작·취소·도착·렌더 분기), 에러 트래킹 릴리스 태깅, 필드 지표, 세션 리플레이. 성공 경로만 계측하면 안 보인다.",
+          "bar": {
+            "jr": "에러 로깅",
+            "mid": "실패 경로 우선 계측",
+            "sr": "질문에서 역산한 계측 설계와 프라이버시·비용 정책"
+          },
+          "good": "마무리: '이 설계에서 가장 먼저 깨질 곳은 어디라고 보나?'",
+          "weak": {
+            "hint": "네트워크는 200 인데 화면이 빈 경우, 어느 지점의 로그가 있어야 원인을 좁힐 수 있나?",
+            "detour": "요청 응답 도착과 렌더 사이에 로그 한 줄을 어디에 둘지만 정하게 한다."
+          }
+        }
+      ]
     }
   ]
 }
