@@ -25,7 +25,7 @@ for (const [seq, fix] of [["</scr" + "ipt>", "<\\/script>"], ["<!" + "--", "<\\!
     );
   }
 }
-const { CATS, LV, Q, TRACKS } = new Function(dataPart + ";return {CATS,LV,Q,TRACKS};")();
+const { CATS, LV, Q, TRACKS, PROV } = new Function(dataPart + ";return {CATS,LV,Q,TRACKS,PROV};")();
 
 writeFileSync("questions.json", JSON.stringify({ categories: CATS, levels: LV, questions: Q, tracks: TRACKS }, null, 2) + "\n");
 
@@ -38,7 +38,7 @@ const count = (l) => Q.filter((q) => q.l === l).length;
 const out = [];
 out.push("# 프론트엔드 면접 문항집");
 out.push("");
-out.push("> **TL;DR** — 프론트엔드 면접 문항 " + Q.length + "개 + 한 주제를 20~45분 파는 딥다이브 대본 " + TRACKS.length + "개. 지식 문답 + 라이브 코딩 + 시스템 디자인 + 디버깅/코드리뷰 라운드 + 과제 + AI 도구 활용. 문항마다 핵심 답, 좋은/약한 신호, 꼬리질문과 기대 답, 코드 예제, 심층 답(원리·증상·측정·반례·스펙 근거), 공식 문서 레퍼런스.");
+out.push("> **TL;DR** — 프론트엔드 면접 문항 " + Q.length + "개 + 딥다이브 대본 " + TRACKS.length + "개. 지식 문답 + 라이브 코딩 + 시스템 디자인 + 디버깅/코드리뷰 라운드 + 과제 + AI 도구 활용 + **토스 예상 문항**(공식 채용 아티클·기술 블로그·오픈소스·후기 근거, 출처 등급 표기). 문항마다 핵심 답, 좋은/약한 신호, 꼬리질문과 기대 답, 코드 예제, 심층 답, 공식 문서 레퍼런스.");
 out.push("> **출처 주의** — 출제 이력 기록이 아니다. 공개 정리글에서 반복 등장하는 **주제**를 기준으로 고른 문항이고, 문항 문장과 답은 직접 썼다. [출처](#출처) 참고.");
 out.push("> 필터·검색·셀프 퀴즈가 되는 웹 페이지: **https://david-myeonghan.github.io/frontend-interview-kit/**");
 out.push("");
@@ -49,6 +49,12 @@ out.push("- 꼬리질문 " + Q.reduce((a, q) => a + (q.p ? q.p.length : 0), 0) +
 out.push("- 코드 예제 " + Q.reduce((a, q) => a + (q.code ? q.code.length : 0), 0) + "개 — 코드로 답해야 하는 " + Q.filter((q) => q.code && q.code.length).length + "문항에 동작하는 예제 첨부");
 out.push("- 딥다이브 대본 " + TRACKS.length + "개(" + TRACKS.reduce((a, t) => a + t.steps.length, 0) + "단계) — 한 주제를 20~45분 파는 면접관 대본. 단계별 기대 답 · 레벨 기준선 · 분기(잘 답하면/막히면)");
 out.push("- 심층 답 " + Q.filter((q) => q.deep).length + "문항 — 원리 · 증상 · 측정 · 반례 · 스펙 근거(절 링크)");
+{
+  const toss = Q.filter((q) => q.c === "toss");
+  const by = {};
+  toss.forEach((q) => { by[q.prov.kind] = (by[q.prov.kind] || 0) + 1; });
+  out.push("- 토스 예상 문항 " + toss.length + "개 — " + Object.entries(by).map(([k, n]) => PROV[k].label + " " + n).join(" · ") + ". 문항마다 출처 등급과 근거 표기");
+}
 out.push("");
 out.push("## 쓰는 법");
 out.push("");
@@ -106,6 +112,10 @@ for (const [key, label] of Object.entries(CATS)) {
   for (const it of items) {
     out.push("#### [" + LV[it.l] + "] " + md(it.q));
     out.push("");
+    if (it.prov) {
+      out.push("> **" + PROV[it.prov.kind].label + "** — " + md(it.prov.note));
+      out.push("");
+    }
     out.push("**핵심 답**");
     out.push("");
     for (const c of it.core) out.push("- " + md(c));
@@ -173,6 +183,36 @@ for (const [t, u] of [
   ["Formation — AI 보조 코딩 면접(Direct·Explain·Verify)", "https://formation.dev/blog/ai-assisted-coding-interviews"],
   ["Exponent — Google AI 보조 코딩 면접 가이드", "https://www.tryexponent.com/blog/google-ai-coding-interview"],
   ["PracHub — AI 코딩 면접 가이드", "https://prachub.com/resources/ai-coding-interview-guide"],
+]) out.push("- [" + t + "](" + u + ")");
+out.push("");
+out.push("### 토스 예상 문항의 출처 등급");
+out.push("");
+out.push("**출제·평가 확인** = 토스 공식 채용 아티클(NEXT 출제 기록·합격 수기), 토스 기술 블로그 모닥불(면접관 발언), 지원자 후기에서 실제 전형 방식·질문이 확인된 문항. **토스 공개자료 기반 예상** = 토스 기술 블로그·SLASH 세션·오픈소스(es-toolkit·Suspensive·overlay-kit·use-funnel·es-hangul)·Frontend Fundamentals 가 다루는 주제로 만든 예상 문항. **도메인·JD 기반 예상** = 담당 영역과 채용 공고에서 추정. 예상 문항은 출제 여부가 확인되지 않았다.");
+out.push("");
+for (const [t, u] of [
+  ["토스 커리어 — [NEXT 합격 수기 - Frontend] 결과보다 '왜'에 집중했어요 (합격자·면접관 인터뷰)", "https://toss.im/career/article/next-25-frontend"],
+  ["토스 커리어 — 2024 NEXT 개발자 챌린지: 테스트 현장, 그 날의 기록 (출제진 인터뷰)", "https://toss.im/career/article/2024_NEXTDEVELOPER_6"],
+  ["토스 기술 블로그 — 모닥불 EP.8 Next.js 그만 쓰세요! 면접관이 진짜 원하는 것", "https://toss.tech/article/firesidechat_frontend_8"],
+  ["모닥불 EP.6 Next.js, 꼭 써야 할까?", "https://toss.tech/article/firesidechat_frontend_6"],
+  ["모닥불 EP.3 테스트 자동화, 꼭 해야 할까?", "https://toss.tech/article/firesidechat_frontend_3"],
+  ["모닥불 EP.10 캠프파이어 상편(폴더 구조·추상화·유효성·함수형)", "https://toss.tech/article/firesidechat_frontend_10"],
+  ["모닥불 EP.12 코드 리뷰할 시간이 어딨어요?", "https://toss.tech/article/firesidechat_frontend_12"],
+  ["토스 기술 블로그 — App Router 의 장점은 우리에게도 장점일까요?", "https://toss.tech/article/52999"],
+  ["토스 기술 블로그 — 전체 데이터를 브라우저에 두는 광고 대시보드 만들기", "https://toss.tech/article/ads_dashboard_fe"],
+  ["토스 기술 블로그 — 모노리포 희망편", "https://toss.tech/article/52209"],
+  ["Frontend Fundamentals — 좋은 코드를 위한 4가지 기준", "https://frontend-fundamentals.com/code-quality/code/"],
+  ["SLASH 21 — 프론트엔드 웹 서비스에서 우아하게 비동기 처리하기", "https://toss.im/slash-21/sessions/3-1"],
+  ["SLASH 23 — 퍼널: 쏟아지는 페이지 한 방에 관리하기", "https://toss.im/slash-23/session-detail/B1-7"],
+  ["SLASH 23 — Server-driven UI 로 토스의 마지막 어드민 만들기", "https://toss.im/slash-23/session-detail/A1-2"],
+  ["toss/es-toolkit", "https://github.com/toss/es-toolkit"],
+  ["toss/suspensive", "https://github.com/toss/suspensive"],
+  ["toss/overlay-kit", "https://github.com/toss/overlay-kit"],
+  ["toss/use-funnel", "https://github.com/toss/use-funnel"],
+  ["toss/es-hangul", "https://github.com/toss/es-hangul"],
+  ["토스 프론트엔드 면접 후기 (경력, 2025-08) — 1차 자료", "https://caesiumy.dev/posts/career/toss-interview-retrospect/"],
+  ["토스 NEXT 2023 후기 (Node 직군, 전형 구조 참고)", "https://spongelog.netlify.app/toss_next_2023_postmortem/"],
+  ["토스 프론트엔드 멘토링 후기", "https://joong-sunny.github.io/career/toss/"],
+  ["비바리퍼블리카 Frontend Developer 채용 공고 (원티드)", "https://www.wanted.co.kr/wd/204081"],
   ["How the Core Web Vitals metrics thresholds were defined — web.dev", "https://web.dev/articles/defining-core-web-vitals-thresholds"],
 ]) out.push("- [" + t + "](" + u + ")");
 out.push("");

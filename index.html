@@ -94,6 +94,11 @@
   .sig-weak{background:var(--weak-soft);color:var(--ink)}
   .sig-weak .t{color:var(--weak)}
   .next{font-size:13.5px;color:var(--muted);padding-left:12px;border-left:2px solid var(--line)}
+  .prov{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;padding:2px 7px;border:1px solid transparent}
+  .prov-reported{background:var(--good-soft);color:var(--good);border-color:var(--good)}
+  .prov-official{background:var(--accent-soft);color:var(--accent)}
+  .prov-expected{background:var(--weak-soft);color:var(--weak)}
+  .prov-note{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
   .ttag{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;padding:2px 7px;border:1px dashed var(--accent);color:var(--accent);text-decoration:none}
   .deep{border:1px solid var(--line);background:var(--surface)}
   .deep summary{cursor:pointer;padding:8px 12px;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--accent)}
@@ -158,7 +163,7 @@
 <body>
 <header class="masthead"><div class="wrap">
   <h1>프론트엔드 면접 문항집</h1>
-  <p class="lede">주니어부터 시니어까지 실제로 갈리는 문항을 모았다. 지식 문답뿐 아니라 <b>라이브 코딩·프론트 시스템 디자인·디버깅 라운드·코드 리뷰 라운드·과제·AI 도구 활용</b>까지 다룬다. 각 문항에 <b>핵심 답</b>, 면접관이 볼 <b>좋은 신호 / 약한 신호</b>, 면접관이 파고드는 <b>꼬리질문 2~3단계와 단계별 기대 답</b>, 코드로 답할 문항엔 <b>동작하는 예제</b>, 핵심 문항엔 <b>심층 답(원리·증상·측정·반례·스펙 근거)</b>, 그리고 답을 검증할 <b>공식 문서 레퍼런스</b>가 붙어 있다. 상단 <b>딥다이브 대본</b>은 한 주제를 20~45분 파는 면접관 대본이다.<br><b>출처 주의</b> — 이것은 출제 이력 기록이 아니다. 공개 정리글에서 반복 등장하는 <b>주제</b>를 기준으로 고른 문항이다. 자세한 것은 맨 아래 출처 절.</p>
+  <p class="lede">주니어부터 시니어까지 실제로 갈리는 문항을 모았다. 지식 문답뿐 아니라 <b>라이브 코딩·프론트 시스템 디자인·디버깅 라운드·코드 리뷰 라운드·과제·AI 도구 활용</b>까지 다룬다. 각 문항에 <b>핵심 답</b>, 면접관이 볼 <b>좋은 신호 / 약한 신호</b>, 면접관이 파고드는 <b>꼬리질문 2~3단계와 단계별 기대 답</b>, 코드로 답할 문항엔 <b>동작하는 예제</b>, 핵심 문항엔 <b>심층 답(원리·증상·측정·반례·스펙 근거)</b>, 그리고 답을 검증할 <b>공식 문서 레퍼런스</b>가 붙어 있다. 상단 <b>딥다이브 대본</b>은 한 주제를 20~45분 파는 면접관 대본이다. <b>토스 예상 문항</b> 영역은 토스 공식 채용 아티클·기술 블로그·오픈소스·후기를 근거로 만들었고, 문항마다 출처 등급(출제 확인 / 공개자료 기반 예상 / 도메인 예상)을 표시한다.<br><b>출처 주의</b> — 이것은 출제 이력 기록이 아니다. 공개 정리글에서 반복 등장하는 <b>주제</b>를 기준으로 고른 문항이다. 자세한 것은 맨 아래 출처 절.</p>
   <div class="stats" id="stats"></div>
   <div class="howto">
     <section>
@@ -214,6 +219,20 @@
     <li><a href="https://www.tryexponent.com/blog/google-ai-coding-interview">Exponent — Google AI 보조 코딩 면접 가이드</a></li>
     <li><a href="https://prachub.com/resources/ai-coding-interview-guide">PracHub — AI 코딩 면접 가이드</a></li>
   </ul>
+  <h2 style="margin-top:18px">토스 예상 문항의 출처 등급</h2>
+  <p><b>출제·평가 확인</b> = 토스 공식 채용 아티클(NEXT 출제 기록·합격 수기), 토스 기술 블로그 모닥불(면접관 발언), 지원자 후기에서 <b>실제 전형 방식·질문이 확인</b>된 문항. <b>토스 공개자료 기반 예상</b> = 토스 기술 블로그·SLASH 세션·오픈소스(es-toolkit·Suspensive·overlay-kit·use-funnel·es-hangul)·Frontend Fundamentals 가 다루는 주제로 만든 예상 문항. <b>도메인·JD 기반 예상</b> = 담당 영역과 채용 공고에서 추정. 예상 문항은 출제 여부가 확인되지 않았다.</p>
+  <ul>
+    <li><a href="https://toss.im/career/article/next-25-frontend">토스 커리어 — [NEXT 합격 수기 - Frontend] 결과보다 '왜'에 집중했어요 (합격자·면접관 인터뷰)</a></li>
+    <li><a href="https://toss.im/career/article/2024_NEXTDEVELOPER_6">토스 커리어 — 2024 NEXT 개발자 챌린지: 테스트 현장, 그 날의 기록 (출제진 인터뷰)</a></li>
+    <li><a href="https://toss.tech/article/firesidechat_frontend_8">토스 기술 블로그 — 모닥불 EP.8 Next.js 그만 쓰세요! 면접관이 진짜 원하는 것</a></li>
+    <li><a href="https://toss.tech/article/firesidechat_frontend_6">모닥불 EP.6 프론트엔드 개발에서 Next.js, 꼭 써야 할까?</a> · <a href="https://toss.tech/article/firesidechat_frontend_3">EP.3 테스트 자동화, 꼭 해야 할까?</a> · <a href="https://toss.tech/article/firesidechat_frontend_10">EP.10 캠프파이어 상편</a> · <a href="https://toss.tech/article/firesidechat_frontend_12">EP.12 코드 리뷰할 시간이 어딨어요?</a></li>
+    <li><a href="https://toss.tech/article/52999">토스 기술 블로그 — App Router 의 장점은 우리에게도 장점일까요?</a> · <a href="https://toss.tech/article/ads_dashboard_fe">전체 데이터를 브라우저에 두는 광고 대시보드 만들기</a> · <a href="https://toss.tech/article/52209">모노리포 희망편</a></li>
+    <li><a href="https://frontend-fundamentals.com/code-quality/code/">Frontend Fundamentals — 좋은 코드를 위한 4가지 기준 (토스 프론트엔드 챕터)</a></li>
+    <li><a href="https://toss.im/slash-21/sessions/3-1">SLASH 21 — 프론트엔드 웹 서비스에서 우아하게 비동기 처리하기</a> · <a href="https://toss.im/slash-23/session-detail/B1-7">SLASH 23 — 퍼널</a> · <a href="https://toss.im/slash-23/session-detail/A1-2">SLASH 23 — Server-driven UI</a></li>
+    <li>토스 오픈소스 — <a href="https://github.com/toss/es-toolkit">es-toolkit</a> · <a href="https://github.com/toss/suspensive">suspensive</a> · <a href="https://github.com/toss/overlay-kit">overlay-kit</a> · <a href="https://github.com/toss/use-funnel">use-funnel</a> · <a href="https://github.com/toss/es-hangul">es-hangul</a></li>
+    <li><a href="https://caesiumy.dev/posts/career/toss-interview-retrospect/">토스 프론트엔드 면접 후기 (경력, 2025-08) — 1차 자료</a> · <a href="https://spongelog.netlify.app/toss_next_2023_postmortem/">토스 NEXT 2023 후기 (Node 직군, 전형 구조 참고)</a> · <a href="https://joong-sunny.github.io/career/toss/">토스 프론트엔드 멘토링 후기</a></li>
+    <li><a href="https://www.wanted.co.kr/wd/204081">비바리퍼블리카 Frontend Developer 채용 공고 (원티드)</a></li>
+  </ul>
 </section>
 
 <footer class="wrap">문항은 고정된 정답표가 아니다. 지원자가 다른 결론에 이르렀다면 근거와 측정 방법을 물어라 — 그게 실무에서 필요한 능력이다. 레퍼런스 링크는 모두 응답 코드 200으로 확인했다(2026-09-16).</footer>
@@ -224,7 +243,13 @@ const CATS = {
   sec:"보안", react:"React", state:"상태·데이터", ts:"TypeScript", perf:"성능",
   test:"테스트", build:"빌드·툴링", a11y:"접근성", arch:"아키텍처·협업",
   live:"라이브 코딩", sysdesign:"시스템 디자인", debug:"디버깅 라운드",
-  review:"코드 리뷰 라운드", take:"과제·포트폴리오", ai:"AI 도구 활용"
+  review:"코드 리뷰 라운드", take:"과제·포트폴리오", ai:"AI 도구 활용",
+  toss:"토스 예상 문항"
+};
+const PROV = {
+  reported:{label:"출제·평가 확인", cls:"prov-reported", desc:"토스 공식 채용 아티클·기술 블로그(면접관 발언) 또는 지원자 후기에서 실제 출제·평가 방식이 확인된 문항"},
+  official:{label:"토스 공개자료 기반 예상", cls:"prov-official", desc:"토스 기술 블로그·SLASH 세션·오픈소스·Frontend Fundamentals 가 다루는 주제로 만든 예상 문항. 출제 여부는 미확인"},
+  expected:{label:"도메인·JD 기반 예상", cls:"prov-expected", desc:"토스 담당 영역(결제·계좌·증권)과 채용 공고에서 추정한 예상 문항. 출제 여부는 미확인"}
 };
 const LV = { jr:"주니어", mid:"미들", sr:"시니어", all:"공통" };
 const M = "https://developer.mozilla.org/en-US/docs/";
@@ -1303,6 +1328,389 @@ const Q = [
  p:[["생산성이 올랐다고 어떻게 증명하나?","리드타임과 결함률을 도입 전후로 비교한다. 코드 양 증가는 지표가 아니다."],
     ["오히려 리뷰 부담이 늘었다면?","생성 코드의 크기·검증 책임 배분을 조정한다. 리뷰 왕복 수를 지표로 본다."]],
  r:[["AI 보조 코딩 면접 — Direct/Explain/Verify","https://formation.dev/blog/ai-assisted-coding-interviews"],["Google AI 보조 코딩 면접 가이드","https://www.tryexponent.com/blog/google-ai-coding-interview"]]}
+,
+// ---------- 토스 예상 문항 ----------
+{c:"toss",l:"all",prov:{kind:"reported",note:"토스 공식 채용 아티클 2건(NEXT 2024 출제 기사·NEXT 25 FE 합격 수기)에서 확인"},
+ q:"[토스·전형] 코딩 테스트가 프로그래밍·서술형·객관식 세 파트다. 각 파트는 무엇을 보고, 어떻게 시간을 배분하나?",
+ core:["토스 출제진은 평가 기준을 '당장 토스에서 일을 시작해도 프로젝트를 문제없이 진행할 역량'으로 잡았고, '복잡한 알고리즘 퀴즈가 아니라 출제 의도와 요구사항을 정확히 파악하는 문제'를 냈다고 밝혔다.","프로그래밍: 제한된 환경·시스템을 고려한 효과적 구현과 구조의 확장성. 객관식: 상/중/하 난이도로 기본 지식 → 실무 필수 → 추가 역량. 서술형: 실무에서 실제로 해 본 방식을 근거와 함께 서술.","합격자 회고: 정확히 풀 수 있는 문제부터 빠르게, 헷갈리는 것은 마킹 후 재방문. 배점 대비 시간 배분이 결과를 갈랐다.","출제진 조언: 문제에 오류가 있을 가능성도 있으니 비판적으로 읽고, 가정을 확인하는 질문을 두려워하지 말 것."],
+ good:"서술형에서 '내가 겪은 문제 → 원인 측정 → 해결 → 결과'를 쓰고, 프로그래밍에서 요구사항을 재진술한 뒤 확장 가능한 구조를 잡는다.",
+ weak:"알고리즘 풀이 속도에만 집중해 요구사항을 놓치거나, 서술형을 이론 나열로 채운다.",
+ p:[["서술형에 '최근 해결한 성능 문제'가 나오면 무엇을 쓰나?","증상·측정값(p75 등)·원인 특정 과정·처방·개선 수치·재발 방지. 이론 설명이 아니라 실제 경험의 인과."],
+    ["프로그래밍 문제에서 요구사항이 모호하면?","가정을 코드 주석과 제출 메모에 명시하고, 확장이 쉬운 쪽으로 구조를 잡는다. 출제진이 '의도 파악'을 명시적으로 평가한다."]],
+ r:[["토스 커리어 — 2024 NEXT 개발자 챌린지 테스트 출제 기록","https://toss.im/career/article/2024_NEXTDEVELOPER_6"],["토스 커리어 — NEXT 25 Frontend 합격 수기","https://toss.im/career/article/next-25-frontend"],["2022 토스 NEXT FE 코딩테스트·과제 후기(velog)","https://velog.io/@ksol0630/2022-%ED%86%A0%EC%8A%A4-NEXT-%EA%B0%9C%EB%B0%9C%EC%9E%90-%EC%B1%8C%EB%A6%B0%EC%A7%80-%ED%94%84%EB%A1%A0%ED%8A%B8%EC%97%94%EB%93%9C-%EC%BD%94%EB%94%A9-%ED%85%8C%EC%8A%A4%ED%8A%B8-%EA%B3%BC%EC%A0%9C-%ED%9B%84%EA%B8%B0"]]},
+{c:"toss",l:"all",prov:{kind:"reported",note:"출제진 인터뷰('TDD 형태의 과제')·합격 수기('테스트 코드 디버깅에 시간 소모')·경력 후기('약 10시간 제한') 교차 확인"},
+ q:"[토스·과제] 과제에 실패하는 테스트 코드가 함께 주어졌다. 제한 시간 안에 어떤 순서로 진행하나?",
+ core:["토스 과제는 출제진이 'TDD 형태의 과제가 흔치 않아 어려웠을 것'이라 말할 만큼 테스트가 요구사항 명세 역할을 한다. 테스트를 먼저 읽고 요구사항 목록으로 번역한다.","순서: 전체 테스트 실행해 실패 지도 파악 → 배점·의존 관계로 우선순위 → 핵심 흐름을 통과시킨 뒤 리팩터 → 남은 시간에 확장성·가독성.","합격자 회고의 함정: 테스트 코드 자체를 디버깅하느라 다른 문제를 못 풀었다. 테스트에 오류가 의심되면 시간을 정해 두고, 안 풀리면 메모를 남기고 넘어간다.","리뷰어가 코드를 직접 읽으므로 '리뷰어가 읽기 쉬운 코드'가 명시적 평가 축이다."],
+ good:"테스트를 명세로 읽고, 시간 박스를 정해 진행하며, 미완 항목과 가정을 제출물에 적는다.",
+ weak:"테스트를 통과시키려고 구현을 테스트에 끼워 맞추거나, 한 테스트에 매달려 전체를 놓친다.",
+ p:[["테스트가 요구하는 동작이 스펙과 모순되면?","테스트가 명세다. 다만 명백한 오류면 메모에 근거를 남기고 스펙 쪽을 따른다 — 출제진이 '문제 오류 가능성에 비판적 시각'을 권했다."],
+    ["시간이 30% 남았다. 무엇을 하나?","새 기능이 아니라 가독성과 구조 정리, README 의 가정·미완 목록. 리뷰어가 읽는 것을 전제로 마감한다."]],
+ r:[["토스 커리어 — 2024 NEXT 테스트 출제 기록(과제·TDD 언급)","https://toss.im/career/article/2024_NEXTDEVELOPER_6"],["토스 커리어 — NEXT 25 Frontend 합격 수기(과제 회고)","https://toss.im/career/article/next-25-frontend"],["토스 FE 경력 면접 후기(과제 10시간, 2025-08)","https://caesiumy.dev/posts/career/toss-interview-retrospect/"]]},
+{c:"toss",l:"all",prov:{kind:"reported",note:"경력 FE 후기(2025-08)·NEXT Node 직군 후기(2023) 두 건이 같은 구조를 보고"},
+ q:"[토스·1차 면접] 면접관이 내 과제에서 놓친 개선점을 하나씩 짚는다. 어떻게 답하나?",
+ core:["토스 1차 기술 면접은 '과제 분석 중심'이고 '코드 리뷰 + 아키텍처 리뷰를 하는 느낌'이라는 후기가 반복된다. 이력서 맥락 밖의 CS 질문은 드물다.","답의 뼈대: 지적을 재진술해 이해를 확인 → 그 결정을 한 당시의 근거·제약 → 지적이 맞다면 인정하고 대안 → 대안의 트레이드오프.","모르는 부분은 '모른다'고 먼저 말하고 아는 곳까지 설명한다. 면접관은 '가이드 질문을 캐치해 답을 찾아가는 태도'를 높게 봤다고 밝혔다.","과제 제출 후 결과를 기다리는 동안 아쉬운 점을 정리해 리팩터해 보는 준비가 효과적이었다는 회고."],
+ good:"지적을 방어하지 않고 근거와 대안을 낸다. 스스로 먼저 약점을 꺼낸다.",
+ weak:"'시간이 없어서'로 끝내거나 지적을 부정한다. 자기 코드 구조를 기억하지 못한다.",
+ p:[["면접관 지적이 틀렸다고 생각되면?","근거를 들어 반박하되 상대의 전제를 먼저 확인한다. 토스 멘토링 후기: '지식과 경험으로 판단 근거를 제시하는 능력'을 본다."],
+    ["과제에서 '왜 이 라이브러리를 썼나'가 나오면?","문제→대안 비교→선택 이유→비용. '인기 있어서'는 감점 신호로 여러 후기가 언급한다."]],
+ r:[["토스 FE 경력 면접 후기(2025-08)","https://caesiumy.dev/posts/career/toss-interview-retrospect/"],["토스 NEXT 2023 후기 — 과제 리뷰 중심 기술 면접","https://spongelog.netlify.app/toss_next_2023_postmortem/"],["토스 커리어 — NEXT 25 FE 합격 수기(면접관 발언)","https://toss.im/career/article/next-25-frontend"],["토스 프론트엔드 멘토링 후기","https://joong-sunny.github.io/career/toss/"]]},
+{c:"toss",l:"all",prov:{kind:"reported",note:"경력 FE 후기(2025-08)에서 라이브 코딩 진행 방식 확인"},
+ q:"[토스·라이브 코딩] AI 자동 완성을 끄라고 한다. 문제 의도가 불명확하면 어떻게 진행하나?",
+ core:["후기: 라이브 코딩에서 AI 자동 완성 비활성화를 요구했고, 의도가 불명확할 때 역질문으로 이해를 확인한 뒤 일부는 의사코드, 나머지는 구두로 설명하는 방식이 허용됐다.","순서: 요구사항 재진술 → 입력·출력·경계 조건 질문 → 가장 단순한 동작 버전 → 경계·에러 처리 → 시간 남으면 개선. 말하면서 쓴다.","막히면 멈추지 말고 '지금 이 부분이 막히는데, A 와 B 중 A 로 가겠다'고 판단을 소리 내어 말한다. 면접관은 판단 과정을 본다.","완성보다 방향. 의사코드로 구조를 보이고 핵심 함수만 실제로 채우는 것이 허용된다."],
+ good:"역질문으로 범위를 좁히고, 판단을 말로 남기며, 경계 조건을 스스로 꺼낸다.",
+ weak:"조용히 타이핑만 하거나, 의도를 확인하지 않고 잘못된 문제를 푼다.",
+ p:[["시간 안에 못 끝날 것 같으면?","남은 부분을 의사코드와 말로 채우고 어디가 미완인지 명시한다. 후기에서 실제로 허용된 방식."],
+    ["자동 완성 없이 API 이름이 정확히 기억나지 않으면?","기억나는 대로 쓰고 '정확한 시그니처는 문서 확인이 필요하다'고 말한다. 존재하지 않는 API 를 확신하는 것이 더 나쁘다."]],
+ r:[["토스 FE 경력 면접 후기(2025-08) — 라이브 코딩 방식","https://caesiumy.dev/posts/career/toss-interview-retrospect/"],["Formation — AI 보조 코딩 면접(Direct·Explain·Verify)","https://formation.dev/blog/ai-assisted-coding-interviews"]]},
+{c:"toss",l:"mid",prov:{kind:"reported",note:"토스 기술 블로그 모닥불 EP.8(면접관 직접 발언)·EP.6, App Router 도입 검토 글에서 확인"},
+ q:"[토스·왜] Next.js 를 썼다고 이력서에 적었다. 면접관이 '왜 썼나'를 묻는다.",
+ core:["토스 면접관들이 직접 말한 기준: 기술 스택은 '단순 사용 경험이 아니라 왜 사용했는지'가 중요하다(모닥불 EP.8). EP.6 은 프레임워크를 '정말 꼭 써야 할까'부터 되묻는다.","답의 뼈대: 해결하려던 문제(SEO·첫 화면·라우팅·팀 규모) → 대안(CRA/Vite SPA, Remix 등) → 선택 이유 → 감수한 비용(빌드·서버·복잡도) → 지금이라면.","토스뱅크는 App Router/RSC 를 직접 측정한 뒤 '장점이 우리 화면에서 유효하지 않고 전환·운영 비용이 크다'며 도입하지 않았다. '많이 쓰인다고 우리 문제가 먼저 풀리는 건 아니다'가 그 글의 결론.","프레임워크 종속을 자각하고 '주도권'을 갖는지도 본다(EP.6)."],
+ good:"문제→대안→비용→측정 순으로 말하고, 쓰지 않았을 경우도 설명할 수 있다.",
+ weak:"'표준이라서', '회사에서 쓰니까', '빠르다고 해서'로 끝낸다. EP.8 댓글에서 조롱된 답이 그 유형이다.",
+ p:[["같은 프로젝트를 Next.js 없이 만들면 무엇이 달라지나?","라우팅·SSR·이미지 최적화·코드 분할을 직접 조립해야 한다. 그 비용과 프레임워크 종속 비용을 비교해 말할 수 있어야 한다."],
+    ["App Router 로 올릴 건가?","토스뱅크의 판단 기준을 알면 좋다: 스트리밍 이득이 우리 화면에 있는가, 경계(RSC/클라이언트)를 그을 자리가 있는가, 공통 패키지가 새 실행 환경에 맞는가, 되돌릴 수 있는가."]],
+ r:[["토스 기술 블로그 — 모닥불 EP.8 「Next.js 그만 쓰세요! 면접관이 진짜 원하는 것」","https://toss.tech/article/firesidechat_frontend_8"],["토스 기술 블로그 — 모닥불 EP.6 「Next.js, 꼭 써야 할까?」","https://toss.tech/article/firesidechat_frontend_6"],["토스 기술 블로그 — App Router 의 장점은 우리에게도 장점일까요?","https://toss.tech/article/52999"],["web.dev 렌더링 전략 비교",W+"rendering-on-the-web"]]},
+{c:"toss",l:"mid",prov:{kind:"reported",note:"NEXT 25 FE 합격 수기에서 '상태 관리 라이브러리' 질문이 나왔다고 명시. Jotai 사용은 토스 모노리포 글에서 확인"},
+ q:"[토스·확인된 질문] 프론트엔드에서 자주 쓰는 상태 관리 라이브러리를 설명해 보라. 서로 무엇이 다른가?",
+ core:["합격 수기: 기술 면접에서 '상태 관리 라이브러리' 질문이 나왔고, 개념을 한 번 정리했다면 자신 있게 답했을 것이라는 회고. 이름이 아니라 모델을 물은 것.","모델로 나눈다. 단일 스토어+리듀서(Redux): 예측 가능·보일러플레이트. 원자(atom) 기반(Jotai·Recoil): 작은 상태 단위와 파생 상태, 부분 구독. 훅 기반 스토어(Zustand): selector 구독·최소 API. 서버 상태 전용(TanStack Query): 캐시·재검증.","토스 모노리포 글은 사내 표준 라이브러리 예로 Jotai 를 든다. atom 모델(읽기/쓰기 원자, 파생 atom, Provider 없는 전역)을 설명할 수 있어야 한다.","선택 기준: 상태의 수명과 독자(서버 사본인가, 화면 로컬인가, URL 인가). 라이브러리 이름이 답이 아니라 이 분류가 답이다."],
+ good:"모델(스토어/원자/훅 selector/서버 캐시)로 분류하고 각각의 부분 구독·파생 상태 처리 차이를 말한다.",
+ weak:"이름만 나열하거나 'Redux 는 복잡하다'는 인상 비평에 머문다.",
+ p:[["Jotai 의 atom 은 Recoil 의 atom 과 무엇이 같고 다른가?","둘 다 원자·파생 모델. Jotai 는 키 문자열 없이 참조로 식별하고 Provider 없이도 동작하며 최소 API 를 지향한다. 파생 atom 은 읽기 함수로 정의한다."],
+    ["서버 데이터를 Jotai atom 에 넣으면 무엇이 문제인가?","캐시 수명·재검증·경합을 직접 구현해야 한다. 서버 상태는 전용 계층(Query)으로 두고 atom 은 UI·파생 상태에 쓴다."]],
+ r:[["토스 커리어 — NEXT 25 FE 합격 수기(질문 확인)","https://toss.im/career/article/next-25-frontend"],["토스 기술 블로그 — 모노리포 희망편(사내 표준 라이브러리에 Jotai 언급)","https://toss.tech/article/52209"],["Jotai 공식 문서 — atom","https://jotai.org/docs/core/atom"],["react.dev 상태 관리",R+"learn/managing-state"],["TanStack Query — 쿼리 키",TQ+"query-keys"]]},
+{c:"toss",l:"sr",prov:{kind:"reported",note:"경력 FE 후기(2025-08)의 2차 면접 서술에서 확인"},
+ q:"[토스·2차 면접] 예측 불가능한 트래픽 급증과 레거시 기술 부채 — 실무 시나리오를 어떻게 다루나?",
+ core:["후기: 2차는 이력서보다 '실무에서 있을 법한 현실 세계의 문제와 운영 시나리오'를 물었고, 저자는 대규모 트래픽·레거시 부채 경험이 없어 답이 얕았다고 회고했다.","트래픽 급증(이벤트·마케팅): 프론트가 할 수 있는 것 — 정적화·CDN 캐시 히트율, 요청 폭주 완화(디바운스·재시도 백오프·지터), 기능 플래그로 무거운 기능 끄기, 실패 시 우아한 저하(graceful degradation), 필드 지표 감시.","레거시 부채: 인벤토리·측정 → Strangler Fig 로 경계 단위 교체 → 신규 코드는 새 규칙 → 코드모드 → 제거 기한. 토스 모노리포 글은 의존성 파편화를 '카탈로그'로 통일한 실제 사례.","답의 핵심은 '내가 결정한 것과 되돌린 것'이다. 경험이 없으면 설계 원칙과 측정 계획으로 답한다."],
+ good:"프론트가 통제할 수 있는 축(캐시·요청량·플래그·저하)을 나누고, 부채는 측정→단계→기한으로 말한다.",
+ weak:"'서버가 알아서' 또는 '전면 재작성'으로 답한다.",
+ p:[["결제 이벤트 오픈 직후 API 가 느려진다. 프론트에서 지금 무엇을 하나?","재시도 폭주를 막고(백오프·지터), 비핵심 요청을 지연·비활성화, 캐시 가능한 것은 캐시, 사용자에게 상태를 정직하게 표시. 플래그로 무거운 기능 차단."],
+    ["레거시 서비스의 React 버전이 세 개다. 어디서부터?","의존성 인벤토리 → 표준 버전(카탈로그) 정의 → 자동 변환 스크립트·호환 레이어 → 서비스별 순차 이관. 토스 사례 그대로."]],
+ r:[["토스 FE 경력 면접 후기(2025-08) — 2차 면접","https://caesiumy.dev/posts/career/toss-interview-retrospect/"],["토스 기술 블로그 — 모노리포 희망편(의존성 파편화와 카탈로그)","https://toss.tech/article/52209"],["Martin Fowler — Strangler Fig","https://martinfowler.com/bliki/StranglerFigApplication.html"],["Martin Fowler — Feature Toggles","https://martinfowler.com/articles/feature-toggles.html"]]},
+{c:"toss",l:"all",prov:{kind:"reported",note:"NEXT 25 FE 합격 수기의 면접관 발언에서 확인(피드백 방식 질문·학습 태도)"},
+ q:"[토스·컬처] 동료에게 피드백을 어떻게 주나? 실제 사례를 말해 보라.",
+ core:["면접관 발언: '동료와의 피드백 방식을 물었을 때 소통하는 방식이 굉장히 좋다고 느꼈다', '상대방 기분이 상하지 않게 피드백하는 것이 중요', '정성적 요소도 평가에 크게 작용'.","답의 뼈대: 상황 → 내가 관찰한 사실(코드·행동) → 영향 → 제안 → 상대 반응과 결과. 사람이 아니라 결과물과 사실에 대해 말한다.","토스 코드 리뷰 문화(모닥불 EP.12): 저맥락자(맥락 모르는 사람)도 이해할 수 있게 쓰는 리뷰, 가독성 위원회, 코드 스멜 워킹그룹. 리뷰 코멘트 자체가 피드백 사례가 된다.","면접관은 '개념이 막혔을 때 당황하지 않고 의도를 파악해 답을 찾아간 태도'와 '끊임없이 학습하는 의지'도 채용 사유로 들었다."],
+ good:"사실 기반·영향·제안 순서로 실제 사례를 말하고 상대의 반응까지 담는다.",
+ weak:"'좋게 말한다' 같은 태도 표현만 있고 사례가 없다.",
+ p:[["피드백을 받았는데 동의하지 않을 때는?","의도와 전제를 먼저 확인하고, 근거로 반론하되 결정 기준(사용자 영향·비용)으로 합의한다."],
+    ["코드 리뷰 코멘트를 저맥락자도 이해하게 쓰려면?","무엇이 문제인지·왜·대안·차단 여부를 한 코멘트에. 배경 링크를 붙인다. EP.12 의 '고맥락자 리뷰' 문제의식."]],
+ r:[["토스 커리어 — NEXT 25 FE 합격 수기(면접관 재원 님 발언)","https://toss.im/career/article/next-25-frontend"],["토스 기술 블로그 — 모닥불 EP.12 「코드 리뷰할 시간이 어딨어요?」","https://toss.tech/article/firesidechat_frontend_12"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"토스 프론트엔드 챕터가 공개·운영하는 Frontend Fundamentals 와 모닥불 EP.12(좋은 코드 4기준)에서 도출한 예상 문항"},
+ q:"[토스·예상] 좋은 프론트엔드 코드란 무엇인가? 기준을 우선순위와 함께 말해 보라.",
+ core:["토스 프론트엔드 챕터의 Frontend Fundamentals(FF): '좋은 프론트엔드 코드는 변경하기 쉬운 코드'. 판단 기준 4가지 — 가독성, 예측 가능성, 응집도, 결합도.","가독성: 한 번에 머릿속에 두는 맥락을 줄이기(같이 실행되지 않는 코드 분리, 구현 상세 추상화, 복잡한 조건·매직 넘버에 이름), 위에서 아래로 읽히게(시점 이동 줄이기, 삼항 단순화).","예측 가능성: 이름 겹치지 않게, 같은 종류 함수는 반환 타입 통일, 숨은 로직 드러내기. 응집도: 함께 수정되는 파일을 같은 디렉토리에, 매직 넘버 없애기, 폼의 응집도. 결합도: 책임 하나씩, 중복 코드 허용, Props Drilling 지우기.","기준은 서로 충돌한다(응집도를 올리면 결합도가 오를 수 있다). FF 는 '여러 각도로 보기'를 강조하고 일반적 우선순위는 가독성이 앞이라고 본다."],
+ good:"4기준을 말하고 충돌 사례(중복 허용 vs 응집)를 자기 코드로 든다.",
+ weak:"'클린 코드', 'DRY' 같은 구호만 말하고 기준 간 충돌을 모른다.",
+ p:[["중복 코드를 허용하라는 말은 DRY 와 충돌하지 않나?","FF 의 결합도 절: 함께 바뀌지 않을 코드를 억지로 합치면 결합이 생긴다. 변경 이유가 다르면 중복이 낫다."],
+    ["가독성과 예측 가능성이 충돌하는 예는?","반환 타입을 통일하면 일부 호출부가 장황해진다. FF 는 이런 충돌을 인정하고 상황별 판단을 요구한다."]],
+ code:[["FF 가독성 — 복잡한 조건에 이름 붙이기","ts",`// 전
+if (user.age >= 19 && user.verified && !user.suspended && account.balance > 0) { /* … */ }
+
+// 후 — 조건의 의도가 이름으로 드러난다
+const canTransfer = user.age >= 19 && user.verified && !user.suspended && account.balance > 0;
+if (canTransfer) { /* … */ }`],
+       ["FF 예측 가능성 — 같은 종류 함수는 반환 타입 통일","ts",`// 전: 하나는 데이터, 하나는 { data } 래핑 → 호출부가 매번 형태를 확인해야 한다
+async function fetchUser(): Promise<User> { /* … */ }
+async function fetchAccount(): Promise<{ data: Account }> { /* … */ }
+
+// 후: 같은 종류(API 조회)는 같은 형태로
+async function fetchUser(): Promise<User> { /* … */ }
+async function fetchAccount(): Promise<Account> { /* … */ }`]],
+ r:[["Frontend Fundamentals — 좋은 코드를 위한 4가지 기준(토스 프론트엔드)","https://frontend-fundamentals.com/code-quality/code/"],["Frontend Fundamentals — 소개","https://frontend-fundamentals.com/code-quality/"],["토스 기술 블로그 — 모닥불 EP.12(좋은 코드의 4가지 기준)","https://toss.tech/article/firesidechat_frontend_12"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"모닥불 EP.10 캠프파이어에서 시청자 질문으로 다룬 주제(폴더 구조·추상화 범위). FF 응집도·결합도 절과 연결"},
+ q:"[토스·예상] 폴더 구조를 어떻게 잡나? 컴포넌트 추상화는 어디까지 하나?",
+ core:["모닥불 EP.10 이 다룬 두 질문 그대로다. FF 응집도 절의 원칙: '함께 수정되는 파일을 같은 디렉토리에' — 종류(components/hooks/utils)별이 아니라 도메인·기능별로 묶는다.","추상화는 '변경 사항을 예측해서' 미리 하지 않는다(EP.10 타임스탬프 11:20). 세 번째 반복에서 공통화하고, 그전에는 중복을 허용한다(FF 결합도 절).","분리 신호: props 폭발·불리언 난립·내부 분기 증가. 합성(children·slot)으로 열어 두는 것이 조건 분기를 늘리는 것보다 낫다.","도메인 폴더 안에서 종류별 하위 폴더는 허용. 반대로 최상위를 종류별로 나누면 한 기능 수정에 5개 폴더를 건너다닌다."],
+ good:"함께 바뀌는 단위로 묶는다는 원칙을 말하고, 조기 추상화의 실패 경험을 든다.",
+ weak:"'재사용을 위해 최대한 공통화한다' 또는 '컴포넌트/훅/유틸 폴더로 나눈다'에서 끝난다.",
+ p:[["두 화면에서 90% 같은 컴포넌트가 있다. 합칠까?","변경 이유가 같은가로 판단한다. 다른 이유로 바뀔 두 컴포넌트를 합치면 조건 분기가 늘어 결합도가 오른다(FF)."],
+    ["공용 컴포넌트에 특정 화면용 prop 을 추가해 달라는 요청이 오면?","합성으로 열 수 있는지 먼저 본다. 화면 전용 분기가 공용에 들어가는 순간 예측 가능성이 깨진다."]],
+ r:[["토스 기술 블로그 — 모닥불 EP.10 캠프파이어 상편(폴더 구조·추상화)","https://toss.tech/article/firesidechat_frontend_10"],["Frontend Fundamentals — 응집도·결합도","https://frontend-fundamentals.com/code-quality/code/"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"SLASH 21 박서진(현 Head of Frontend) 세션·토스 OSS Suspensive 에서 도출. 토스 FE 의 핵심 관심사"},
+ q:"[토스·예상] 로딩·에러 상태를 컴포넌트마다 처리하면 무엇이 문제인가? 선언적으로 어떻게 바꾸나?",
+ core:["SLASH 21 '프론트엔드 웹 서비스에서 우아하게 비동기 처리하기': 성공 경로에 로딩·에러 분기가 섞이면 코드가 읽기 어렵고 실패 처리가 누락된다. Suspense 와 Error Boundary 로 '성공 케이스만 쓰고' 로딩·에러는 경계가 맡는 구조를 제안했다.","Suspense: 자식이 데이터를 기다리면 fallback. Error Boundary: 렌더 중 에러를 잡아 대체 UI. 둘을 컴포넌트 경계에 배치해 관심사를 분리한다.","토스 OSS Suspensive 는 React 의 Suspense/ErrorBoundary 사용에서 '실제 앱에서 드러나는 빈틈'을 메운다: ErrorBoundaryGroup(일괄 reset), shouldCatch(에러 종류별 선택 처리), Delay(짧은 로딩 깜빡임 방지), clientOnly.","대가: 경계 위치 설계가 필요하고, 잘못 두면 넓은 영역 깜빡임·중복 요청·상태 되돌림."],
+ good:"성공 경로 분리라는 동기를 말하고, 경계 배치와 reset 전략까지 설계한다.",
+ weak:"isLoading/isError 분기를 컴포넌트마다 두는 것을 당연하게 여긴다.",
+ p:[["네트워크 에러는 재시도 버튼, 권한 에러는 로그인 이동 — 한 경계에서 어떻게 나누나?","에러 타입으로 분기. Suspensive 의 shouldCatch 처럼 잡을 에러를 선택하고 나머지는 상위 경계로 던진다."],
+    ["로딩이 100ms 만에 끝나는데 스켈레톤이 번쩍인다. 어떻게?","fallback 표시를 지연(Delay)하거나 transition 으로 이전 화면을 유지한다."]],
+ code:[["성공 경로만 남긴 컴포넌트 — 로딩·에러는 경계가 맡는다","jsx",`// 전: 분기가 성공 경로를 덮는다
+function Account({ id }) {
+  const { data, isLoading, error } = useAccount(id);
+  if (isLoading) return <Spinner />;
+  if (error) return <ErrorView error={error} />;
+  return <Balance amount={data.balance} />;
+}
+
+// 후: 컴포넌트는 성공만 그린다. 로딩·에러는 경계로
+function Account({ id }) {
+  const { data } = useSuspenseAccount(id);   // suspense 모드 쿼리
+  return <Balance amount={data.balance} />;
+}
+
+<ErrorBoundary fallback={({ error, reset }) => <ErrorView error={error} onRetry={reset} />}>
+  <Suspense fallback={<Skeleton />}>
+    <Account id={id} />
+  </Suspense>
+</ErrorBoundary>`]],
+ r:[["토스 SLASH 21 — 프론트엔드 웹 서비스에서 우아하게 비동기 처리하기","https://toss.im/slash-21/sessions/3-1"],["toss/suspensive — What is Suspensive?","https://github.com/toss/suspensive"],["Suspensive 문서","https://suspensive.org/"],["react.dev Suspense",R+"reference/react/Suspense"],["react.dev Error Boundary(Component 참조)",R+"reference/react/Component"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"모닥불 EP.10 시청자 질문('유효성 검사는 에러로 보는 것이 맞을까요?')과 Suspensive shouldCatch 설계에서 도출"},
+ q:"[토스·예상] 폼 유효성 실패를 에러(throw)로 다뤄야 하나, 값으로 다뤄야 하나?",
+ core:["모닥불 EP.10 에서 시청자 질문으로 다뤄진 주제. 기준은 '예상된 결과인가, 예외적 실패인가'.","유효성 실패는 사용자 입력의 정상적 결과다. 값(Result/유니온)으로 돌려 화면이 필드별로 안내하게 한다. throw 하면 제어 흐름이 경계로 튀어 필드 맥락을 잃는다.","네트워크·권한·서버 오류는 예외다. Error Boundary 가 잡아 재시도·이동을 제공한다. 두 종류를 한 채널에 섞으면 경계가 유효성 메시지를 화면 전체 에러로 바꾼다.","예외로 다룰 때도 종류별로 잡는다(Suspensive shouldCatch). 모든 에러를 한 경계로 삼키면 원인이 사라진다."],
+ good:"'예상 가능한 결과 vs 예외'로 나누고 각 채널의 소비자(필드 UI vs 경계)를 말한다.",
+ weak:"편의상 전부 throw 하거나 전부 값으로 돌려 예외 처리가 누락된다.",
+ p:[["서버가 400 으로 필드 에러를 돌려주면 그건 에러인가 값인가?","의미상 유효성 결과다. 응답을 필드 에러 값으로 변환해 같은 채널로 보낸다. 상태 코드가 아니라 의미로 분류한다."],
+    ["TypeScript 로 이 구분을 강제할 수 있나?","반환 타입을 판별 유니온(ok/fail)으로 두면 호출부가 실패를 무시할 수 없다. 예외는 타입에 드러나지 않는다."]],
+ code:[["유효성은 값, 예외는 throw","ts",`type ValidationResult =
+  | { ok: true; value: TransferForm }
+  | { ok: false; errors: Partial<Record<keyof TransferForm, string>> };
+
+function validate(form: TransferForm): ValidationResult {
+  const errors: Partial<Record<keyof TransferForm, string>> = {};
+  if (form.amount <= 0) errors.amount = "0원보다 큰 금액을 입력하세요.";
+  if (!/^\\d{10,14}$/.test(form.account)) errors.account = "계좌번호 형식이 아닙니다.";
+  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: form };
+}
+
+async function submit(form: TransferForm) {
+  const v = validate(form);
+  if (!v.ok) return showFieldErrors(v.errors);     // 예상된 결과 → 값
+  await transfer(v.value);                          // 네트워크 실패 → throw → 경계
+}`]],
+ r:[["토스 기술 블로그 — 모닥불 EP.10 상편(유효성 검사는 에러인가)","https://toss.tech/article/firesidechat_frontend_10"],["toss/suspensive — ErrorBoundary shouldCatch","https://github.com/toss/suspensive"],["TS 핸드북 Narrowing(판별 유니온)",T+"2/narrowing.html"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"토스 OSS overlay-kit(구 @toss/use-overlay)의 설계 동기에서 도출"},
+ q:"[토스·예상] 모달·바텀시트 열림 상태를 어디에 두나? 확인 결과를 호출부로 어떻게 돌려주나?",
+ core:["토스 OSS overlay-kit 의 동기: 오버레이를 '복잡한 상태 관리나 불필요한 이벤트 처리 없이' 선언적으로 관리한다. isOpen state 와 onClose 콜백을 컴포넌트마다 두는 방식의 반복을 없앤다.","호출부에서 overlay.open(({ isOpen, close, unmount }) => <Dialog … />) 처럼 여는 시점에 UI 를 넘기고, 결과는 Promise 로 받는다(확인/취소를 await).","장점: 여는 곳과 닫는 곳이 한 함수 안에 있어 응집도가 오르고, 오버레이 상태가 부모 컴포넌트 트리에 섞이지 않는다. 라우트 이동 시 정리(unmount)도 한 곳.","대가: Provider 필요, 오버레이가 트리 밖에서 렌더되므로 컨텍스트·포커스 관리·접근성(포커스 복귀·트랩)을 라이브러리나 구현이 책임져야 한다."],
+ good:"명령형 열기 + Promise 결과라는 모델과 그 응집도 이점을 말하고 접근성 대가를 짚는다.",
+ weak:"모달마다 useState(false) + prop 전달을 반복하는 구조의 문제를 인식하지 못한다.",
+ p:[["오버레이가 포털로 트리 밖에 렌더되면 무엇을 잃나?","포커스 복귀·트랩·aria 연결을 직접 챙겨야 한다. 네이티브 dialog 를 감싸면 상당 부분 해결된다."],
+    ["오버레이 안에서 또 오버레이를 열면?","스택으로 관리하고 최상위만 트랩. overlay-kit 은 여러 오버레이를 id 로 관리한다."]],
+ code:[["열기·결과·닫기가 한 곳에 — overlay-kit 스타일","jsx",`import { overlay } from "overlay-kit";
+
+async function onDelete(caseId) {
+  const confirmed = await new Promise((resolve) =>
+    overlay.open(({ isOpen, close, unmount }) => (
+      <ConfirmDialog
+        open={isOpen}
+        title="케이스를 삭제할까요?"
+        onConfirm={() => { resolve(true); close(); }}
+        onCancel={() => { resolve(false); close(); }}
+        onExit={unmount}
+      />
+    ))
+  );
+  if (confirmed) await deleteCase(caseId);
+}`]],
+ r:[["toss/overlay-kit — 선언적 오버레이 관리","https://github.com/toss/overlay-kit"],["ARIA APG Dialog 패턴","https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/"],["MDN dialog 요소",M+"Web/HTML/Reference/Elements/dialog"]]}
+,
+{c:"toss",l:"mid",prov:{kind:"official",note:"SLASH 23 「퍼널: 쏟아지는 페이지 한 방에 관리하기」 세션과 토스 OSS @use-funnel 에서 도출. 토스 서비스(계좌 개설·대출)가 다단계 퍼널 중심"},
+ q:"[토스·예상] 10단계 가입 퍼널을 만든다. 단계별 상태·뒤로 가기·타입 안전을 어떻게 설계하나?",
+ core:["SLASH 23 퍼널 세션: '수많은 화면과 쏟아지는 분기'를 각 화면 컴포넌트가 아니라 퍼널 단위로 관리한다. 토스 OSS @use-funnel 은 이를 훅으로 제공한다.","핵심 원칙(use-funnel 문서): 단계별로 필요한 상태만 타입으로 강제(다음 단계의 필수 필드가 없으면 컴파일 에러), 히스토리 기반 상태 관리로 뒤로/앞으로 가기에서 상태가 복원, 브라우저 히스토리·react-router·Next.js·React Navigation 등 라우터 지원.","안티패턴: 전역 스토어 하나에 모든 단계 값을 optional 로 두고 각 화면이 undefined 를 방어하는 구조. 어느 단계에서 값이 채워졌는지 타입이 말해 주지 않는다.","실무 요건: 새로고침·딥링크 복원, 중간 이탈 후 재진입, 서버 저장 시점(단계마다 vs 마지막), 뒤로 가기 시 서버 상태와의 불일치 처리."],
+ good:"단계 전이를 타입으로 좁히고 히스토리 복원을 설계에 넣는다. 서버 저장 시점을 트레이드오프로 말한다.",
+ weak:"단계 인덱스 하나와 거대한 폼 state 로 만들고 뒤로 가기·복원을 다루지 않는다.",
+ p:[["뒤로 가기로 3단계로 돌아가 값을 바꾸면 4~5단계 값은 어떻게 하나?","의존하는 값이면 무효화하고 다시 입력받는다. 히스토리 기반이면 그 지점 이후 상태를 자연스럽게 폐기할 수 있다."],
+    ["퍼널 중간에 서버 저장이 실패하면?","단계를 넘기지 않고 재시도. 낙관적 전이는 되돌리기 어려운 금융 절차엔 부적합하다."]],
+ code:[["단계마다 필요한 상태만 타입으로 강제 — @use-funnel 모델","tsx",`import { useFunnel } from "@use-funnel/browser";
+
+type Steps = {
+  agree:   { agreed?: boolean };
+  identity:{ agreed: true; name?: string; rrn?: string };
+  account: { agreed: true; name: string; rrn: string; bank?: string };
+  done:    { agreed: true; name: string; rrn: string; bank: string };
+};
+
+const funnel = useFunnel<Steps>({ id: "open-account", initial: { step: "agree", context: {} } });
+
+<funnel.Render
+  agree={({ history }) => <Agree onNext={() => history.push("identity", { agreed: true })} />}
+  identity={({ context, history }) => (
+    <Identity onNext={(name, rrn) => history.push("account", { ...context, name, rrn })} />
+  )}
+  account={({ context, history }) => (
+    <Account onNext={(bank) => history.push("done", { ...context, bank })} />   // name·rrn 누락이면 컴파일 에러
+  )}
+  done={({ context }) => <Done {...context} />}
+/>`]],
+ r:[["토스 SLASH 23 — 퍼널: 쏟아지는 페이지 한 방에 관리하기","https://toss.im/slash-23/session-detail/B1-7"],["toss/use-funnel — Core Concepts","https://github.com/toss/use-funnel"],["@use-funnel 문서","https://use-funnel.slash.page/"],["MDN History API",M+"Web/API/History_API"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"SLASH 21 번들 사이즈 세션(이한)과 토스 OSS es-toolkit 의 설계 목표(번들 97% 축소·트리 셰이킹)에서 도출"},
+ q:"[토스·예상] lodash 를 쓰는 프로젝트를 es-toolkit 으로 바꾸면 무엇이 달라지고, 왜 그런가?",
+ core:["es-toolkit(토스 OSS)의 설계 목표: 현대적 구현으로 2~3배 빠른 성능, 트리 셰이킹을 기본 지원해 다른 라이브러리 대비 최대 97% 작은 번들, 견고한 TypeScript 타입, lodash 호환 레이어(es-toolkit/compat).","왜 작아지나: ESM + 함수 단위 모듈 + sideEffects 없음 → 쓰는 함수만 번들에 남는다. lodash 는 CJS 빌드·내부 공유 유틸 참조 때문에 부분 import 가 어렵고 lodash-es 도 구현이 무겁다.","SLASH 21 세션의 관점: 번들이 커지는 상황은 '라이브러리를 사용하는 쪽'과 '제공하는 쪽' 양쪽에서 생긴다. 사용 측은 전체 import·중복 의존성, 제공 측은 CJS·사이드이펙트 표기 누락.","검증은 산출물로: 번들 분석 도구로 전후 크기, 그리고 필드 지표(LCP·INP) 변화."],
+ good:"작아지는 구조적 이유(ESM·모듈 경계·sideEffects)를 말하고 전후를 측정으로 증명한다.",
+ weak:"'가볍다고 들어서'로 끝나고 왜 트리 셰이킹이 되는지 설명하지 못한다.",
+ p:[["compat 레이어를 쓰면 번들 이득이 줄어드는 이유는?","lodash 동작을 재현하는 코드가 붙어 순수 es-toolkit 보다 크다. 마이그레이션 중간 단계로만 쓰고 걷어낸다."],
+    ["우리 프로젝트에서 트리 셰이킹이 실제로 됐는지 어떻게 확인하나?","번들 분석기에서 라이브러리 모듈이 함수 단위로만 포함됐는지, 그리고 사이드이펙트 표기와 ESM 해석을 확인한다."]],
+ r:[["toss/es-toolkit — README(설계 목표)","https://github.com/toss/es-toolkit"],["es-toolkit — Bundle Size","https://es-toolkit.dev/bundle-size.html"],["es-toolkit — Performance","https://es-toolkit.dev/performance.html"],["토스 SLASH 21 세션 목록(JavaScript Bundle Size 다이어트)","https://toss.im/slash-21/sessions"],["webpack tree shaking","https://webpack.js.org/guides/tree-shaking/"]]},
+{c:"toss",l:"sr",prov:{kind:"official",note:"토스 FE JD(앱 내 웹 페이지 구현)·토스뱅크 JD(모바일 앱 내 웹앱 우대)·App Router 검토 글의 '앱 브릿지' 서술에서 도출"},
+ q:"[토스·예상] 앱 안 웹뷰에서 네이티브와 통신(브릿지)하고 첫 로딩을 빠르게 하려면?",
+ core:["토스 FE JD 의 주요 업무가 '앱 내 웹 페이지 구현'이다. 토스뱅크 JD 는 '모바일 앱 내 웹앱 개발 경험'을 우대한다. 웹뷰가 기본 실행 환경.","브릿지 설계: 요청/응답에 id 를 붙여 비동기 왕복을 Promise 로 감싸고, 타임아웃·앱 미지원 메서드 폴백을 둔다. App Router 검토 글의 함정: 앱 밖에서도 '에러 없이 그냥 넘어가도록' 만든 브릿지가 서버 컴포넌트에서 호출돼도 실패가 드러나지 않았다 — 실행 환경 판별과 명시적 실패가 필요하다.","첫 로딩: 웹뷰는 콜드 스타트·JS 엔진 초기화 비용이 있어 번들 크기와 요청 수가 곧 체감이다. 토스는 SLASH 24 에서 웹뷰 번들 배포 전략을, App Router 글에서 WebKit 이 스트리밍 첫 표시를 5초 넘게 미룬 측정(Chromium 64ms vs WebKit 5,065ms)을 공유했다 — 엔진별 실측이 필수.","앱 브릿지 호출은 클라이언트 전용 동작이라 RSC/SSR 경계를 그을 때 남겨 둘 영역을 미리 표시해야 한다."],
+ good:"브릿지의 실패·타임아웃·환경 판별을 설계하고, 웹뷰 성능을 엔진별 실측으로 말한다.",
+ weak:"window.postMessage 한 줄로 끝내고 실패 경로·엔진 차이를 다루지 않는다.",
+ p:[["앱 없이 브라우저에서 같은 페이지를 열면?","환경 판별 후 브릿지 없는 경로로 동작하거나 명시적으로 미지원을 알린다. '조용히 넘어가는' 브릿지는 디버깅 불가능한 결함을 만든다."],
+    ["iOS 웹뷰에서만 첫 화면이 늦으면 무엇을 의심하나?","WebKit 의 스트리밍/첫 페인트 정책 차이, 폰트·이미지 우선순위, JIT 제약. 엔진별로 측정해 비교한다."]],
+ code:[["브릿지 — id 기반 왕복 + 타임아웃 + 환경 판별","ts",`const pending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
+
+export function callNative<T>(method: string, params?: unknown, timeoutMs = 3000): Promise<T> {
+  if (!window.NativeBridge) return Promise.reject(new Error("not-in-app: " + method));  // 조용히 넘기지 않는다
+  const id = crypto.randomUUID();
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error("bridge-timeout: " + method)); }, timeoutMs);
+    pending.set(id, { resolve: (v) => { clearTimeout(timer); resolve(v as T); }, reject });
+    window.NativeBridge.postMessage(JSON.stringify({ id, method, params }));
+  });
+}
+
+// 네이티브 → 웹 응답 수신
+window.__onNativeResponse = (raw: string) => {
+  const { id, ok, result, error } = JSON.parse(raw);
+  const p = pending.get(id); if (!p) return;
+  pending.delete(id);
+  ok ? p.resolve(result) : p.reject(new Error(error));
+};`]],
+ r:[["비바리퍼블리카 Frontend Developer 공고(원티드) — 앱 내 웹 페이지 구현","https://www.wanted.co.kr/wd/204081"],["토스 기술 블로그 — App Router 검토 글(앱 브릿지·WebKit 첫 표시 측정)","https://toss.tech/article/52999"],["MDN postMessage",M+"Web/API/Window/postMessage"],["web.dev LCP 최적화",W+"optimize-lcp"]]},
+{c:"toss",l:"sr",prov:{kind:"official",note:"SLASH 23 「Server-driven UI 로 토스의 마지막 어드민 만들기」 세션에서 도출"},
+ q:"[토스·예상] Server-driven UI 는 언제 쓰고, 무엇을 잃나?",
+ core:["SLASH 23 세션: 토스 홈 화면과 어드민이 Server-driven UI(SDUI)로 '다양한 서비스 운영을 효율화'한다. 서버가 화면 구성(컴포넌트 종류·순서·데이터)을 내려 주고 클라이언트는 렌더러 역할.","쓰는 조건: 배포 없이 바뀌어야 하는 화면(홈·프로모션·어드민 폼), 여러 플랫폼(웹·iOS·Android)이 같은 구성을 써야 할 때, 운영자가 조합하는 화면.","잃는 것: 클라이언트 타입 안전(스키마 버전 관리 필요), 복잡한 상호작용 표현력, 디버깅 난도(문제가 서버 데이터인지 렌더러인지), 성능(구성 데이터 왕복·렌더러 범용화 비용).","설계 요점: 컴포넌트 스키마 버전과 하위 호환(모르는 컴포넌트 무시/폴백), 액션(클릭 시 무엇) 표현, 프리뷰 도구, 관측(어느 구성이 어떤 에러를 냈나)."],
+ good:"쓰는 조건과 잃는 것을 나란히 말하고 스키마 버전·폴백을 설계에 넣는다.",
+ weak:"'유연해서 좋다'로 끝나고 타입·디버깅·성능 대가를 모른다.",
+ p:[["클라이언트가 모르는 새 컴포넌트 타입이 내려오면?","무시하거나 폴백 렌더. 구 버전 앱이 남아 있으므로 서버는 하위 호환을 지켜야 한다 — Parallel Change 와 같은 문제."],
+    ["SDUI 화면의 성능은 어떻게 지키나?","구성 응답 캐시, 렌더러 컴포넌트 지연 로드, 구성 크기 상한. 범용 렌더러가 무거워지는 것을 계측한다."]],
+ r:[["토스 SLASH 23 — Server-driven UI 로 토스의 마지막 어드민 만들기","https://toss.im/slash-23/session-detail/A1-2"],["Martin Fowler — ParallelChange(스키마 하위 호환)","https://martinfowler.com/bliki/ParallelChange.html"]]},
+{c:"toss",l:"sr",prov:{kind:"official",note:"토스 기술 블로그 「모노리포 희망편」(100+ 엔지니어, 카탈로그 도입)에서 도출"},
+ q:"[토스·예상] 100명이 쓰는 모노레포에서 서비스마다 React 버전이 다르다. 무엇이 문제이고 어떻게 풀었나?",
+ core:["토스 글의 문제 진단: 서비스마다 의존성 버전이 달라 개발 경험 파편화, 설치가 캐시 있어도 1분 이상, 플랫폼 라이브러리가 전 서비스에서 동작한다고 보장 못 함, 업데이트 비용이 높아 낡은 의존성이 고착.","검토했다가 버린 답: 폴리리포. 설치 시간은 줄지만 파편화·공통 코드 비용은 그대로이고 오히려 심해진다고 판단.","채택한 답: '카탈로그' — pnpm/Yarn 의 catalog 기능으로 표준 라이브러리 버전을 워크스페이스 파일에 정의하고 서비스는 catalog: 프로토콜로 참조. 관찰 근거: 개발자는 'React 가 필요하다'는 결정은 해도 특정 버전을 지정할 필요는 거의 없었다.","효과: 설치 단축, 플랫폼 테스트 환경 고정, 파괴적 변경에도 자동 변환 스크립트·호환 레이어를 제공할 수 있는 단일 업데이트 경로. 결과적으로 전 서비스가 React 19·Next.js 15 동일 버전."],
+ good:"문제를 '버전 파편화'로 정확히 짚고 폴리리포를 기각한 이유와 카탈로그 메커니즘을 말한다.",
+ weak:"'모노레포가 느려서 쪼갠다'로 답하거나 도구 이름(Nx·Turbo)만 댄다.",
+ p:[["버전을 통일하면 특정 서비스가 필요한 옛 버전을 못 쓰는 문제는?","예외 경로를 두되 승인·기한을 붙인다. 토스 글의 관찰: 실제로 버전을 지정해야 할 필요는 거의 없었다."],
+    ["카탈로그로 메이저 업그레이드는 어떻게 하나?","한 곳에서 버전을 올리고 자동 변환(코드모드)·호환 레이어를 함께 배포한다. 단일 경로라 도구화가 가능해진다."]],
+ code:[["pnpm 카탈로그 — 표준 버전 한 곳에서","yaml",`# pnpm-workspace.yaml
+catalog:
+  react: ^19.0.0
+  react-dom: ^19.0.0
+  next: ^15.0.0
+  jotai: ^2.10.0`],
+       ["서비스는 버전 대신 catalog: 참조","json",`{
+  "dependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "next": "catalog:"
+  }
+}`]],
+ r:[["토스 기술 블로그 — 모노리포 희망편, 절망의 리포가 희망의 리포로 부활하기까지 걸린 1년","https://toss.tech/article/52209"],["pnpm — Catalogs","https://pnpm.io/catalogs"],["Nx 모듈 경계 강제","https://nx.dev/features/enforce-module-boundaries"]]},
+{c:"toss",l:"sr",prov:{kind:"official",note:"토스뱅크 App Router 검토 글의 판단 기준·측정 방법에서 도출"},
+ q:"[토스·예상] 새 기술(예: App Router/RSC) 도입 여부를 어떤 기준으로 판단하나? 실제로 어떻게 측정하나?",
+ core:["토스뱅크 글의 결론 문장: '새로운 기술을 검토할 때는 그 장점이 우리 서비스에서도 유효한지, 전환하고 운영하는 비용은 감당할 수 있는지 직접 확인한다.' 많이 쓰인다는 사실은 근거가 아니다.","측정 사례: 스트리밍 첫 표시(FCP)가 Chromium 64ms vs WebKit 5,065ms — WebKit 이 마지막 섹션까지 기다렸다. 이득이 엔진에 따라 사라진다는 것을 숫자로 확인.","기대 이득의 실물 확인: RSC 로 클라이언트 번들에서 서버 전용 의존성이 빠짐, 조건부 exports 로 환경별 구현 분기 → 쿼리별 서버 코드 중복이 사라짐(예상 못한 큰 이득).","비용의 실물 확인: RSC/클라이언트 경계를 그을 자리가 적음(버튼·입력·앱 브릿지가 많아 대부분 클라이언트), 경계 실수가 조용히 넘어감(앱 브릿지), 프레임워크 결함(basePath 중복으로 404). 결론: 도입하지 않고 Pages Router 유지."],
+ good:"이득·비용을 '우리 화면에서' 측정한 값으로 말하고, 도입하지 않는 결론도 정당한 결과로 다룬다.",
+ weak:"커뮤니티 인기·공식 권장을 근거로 도입을 말한다.",
+ p:[["측정해 보니 이득이 특정 화면에만 있다면?","그 화면만 부분 도입할 수 있는지, 두 방식 공존 비용은 얼마인지 다시 측정한다. 전면 도입/불도입 이분법이 아니다."],
+    ["도입하지 않기로 한 결정을 어떻게 기록하나?","기준·측정값·재검토 조건(예: WebKit 동작 변경 시)을 ADR 로 남긴다. 토스 글 자체가 그 기록 형태다."]],
+ r:[["토스 기술 블로그 — App Router 의 장점은 우리에게도 장점일까요?","https://toss.tech/article/52999"],["react.dev 서버 컴포넌트",R+"reference/rsc/server-components"],["Architecture Decision Records","https://adr.github.io/"]]},
+{c:"toss",l:"sr",prov:{kind:"official",note:"토스 기술 블로그 「전체 데이터를 브라우저에 두는 광고 대시보드 만들기」에서 도출"},
+ q:"[토스·예상] 필터·정렬·검색·페이지네이션을 서버에 둘까, 브라우저에 둘까? 판단 기준은?",
+ core:["토스 광고 대시보드 글: 서버가 하던 네 동작을 전부 브라우저로 옮겼다. 얻은 것은 속도(수백 ms → 체감 없음)만이 아니라 서버 스펙에 묶여 못 풀던 문제 네 개(집계 테이블에 없는 항목 누락, 특정 ID 위치 이동 불가, 서버 미지원 정렬 불가 등)가 함께 풀린 것.","판단 기준(글의 핵심 문장): '클라이언트 필터링이 좋은가'가 아니라 '데이터에 상한이 있고 그 상한을 숫자로 확정할 수 있는가'. 상한이 있으면 메모리·연산·초기 로딩을 미리 계산할 수 있다. 사용자 수만큼 무한히 늘어나는 데이터면 이 결정은 하면 안 된다.","구현 요점: 10만 건 연산은 Web Worker 로(연산을 줄이는 게 아니라 화면이 굳는 시간과 떼어 놓는 것), 초기 데이터는 ArrayBuffer Transferable 로 복사 없이 이전, 워커는 현재 페이지 100건만 반환, API 를 쪼개 도착한 컬럼부터 그리되 아직 안 온 컬럼은 정렬을 잠근다.","목록의 주인을 클라이언트로 정하면 새 정보 추가가 '구조 변경'이 아니라 'API 하나 더 + ID 병합'이 된다. 한 API 실패가 컬럼 하나 비는 일로 격리된다."],
+ good:"상한 확정 가능성을 기준으로 말하고 워커·Transferable·정렬 잠금 같은 구현 대가를 안다.",
+ weak:"'데이터가 많으면 서버'라는 일반론으로 끝난다.",
+ p:[["상한이 2만 건인데 갑자기 20만 건이 되면?","설계 전제가 깨진 것. 상한을 계측·알림으로 감시하고, 초과 시 서버 처리로 되돌릴 경로를 미리 둔다."],
+    ["워커에 매번 10만 건을 보내면 왜 이득이 사라지나?","postMessage 는 구조화 복제라 매번 전체를 복사한다. 초기 1회만 Transferable 로 넘기고 이후엔 작은 결과만 오가게 한다."]],
+ code:[["초기 데이터는 소유권 이전, 이후엔 작은 결과만","js",`// 메인: 본문을 파싱하지 않고 버퍼 소유권만 워커에 넘긴다(복사 0)
+const res = await fetch("/api/campaigns/all");
+const buf = await res.arrayBuffer();
+worker.postMessage({ type: "init", buf }, [buf]);          // Transferable
+
+// 조작마다: 파라미터만 보내고 현재 페이지(100건)만 받는다
+worker.postMessage({ type: "query", filter, sort, search, page });
+worker.onmessage = (e) => { if (e.data.type === "page") renderRows(e.data.rows); };
+
+// 워커: 필터 → 검색 → 정렬 → slice 는 10ms 남짓
+self.onmessage = (e) => {
+  if (e.data.type === "init") { rows = decode(e.data.buf); return; }
+  const { filter, sort, search, page } = e.data;
+  const out = rows.filter(byFilter(filter)).filter(bySearch(search)).sort(bySort(sort));
+  self.postMessage({ type: "page", rows: out.slice(page * 100, page * 100 + 100), total: out.length });
+};`]],
+ r:[["토스 기술 블로그 — 전체 데이터를 브라우저에 두는 광고 대시보드 만들기","https://toss.tech/article/ads_dashboard_fe"],["MDN Web Workers 사용(Transferable)",M+"Web/API/Web_Workers_API/Using_web_workers"],["MDN Long Task API",M+"Web/API/PerformanceLongTaskTiming"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"모닥불 EP.12(저맥락자/고맥락자 리뷰·가독성 위원회·코드 스멜 워킹그룹)에서 도출"},
+ q:"[토스·예상] PR 이 빨리 쌓이고 리뷰는 LGTM 만 남는다. 리뷰 문화를 어떻게 살리나?",
+ core:["모닥불 EP.12 의 문제 제기: '빠르게 쌓이는 PR, 느리게 달리는 리뷰, 남는 건 LGTM'. 토스 FE 챕터의 대응: 저맥락자도 이해할 수 있는 리뷰(고맥락자만 아는 리뷰의 한계), 코드 스멜 워킹그룹, 가독성 위원회, 코드 리뷰 배틀.","리뷰 코멘트 규칙: 무엇이 문제인지·왜·대안·차단 여부를 한 코멘트에. 맥락 없는 사람이 읽어도 판단할 수 있게 링크와 근거를 붙인다.","기준을 공용화한다 — 좋은 코드 4기준(FF)을 리뷰 언어로 쓰면 취향 논쟁이 줄고 '가독성이 떨어지는 이유'를 같은 어휘로 말할 수 있다.","리뷰 부담은 구조로 줄인다: PR 크기 제한, 스타일 자동화, 차단/제안 라벨, 리뷰 지연 시간 지표."],
+ good:"리뷰 코멘트의 형식과 공용 기준(FF)을 말하고, 문화를 구조(워킹그룹·지표)로 만든 사례를 안다.",
+ weak:"'리뷰를 열심히 하자'는 다짐으로 끝난다.",
+ p:[["저맥락자 리뷰가 왜 중요한가?","맥락을 아는 사람만 이해하는 코드는 그 사람이 떠나면 유지 불가. 저맥락자가 이해 못 하면 코드가 어렵다는 신호로 삼는다."],
+    ["리뷰에서 취향 논쟁이 반복되면?","기준(FF 4기준·린트 규칙)으로 승격시켜 끝낸다. 자동화 가능한 것은 사람이 지적하지 않는다."]],
+ r:[["토스 기술 블로그 — 모닥불 EP.12 「코드 리뷰할 시간이 어딨어요?」","https://toss.tech/article/firesidechat_frontend_12"],["Frontend Fundamentals — 좋은 코드 4기준","https://frontend-fundamentals.com/code-quality/code/"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"모닥불 EP.3 「테스트 자동화, 꼭 해야 할까?」와 NEXT 과제가 TDD 형태라는 출제진 발언에서 도출"},
+ q:"[토스·예상] 프론트엔드 테스트 자동화, 꼭 해야 하나? 어디까지 하나?",
+ core:["토스 FE 챕터가 모닥불 EP.3 에서 이 질문 자체를 주제로 다뤘고, NEXT 과제는 'TDD 형태'로 출제됐다. 즉 '테스트를 쓰는가'가 아니라 '무엇을 왜 테스트하는가'를 묻는다.","기준: 실패하면 실제 사용자 문제가 되는 것부터 — 금액 계산·상태 전이·권한 분기 같은 순수 로직은 유닛, 핵심 흐름(송금·가입 퍼널)은 통합/e2e 소수. UI 스냅샷 전량은 유지 비용만 크다.","테스트는 요구사항의 실행 가능한 명세다. 과제에서 테스트가 주어진 이유가 그것이다. 테스트 이름을 요구사항 문장으로 쓴다.","금융 서비스의 특수성: 되돌릴 수 없는 동작(결제·이체)은 실패 경로 테스트가 성공 경로보다 중요하다."],
+ good:"'무엇을 막는 테스트인가'로 배치를 설명하고 금융 도메인의 실패 경로 우선을 말한다.",
+ weak:"커버리지 숫자나 '시간이 없어 안 쓴다'로 답한다.",
+ p:[["테스트가 리팩터마다 깨져서 부담이라면?","구현 세부(내부 상태·클래스명)에 결합된 테스트다. 사용자 관점(role·텍스트)과 공개 계약으로 옮긴다."],
+    ["QA 팀이 있으면 개발자 테스트는 줄여도 되나?","QA 는 회귀 발견, 개발자 테스트는 설계 피드백과 빠른 실패. 역할이 달라 대체되지 않는다."]],
+ r:[["토스 기술 블로그 — 모닥불 EP.3 「프론트엔드 개발에서 테스트 자동화, 꼭 해야 할까?」","https://toss.tech/article/firesidechat_frontend_3"],["토스 커리어 — 2024 NEXT 테스트 출제 기록(TDD 형태 과제)","https://toss.im/career/article/2024_NEXTDEVELOPER_6"],["Testing Library 원칙","https://testing-library.com/docs/guiding-principles"],["Testing Trophy(Kent C. Dodds)","https://kentcdodds.com/blog/the-testing-trophy-and-testing-classifications"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"모닥불 EP.10 시청자 질문('함수형 프로그래밍이 꼭 필요한가요?')과 es-toolkit 의 함수 단위 설계에서 도출"},
+ q:"[토스·예상] 함수형 프로그래밍은 언제, 왜 쓰나? 꼭 필요한가?",
+ core:["모닥불 EP.10 에서 시청자 질문으로 다뤄진 주제. 답은 '패러다임 신봉'이 아니라 '어떤 문제를 줄이는가'.","프론트에서 실질 이득: 불변 데이터 → 참조 비교로 리렌더 판정이 가능, 순수 함수 → 테스트·예측 가능성(FF 의 예측 가능성 기준과 직결), 작은 함수 조합 → 트리 셰이킹 가능한 모듈 경계(es-toolkit 이 함수 단위로 설계된 이유).","비용: 과도한 커링·포인트프리는 가독성(FF 1순위)을 해친다. 성능 민감 구간에서 매 단계 새 배열 생성은 부담.","기준: 상태 변경이 있는 곳(폼·리스트 갱신)은 불변 갱신, 로직은 순수 함수로 분리, 스타일은 팀 가독성 기준으로 제한한다."],
+ good:"이득을 리렌더·테스트·트리 셰이킹 같은 구체 효과로 말하고 가독성 비용과 균형을 잡는다.",
+ weak:"'부작용이 없어 좋다'는 교과서 문장으로 끝난다.",
+ p:[["reduce 체인 세 줄이 for 문보다 읽기 어렵다는 리뷰를 받으면?","FF 우선순위상 가독성이 앞이다. 중간 이름을 붙이거나 루프로 바꾼다. 패러다임보다 읽는 사람."],
+    ["불변 갱신이 성능에 해가 되는 경우는?","거대한 배열을 매 입력마다 복사할 때. 구조적 공유나 배치 갱신으로 범위를 좁힌다."]],
+ r:[["토스 기술 블로그 — 모닥불 EP.10 상편(함수형 프로그래밍 질문)","https://toss.tech/article/firesidechat_frontend_10"],["Frontend Fundamentals — 예측 가능성","https://frontend-fundamentals.com/code-quality/code/"],["toss/es-toolkit — 함수 단위·트리 셰이킹 설계","https://github.com/toss/es-toolkit"]]},
+{c:"toss",l:"jr",prov:{kind:"expected",note:"토스 FE 담당 영역(결제·계좌 개설·대출·증권)에서 도출한 도메인 예상 문항. 답은 ECMAScript/MDN 근거"},
+ q:"[토스·예상·도메인] 금액 계산에서 0.1 + 0.2 가 0.3 이 아니다. 금융 화면에서 금액을 어떻게 다루나?",
+ core:["JavaScript Number 는 IEEE 754 배정밀도 부동소수라 십진 소수를 정확히 표현하지 못한다. 0.1 + 0.2 === 0.30000000000000004. 금액 비교·합산에 그대로 쓰면 1원이 어긋난다.","원칙: 금액은 최소 단위 정수(원·센트)로 계산하고 표시 직전에만 포맷한다. 2^53 을 넘는 값이나 정밀도가 필요한 계산은 BigInt 또는 십진 라이브러리.","표시는 Intl.NumberFormat(locale·currency)에 맡긴다. 천 단위 구분·통화 기호·소수 자릿수를 직접 문자열 조작하지 않는다.","입력 파싱: 사용자 입력의 쉼표·공백 제거 후 정수 변환, 최대 금액 검증. 서버와의 계약은 정수(또는 문자열)로 고정한다."],
+ good:"정수 단위 계산과 표시 분리를 말하고 Intl.NumberFormat 을 쓴다. 부동소수 오차의 원인을 설명한다.",
+ weak:"toFixed(2) 로 반올림하면 된다고 답한다(반올림 자체도 부동소수 영향을 받는다).",
+ p:[["이자 계산처럼 소수가 나오는 연산은?","계산 규칙(반올림 시점·방식)을 서버와 합의하고 클라이언트는 표시만. 정밀 계산이 필요하면 십진 라이브러리를 쓴다."],
+    ["원화 금액을 서버에서 문자열로 받으면 어떻게 처리하나?","BigInt 또는 정수 Number 로 파싱(범위 확인) 후 계산, 포맷은 Intl."]],
+ code:[["금액은 정수로 계산, 표시는 Intl","ts",`0.1 + 0.2 === 0.3;                     // false — IEEE 754 배정밀도
+
+// 원 단위 정수로 계산한다
+const fee = 1_500;
+const amount = 123_456;
+const total = amount + fee;             // 124956 (정확)
+
+// 표시 직전에만 포맷
+const krw = new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" });
+krw.format(total);                      // "₩124,956"
+
+// 2^53 을 넘거나 정밀도가 필요하면 BigInt
+const big = 9_007_199_254_740_993n + 1n;`]],
+ r:[["MDN Number — 부동소수 정밀도",M+"Web/JavaScript/Reference/Global_Objects/Number"],["MDN Intl.NumberFormat",M+"Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat"],["MDN BigInt",M+"Web/JavaScript/Reference/Global_Objects/BigInt"]]},
+{c:"toss",l:"mid",prov:{kind:"expected",note:"금융 서비스 도메인 예상 문항. 답은 OWASP 로깅 치트시트·MDN 근거"},
+ q:"[토스·예상·도메인] 계좌번호·주민번호 같은 민감 정보가 로그·에러 트래킹·URL 에 새지 않게 하려면?",
+ core:["OWASP 로깅 치트시트: 로그에 넣지 말 것 — 인증 정보, 세션 식별자, 결제 카드 정보, 개인 식별 정보(법·규제 요건에 따라). 프론트 로그·에러 트래킹 페이로드도 로그다.","경로별 차단: URL 쿼리스트링에 민감 값 금지(히스토리·리퍼러·서버 로그에 남는다), 에러 트래킹 breadcrumb·요청 본문 마스킹, 세션 리플레이는 입력 필드 마스킹 기본값, 분석 이벤트 속성 화이트리스트.","표시: 화면에서도 마스킹(계좌번호 뒤 4자리) 후 사용자 동작으로만 전체 표시. 클립보드 복사·스크린샷 정책은 앱과 협의.","구조로 강제: 로그 유틸이 필드명 기반 마스킹을 기본 수행, 린트로 console.log 금지, 에러 트래킹 SDK 의 beforeSend 훅에서 스크러빙."],
+ good:"경로(URL·로그·리플레이·분석)를 전수로 나열하고 구조적 차단(유틸·SDK 훅·린트)을 말한다.",
+ weak:"'조심해서 안 찍는다'는 개인 주의로 답한다.",
+ p:[["에러 객체 메시지에 응답 본문이 통째로 들어가면?","트래킹 SDK 의 전송 전 훅에서 필드 마스킹. 에러 생성 시 본문을 넣지 않는 규칙도 함께."],
+    ["세션 리플레이 도구를 쓰면 무엇을 기본으로 꺼야 하나?","모든 입력값 마스킹, 민감 화면 녹화 제외. 기본값을 확인하지 않은 채 켜면 사고가 된다."]],
+ r:[["OWASP Logging 치트시트",O+"Logging_Cheat_Sheet.html"],["OWASP 세션 관리 치트시트",O+"Session_Management_Cheat_Sheet.html"],["MDN Referer 헤더(URL 유출 경로)",M+"Web/HTTP/Reference/Headers/Referer"]]},
+{c:"toss",l:"mid",prov:{kind:"official",note:"토스 OSS es-hangul(초성 검색·조사 붙이기)에서 도출한 라이브 코딩 예상"},
+ q:"[토스·예상·라이브 코딩] 한글 초성 검색을 구현하라. 'ㅅㅇ' 으로 '송금', '수익' 을 찾아야 한다.",
+ core:["토스 OSS es-hangul 이 초성 검색과 조사 붙이기를 제공한다 — 토스 서비스에서 실제로 반복 구현되던 문제라는 뜻.","원리: 완성형 한글 음절은 U+AC00(가)부터 (초성 19 × 중성 21 × 종성 28) 순서로 배치된다. 음절 코드에서 초성 인덱스 = floor((code − 0xAC00) / 588).","구현: 검색어의 각 글자가 자음(ㄱ~ㅎ)이면 초성 매칭, 완성형이면 그대로 매칭. 검색 대상 문자열을 초성 문자열로 변환해 부분 일치.","실무 확장: 유니코드 정규화(NFC/NFD 혼용 입력), 쌍자음·복합 초성 처리, 조사('을/를') 자동 선택은 종성 유무로 판단."],
+ good:"유니코드 배치 규칙으로 초성을 계산하고 자음/완성형 혼합 검색어를 처리한다.",
+ weak:"초성 테이블을 하드코딩만 하거나 완성형·자음 혼합 입력을 고려하지 않는다.",
+ p:[["'ㅆ' 처럼 쌍자음 초성은?","초성 19개에 ㄲㄸㅃㅆㅉ 가 포함된다. 테이블 인덱스로 처리된다. 검색어 'ㅅ' 이 'ㅆ' 도 찾게 할지는 정책."],
+    ["macOS 파일명처럼 NFD 로 분해된 한글이 들어오면?","String.prototype.normalize('NFC') 로 합친 뒤 처리한다. 정규화 없으면 같은 글자가 다른 코드로 비교된다."]],
+ code:[["초성 추출 + 검색","ts",`const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const isSyllable = (c: string) => c >= "가" && c <= "힣";
+const isCho = (c: string) => CHO.includes(c);
+
+function toChosung(s: string): string {
+  return [...s.normalize("NFC")].map((ch) => {
+    if (!isSyllable(ch)) return ch;
+    const idx = Math.floor((ch.charCodeAt(0) - 0xac00) / 588);   // 21 * 28
+    return CHO[idx];
+  }).join("");
+}
+
+// 검색어: 자음이면 초성 비교, 완성형이면 글자 비교
+function matchChosung(target: string, query: string): boolean {
+  const t = [...target.normalize("NFC")], q = [...query.normalize("NFC")];
+  outer: for (let i = 0; i + q.length <= t.length; i++) {
+    for (let j = 0; j < q.length; j++) {
+      const ok = isCho(q[j]) ? toChosung(t[i + j]) === q[j] : t[i + j] === q[j];
+      if (!ok) continue outer;
+    }
+    return true;
+  }
+  return false;
+}
+matchChosung("송금", "ㅅㅇ");   // true
+matchChosung("수익", "ㅅㅇ");   // true`]],
+ r:[["toss/es-hangul — 초성 검색·조사 붙이기","https://github.com/toss/es-hangul"],["MDN String.prototype.normalize",M+"Web/JavaScript/Reference/Global_Objects/String/normalize"]]}
 ];
 
 const PROBES = {
@@ -2720,7 +3128,7 @@ npm run build && npx serve dist
 # 소스맵으로 스택 복원 (소스맵은 공개 배포하지 않는다)
 npx source-map-cli resolve dist/assets/app-a1b2c3.js.map 1 45213`]]
 };
-Q.forEach((q,i)=>{ q.p = q.p || PROBES[i] || []; q.code = CODE[i] || []; });
+Q.forEach((q,i)=>{ q.p = q.p || PROBES[i] || []; q.code = q.code || CODE[i] || []; });
 const EXTRA_REFS = {3: [["MDN scheduler.yield", "https://developer.mozilla.org/en-US/docs/Web/API/Scheduler/yield"]], 6: [["MDN AbortSignal.any()", "https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/any_static"]], 18: [["MDN scroll-margin", "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin"]], 19: [["MDN 길이 단위(dvh)", "https://developer.mozilla.org/en-US/docs/Web/CSS/length"]], 26: [["DOMPurify(허용목록 sanitizer)", "https://github.com/cure53/DOMPurify"]], 50: [["web-vitals 라이브러리(attribution)", "https://github.com/GoogleChrome/web-vitals"]], 80: [["MDN touch-action", "https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action"]], 85: [["MDN @layer", "https://developer.mozilla.org/en-US/docs/Web/CSS/@layer"]], 87: [["MDN clamp()", "https://developer.mozilla.org/en-US/docs/Web/CSS/clamp"]], 90: [["MDN FormData", "https://developer.mozilla.org/en-US/docs/Web/API/FormData"]], 104: [["MDN Web Locks API", "https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API"], ["MDN SubtleCrypto.digest()", "https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest"]], 106: [["web-vitals 라이브러리(attribution)", "https://github.com/GoogleChrome/web-vitals"]], 109: [["MDN Cache", "https://developer.mozilla.org/en-US/docs/Web/API/Cache"]], 121: [["MDN prefers-reduced-motion", "https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion"]], 125: [["MDN setPointerCapture()", "https://developer.mozilla.org/en-US/docs/Web/API/Element/setPointerCapture"]], 130: [["MDN aria-sort", "https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-sort"]], 138: [["IETF Idempotency-Key 헤더 초안", "https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header"]], 142: [["MDN performance.mark()", "https://developer.mozilla.org/en-US/docs/Web/API/Performance/mark"], ["web.dev layout thrashing", "https://web.dev/articles/avoid-large-complex-layouts-and-layout-thrashing"]], 146: [["MDN @supports", "https://developer.mozilla.org/en-US/docs/Web/CSS/@supports"]], 148: [["web-vitals 라이브러리(attribution)", "https://github.com/GoogleChrome/web-vitals"], ["MDN scrollbar-gutter", "https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-gutter"]], 161: [["MSW 철학(경계 모킹)", "https://mswjs.io/docs/philosophy"]]};
 Q.forEach((q,i)=>{ const e = EXTRA_REFS[i]; if (e) { const seen = new Set(q.r.map(x=>x[1])); for (const ref of e) if (!seen.has(ref[1])) q.r.push(ref); } });
 
@@ -2966,6 +3374,46 @@ const TRACKS = [
    bar:{jr:"에러 로깅",mid:"실패 경로 우선 계측",sr:"질문에서 역산한 계측 설계와 프라이버시·비용 정책"},
    good:"마무리: '이 설계에서 가장 먼저 깨질 곳은 어디라고 보나?'",
    weak:{hint:"네트워크는 200 인데 화면이 빈 경우, 어느 지점의 로그가 있어야 원인을 좁힐 수 있나?",detour:"요청 응답 도착과 렌더 사이에 로그 한 줄을 어디에 둘지만 정하게 한다."}}
+ ]},
+{id:"toss-first-round",title:"토스 1차 면접 — 과제 리뷰에서 라이브 코딩까지",lv:["jr","mid","sr"],minutes:60,
+ intro:"후기와 공식 아티클이 일치하는 토스 1차 기술 면접의 흐름(1시간): 과제 코드 리뷰 → 결정의 '왜' → 코드 품질 기준 → 비동기·상태 설계 → 라이브 코딩. 맥락 없는 CS 암기 질문은 드물고, 과제와 이력서에서 내린 결정의 근거를 끝까지 판다.",
+ r:[["토스 커리어 — NEXT 25 FE 합격 수기(면접관 발언)","https://toss.im/career/article/next-25-frontend"],["토스 FE 경력 면접 후기(2025-08)","https://caesiumy.dev/posts/career/toss-interview-retrospect/"],["토스 기술 블로그 — 모닥불 EP.8(면접관이 원하는 것)","https://toss.tech/article/firesidechat_frontend_8"],["Frontend Fundamentals","https://frontend-fundamentals.com/code-quality/code/"]],
+ steps:[
+  {phase:"과제 리뷰",node:165,q:"과제에서 이 부분은 이렇게 했는데, 여기서 문제가 보이나요? 어떻게 개선할 수 있을까요?",
+   expect:"지적을 재진술 → 당시 근거·제약 → 인정과 대안 → 대안의 트레이드오프. 스스로 약점을 먼저 꺼내면 더 좋다.",
+   bar:{jr:"지적을 이해하고 대안 하나",mid:"근거와 트레이드오프까지",sr:"규모가 커질 때 먼저 깨질 곳을 스스로 지목"},
+   good:"'그 대안은 어떤 상황에서 다시 문제가 되나?'로 한 단계 더.",
+   weak:{hint:"그 결정을 했을 때 어떤 제약이 있었나요? 지금 다시 하면 무엇을 바꾸겠어요?",detour:"면접관이 대안을 하나 제시하고 그 대안의 단점을 찾게 한다."}},
+  {phase:"과제 구조",node:164,q:"테스트 코드가 주어졸 때 어떤 순서로 진행했나요? 시간이 부족하면 무엇을 잘랐나요?",
+   expect:"테스트를 명세로 읽고 실패 지도 → 우선순위 → 핵심 흐름 → 리팩터. 테스트 디버깅에 갇히지 않기 위한 시간 박스. 미완·가정을 제출물에 기록.",
+   bar:{jr:"테스트를 통과시키는 순서",mid:"우선순위와 시간 박스",sr:"테스트가 스펙과 모순될 때의 판단과 기록"},
+   good:"'테스트가 없는 요구사항은 어떻게 검증했나?'",
+   weak:{hint:"실패하는 테스트 20개 중 무엇부터 봤나요?",detour:"테스트 하나를 같이 읽고 그것이 요구하는 동작을 말로 풀게 한다."}},
+  {phase:"코드 품질",node:171,q:"좋은 프론트엔드 코드란 무엇이라고 생각하나요? 과제 코드에서 그 기준을 적용한 곳이 있나요?",
+   expect:"변경하기 쉬운 코드. 가독성·예측 가능성·응집도·결합도와 서로 충돌하는 지점. 과제의 실제 파일을 예로.",
+   bar:{jr:"기준 몇 개를 자기 말로",mid:"4기준과 충돌 사례",sr:"팀 리뷰 기준으로 어떻게 공용화했는지"},
+   good:"'중복을 허용한 곳이 있나? 왜?'",
+   weak:{hint:"이 함수를 처음 보는 동료가 이해하려면 무엇을 알아야 하나요?",detour:"과제 코드 한 함수를 열어 '한 번에 머릿속에 둬야 하는 맥락'을 세게 한다."}},
+  {phase:"비동기·에러",node:173,q:"로딩과 에러 처리를 어디에서 하고 있나요? 컴포넌트마다 분기가 있는 이유는?",
+   expect:"성공 경로 분리, Suspense/Error Boundary 경계 배치, 에러 종류별 처리(재시도 vs 이동), 유효성 실패는 값으로.",
+   bar:{jr:"로딩·에러 상태를 빠뜨리지 않음",mid:"경계로 분리하는 설계",sr:"경계 위치 실패 사례와 에러 분류 정책"},
+   good:"'네트워크 에러와 권한 에러를 같은 경계가 잡아도 되나?'",
+   weak:{hint:"에러가 났을 때 사용자는 무엇을 할 수 있어야 하나요?",detour:"isLoading/isError 분기 하나를 경계로 옮기는 코드를 같이 쓴다."}},
+  {phase:"결정의 왜",node:167,q:"Next.js(또는 그 상태 관리 라이브러리)를 왜 썼나요? 안 썼다면 무엇이 달라졌을까요?",
+   expect:"문제 → 대안 → 선택 이유 → 비용 → 지금이라면. 인기·관성은 근거가 아니다. 쓰지 않았을 경우를 설명할 수 있어야 한다.",
+   bar:{jr:"해결하려던 문제를 말함",mid:"대안 비교와 비용",sr:"도입하지 않은 결정과 그 측정 근거"},
+   good:"'그 선택으로 감수한 비용이 실제로 드러난 적이 있나?'",
+   weak:{hint:"그 도구가 없었다면 직접 만들어야 했던 것은 무엇인가요?",detour:"프레임워크가 해 주는 일 세 가지만 나열하게 한 뒤 하나씩 필요 여부를 묻는다."}},
+  {phase:"상태 설계",node:168,q:"상태 관리 라이브러리들을 설명해 보세요. 이 과제에서는 어떤 상태를 어디에 뒀나요?",
+   expect:"모델별 분류(스토어/원자/훅 selector/서버 캐시)와 선택 기준(수명·독자). 과제의 서버 데이터·UI 상태·URL 상태 배치.",
+   bar:{jr:"라이브러리 두세 개의 차이",mid:"모델 분류와 서버/클라 분리",sr:"부분 구독·파생 상태·캐시 무효화까지"},
+   good:"'서버 데이터를 전역 스토어에 복사하면 무엇이 문제인가?'",
+   weak:{hint:"이 값은 서버가 원본인가, 화면이 원본인가?",detour:"과제의 상태 하나를 골라 '누가 읽고 얼마나 오래 사나'를 답하게 한다."}},
+  {phase:"라이브 코딩",node:166,q:"(AI 자동완성을 끄고) 이 함수를 구현해 보세요. 의도가 불명확하면 물어보세요.",
+   expect:"요구 재진술 → 경계 조건 질문 → 단순 버전 → 경계·에러 → 개선. 판단을 말로 남기고, 시간이 부족하면 의사코드와 설명으로 마감.",
+   bar:{jr:"동작하는 단순 버전 + 질문",mid:"경계 조건과 에러 처리를 스스로",sr:"확장·성능 트레이드오프를 말하며 구현"},
+   good:"마무리: '이 코드가 프로덕션에 가면 무엇을 더 해야 하나?'",
+   weak:{hint:"입력이 비어 있거나 매우 크면 어떻게 되나요?",detour:"입력 하나를 정해 손으로 실행 과정을 따라가게 한다."}}
  ]}
 ];
 const DEEP = {
@@ -3281,8 +3729,9 @@ function render(){
         <div class="rule"></div>
         ${items.map(it => `
           <article id="q-${Q.indexOf(it)}">
-            <div class="meta"><span class="lv lv-${it.l}">${LV[it.l]}</span>${trackTags(Q.indexOf(it))}</div>
+            <div class="meta"><span class="lv lv-${it.l}">${LV[it.l]}</span>${it.prov ? `<span class="prov ${PROV[it.prov.kind].cls}" title="${PROV[it.prov.kind].desc}">${PROV[it.prov.kind].label}</span>` : ""}${trackTags(Q.indexOf(it))}</div>
             <h3>${it.q}</h3>
+            ${it.prov ? `<p class="prov-note">${it.prov.note}</p>` : ""}
             <button class="reveal" type="button">답 보기</button>
             <div class="answer">
               <ul class="core">${it.core.map(c=>`<li>${c}</li>`).join("")}</ul>
