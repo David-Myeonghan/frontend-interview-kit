@@ -49,7 +49,7 @@ out.push("- 꼬리질문 " + Q.reduce((a, q) => a + (q.p ? q.p.length : 0), 0) +
 out.push("- 코드 예제 " + Q.reduce((a, q) => a + (q.code ? q.code.length : 0), 0) + "개 — 코드로 답해야 하는 " + Q.filter((q) => q.code && q.code.length).length + "문항에 동작하는 예제 첨부");
 out.push("- 딥다이브 대본 " + TRACKS.length + "개(" + TRACKS.reduce((a, t) => a + t.steps.length, 0) + "단계) — 한 주제를 20~45분 파는 면접관 대본. 단계별 기대 답 · 레벨 기준선 · 분기(잘 답하면/막히면)");
 out.push("- 심층 답 " + Q.filter((q) => q.deep).length + "문항 — 원리 · 증상 · 측정 · 반례 · 스펙 근거(절 링크)");
-out.push("- 기준·결론 " + Q.filter((q) => q.struct).length + "/" + Q.length + "문항 — 답의 첫 두 줄을 「판단 기준 → 결론」으로 세우고 핵심 답은 그 이유로 배치");
+out.push("- 구조 " + Q.filter((q) => q.frame).length + "/" + Q.length + "문항 — 「문제 → 대안 → 기준 → 결론 → 비용 → 측정」 여섯 줄을 맨 위에 두고 핵심 답은 그 이유로 배치");
 {
   const toss = Q.filter((q) => q.c === "toss");
   const by = {};
@@ -126,10 +126,12 @@ for (const [key, label] of Object.entries(CATS)) {
       out.push("");
     }
     if (it.struct) {
+      if (it.frame) { out.push("**문제** — " + md(it.frame[0])); out.push(""); out.push("**대안** — " + md(it.frame[1])); out.push(""); }
       out.push("**기준** — " + md(it.struct[0]));
       out.push("");
       out.push("**결론** — " + md(it.struct[1]));
       out.push("");
+      if (it.frame) { out.push("**비용** — " + md(it.frame[2])); out.push(""); out.push("**측정** — " + md(it.frame[3])); out.push(""); }
     }
     out.push(it.struct ? "**이유**" : "**핵심 답**");
     out.push("");
