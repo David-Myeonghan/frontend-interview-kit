@@ -63,7 +63,8 @@
           "function createCounter() {\n  let count = 0;                      // 외부에서 접근 불가, 함수만 기억한다\n  return { inc: () => ++count, get: () => count };\n}\n\n// 누수: 클로저가 큰 객체·DOM 을 붙잡은 채 리스너가 남는다\nfunction attach(node, hugeData) {\n  const onClick = () => console.log(hugeData.length);  // hugeData 를 계속 참조\n  node.addEventListener(\"click\", onClick);\n  return () => node.removeEventListener(\"click\", onClick);  // 해제 함수 필수\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -94,7 +95,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -125,7 +127,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -197,7 +200,11 @@
             "Promise 반응은 Job 으로 호스트가 큐잉한다"
           ]
         ]
-      }
+      },
+      "struct": [
+        "큐가 몇 종류이고 우선순위가 어떻게 다른가로 나눈다.",
+        "마이크로태스크 큐를 전부 비운 뒤 렌더 기회, 그다음 매크로태스크 하나 — 그래서 then·queueMicrotask 가 setTimeout 보다 먼저다."
+      ]
     },
     {
       "c": "js",
@@ -234,7 +241,8 @@
           "const timer = {\n  label: \"upload\",\n  report() { console.log(this.label); },\n};\n\ntimer.report();                       // \"upload\"  — 점 앞 객체가 this\nsetTimeout(timer.report, 0);          // undefined — 참조만 떼어 냈다\nsetTimeout(() => timer.report(), 0);  // \"upload\"  — 호출 형태를 유지\nsetTimeout(timer.report.bind(timer), 0);  // \"upload\""
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -280,7 +288,8 @@
           "// 전량 복사 대신 구조적 공유 — 참조 비교로 리렌더를 가를 수 있다\nconst next = {\n  ...state,\n  user: { ...state.user, name: \"다윗\" },\n};\nnext.tags === state.tags;   // true — 바뀌지 않은 가지는 같은 참조"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -357,7 +366,11 @@
             "여러 신호 중 하나라도 abort 되면 abort"
           ]
         ]
-      }
+      },
+      "struct": [
+        "부분 실패를 화면에 보여야 하는가, 전부 성공해야 의미 있는가로 나눈다.",
+        "부분 실패 허용이면 allSettled, 트랜잭션형이면 all. 취소는 조합자가 아니라 AbortSignal 이 한다."
+      ]
     },
     {
       "c": "js",
@@ -416,7 +429,11 @@
             "forEach 는 Promise 를 기다리지 않는다 — 콜백 반환값을 사용하지 않는다"
           ]
         ]
-      }
+      },
+      "struct": [
+        "거부(rejection)를 누가 소비하는가 — 소비자가 없는 경로를 찾는다.",
+        "await 누락·forEach+async·타이머 콜백 throw 는 소비자가 없어 사라진다. 마지막 그물은 전역 unhandledrejection 핸들러다."
+      ]
     },
     {
       "c": "js",
@@ -461,7 +478,11 @@
           "const meta = new WeakMap();\n\nfunction track(node, info) {\n  meta.set(node, info);          // 강한 Map 이면 노드 제거 후에도 회수되지 않는다\n}\n\n// 노드가 DOM 에서 사라지고 다른 참조가 없으면 엔트리도 회수 대상\n// 단, 회수 시점은 보장되지 않는다 → 정리 로직의 유일한 수단으로 쓰지 않는다"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "부가 정보를 붙일 객체의 수명을 누가 소유하는가로 나눈다.",
+        "객체 수명을 늘리지 않아야 하면 WeakMap. 단 회수 시점은 보장되지 않으니 정리 로직의 유일한 수단으로 쓰지 않는다."
+      ]
     },
     {
       "c": "render",
@@ -518,7 +539,11 @@
             "내비게이션부터 컴포지팅까지의 단계"
           ]
         ]
-      }
+      },
+      "struct": [
+        "각 단계에서 무엇이 렌더를 막는가(파서 블로킹 vs 렌더 블로킹)로 나눈다.",
+        "스크립트는 파서를, CSS 는 렌더를 막는다. 첫 화면 개선은 지배 구간을 측정해 그 블로킹부터 푼다."
+      ]
     },
     {
       "c": "render",
@@ -570,7 +595,11 @@
             "읽기-쓰기 교차가 강제 동기 레이아웃을 만든다"
           ]
         ]
-      }
+      },
+      "struct": [
+        "속성이 파이프라인의 어느 단계까지 다시 실행시키는가로 나눈다.",
+        "레이아웃 > 페인트 > 컴포지트 순으로 비싸다. 애니메이션은 transform/opacity 로, 읽기와 쓰기는 분리한다."
+      ]
     },
     {
       "c": "render",
@@ -601,7 +630,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "render",
@@ -633,7 +663,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "render",
@@ -664,7 +695,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "render",
@@ -729,7 +761,11 @@
             "메인 스레드에 양보한 뒤 우선순위를 유지하며 재개"
           ]
         ]
-      }
+      },
+      "struct": [
+        "작업을 다른 스레드로 옮길 수 있는가, 데이터 전달 비용이 얼마인가로 나눈다.",
+        "DOM 결합이 없으면 워커 + Transferable, 있으면 청크 분할 + yield. 어느 쪽이든 Long Task 로 측정한다."
+      ]
     },
     {
       "c": "css",
@@ -770,7 +806,8 @@
           "*, *::before, *::after { box-sizing: border-box; }\n/* content-box: width 200 + padding 32 + border 2 = 실제 234 */\n/* border-box:  지정한 200 이 최종 너비 */\n\n.card { width: 200px; padding: 16px; border: 1px solid; }\n\n/* 마진 병합: 인접 형제의 수직 마진이 합쳐지지 않고 큰 값만 남는다 */\n.a { margin-bottom: 24px; }\n.b { margin-top: 16px; }            /* 간격은 40px 이 아니라 24px */\n\n/* 병합을 피하는 가장 단순한 방법 = 레이아웃이 간격을 소유한다 */\n.stack { display: flex; flex-direction: column; gap: 24px; }"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "css",
@@ -812,7 +849,8 @@
           "// overflow:hidden 부모 밖으로 렌더\ncreatePortal(<Dropdown />, document.body);"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "css",
@@ -847,7 +885,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "css",
@@ -889,7 +928,8 @@
           ".wrap { overflow: hidden; }       /* ① 조상 overflow → 스크롤 컨테이너가 바뀐다 */\n\n.header {\n  position: sticky;\n  /* top 미지정 → 임계점이 없어 붙지 않는다 ② */\n  top: env(safe-area-inset-top, 0px);\n}\n\n.section { height: auto; }        /* ③ 부모 높이에 여유가 없으면 고정 구간이 없다 */\n\n/* 앵커가 헤더에 가려지는 문제 */\n:target { scroll-margin-top: var(--header-h, 56px); }"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "css",
@@ -930,7 +970,8 @@
           ".a { display: grid; place-items: center; }              /* 부모 높이 필요 */\n.b { display: flex; align-items: center; justify-content: center; }\n.c { position: absolute; inset: 0; margin: auto; width: 120px; height: 40px; }\n.d { position: absolute; top: 50%; left: 50%; translate: -50% -50%; }  /* 크기 몰라도 됨 */\n\n/* 모바일 뷰포트: 100vh 는 주소창을 포함해 잘린다 */\n.screen { min-height: 100dvh; }"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "css",
@@ -980,7 +1021,11 @@
           ":root {                          /* 완전한 라이트 팔레트 */\n  --bg: #ffffff; --fg: #131a24; --accent: #1f4d7a;\n}\n@media (prefers-color-scheme: dark) {\n  :root:not([data-theme=\"light\"]) {        /* 명시적 라이트 선택이 이긴다 */\n    --bg: #0f141a; --fg: #e7ecf2; --accent: #7fb3e0;\n  }\n}\n:root[data-theme=\"dark\"] { --bg: #0f141a; --fg: #e7ecf2; --accent: #7fb3e0; }\n\nbody { background: var(--bg); color: var(--fg); }   /* 컴포넌트는 토큰만 참조 */\n\n/* 안티패턴: 미디어 쿼리 안에만 정의된 색 → 조건이 어긋난 상태에서 미정의 */"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "색을 누가 정의하고 누가 참조하는가로 나눈다.",
+        "토큰은 :root 에 전량, 다크는 토큰만 재정의, 컴포넌트는 토큰만 참조. 미디어 쿼리 안에만 있는 색은 사고다."
+      ]
     },
     {
       "c": "net",
@@ -1048,7 +1093,11 @@
             "조건부 요청과 304"
           ]
         ]
-      }
+      },
+      "struct": [
+        "URL 이 바뀌는 자원인가(해시) 바뀌지 않는 자원인가(HTML)로 나눈다.",
+        "해시 자산은 1년 immutable, HTML 은 no-cache 매번 검증. 이 짝이 어긋나면 배포 직후 404 가 난다."
+      ]
     },
     {
       "c": "net",
@@ -1103,7 +1152,11 @@
             "단순 요청 조건·preflight·credentials 제약"
           ]
         ]
-      }
+      },
+      "struct": [
+        "규칙을 적용하는 쪽이 누구인가(브라우저 vs 서버)와 요청이 단순 요청 조건을 벗어나는가로 나눈다.",
+        "CORS 는 브라우저 규칙이다. 커스텀 헤더·JSON 이 preflight 를 부르고, Max-Age·헤더 제거·동일 오리진 프록시로 줄인다."
+      ]
     },
     {
       "c": "net",
@@ -1160,7 +1213,11 @@
             "브라우저 앱의 토큰 저장·아키텍처 권고"
           ]
         ]
-      }
+      },
+      "struct": [
+        "어떤 공격(XSS vs CSRF)에 노출되는 저장소인가로 나눈다.",
+        "스크립트가 읽는 저장소는 XSS 한 번에 끝난다. HttpOnly 쿠키 + CSRF 대비, 또는 메모리 + 짧은 만료·회전이 기본이다."
+      ]
     },
     {
       "c": "net",
@@ -1222,7 +1279,11 @@
             "이벤트 스트림 클라이언트 API"
           ]
         ]
-      }
+      },
+      "struct": [
+        "방향(단방향/양방향)·빈도·운영 비용으로 나눈다.",
+        "단방향 알림은 SSE(또는 폴링), 양방향 저지연만 WebSocket. 어느 쪽이든 재연결 유실 보정이 본 설계다."
+      ]
     },
     {
       "c": "net",
@@ -1258,7 +1319,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "sec",
@@ -1313,7 +1375,8 @@
           "const SAFE = /^(https?:|mailto:|\\/)/i;\nconst href = SAFE.test(userUrl) ? userUrl : \"#\";   // javascript: 차단"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "sec",
@@ -1349,7 +1412,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "막는 것보다 먼저 '무엇이 깨지는지 보이는가'로 순서를 정한다.",
+        "Report-Only 로 위반을 수집한 뒤 nonce/hash 로 인라인을 없애고 단계적으로 강제한다. unsafe-inline 이 남으면 효과가 반감된다."
+      ]
     },
     {
       "c": "sec",
@@ -1402,7 +1469,11 @@
             "Lax 기본값과 예외"
           ]
         ]
-      }
+      },
+      "struct": [
+        "SameSite 가 막지 못하는 경로가 남아 있는가로 판단한다.",
+        "남는다(top-level POST·서브도메인·비쿠키 인증). 토큰 + Origin 검증을 유지하고 GET 으로 상태를 바꾸지 않는다."
+      ]
     },
     {
       "c": "sec",
@@ -1438,7 +1509,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "서드파티 코드가 어떤 권한으로 실행되는가로 본다.",
+        "같은 오리진 권한이다. CSP·SRI·iframe 격리와 승인 절차로 통제하고 lockfile·자동 PR·CI 로 의존성을 관리한다."
+      ]
     },
     {
       "c": "react",
@@ -1490,7 +1565,11 @@
             "props 가 같으면 리렌더를 건너뛴다"
           ]
         ]
-      }
+      },
+      "struct": [
+        "무엇이 렌더를 트리거하는가와 렌더가 곧 DOM 변경인가로 나눈다.",
+        "state·부모 렌더·context·key 가 트리거다. 렌더≠커밋이라 리렌더 자체는 문제가 아니고 지표로 판단한다."
+      ]
     },
     {
       "c": "react",
@@ -1548,7 +1627,11 @@
             "key 를 바꾸면 상태가 초기화된다"
           ]
         ]
-      }
+      },
+      "struct": [
+        "key 가 위치를 가리키나 데이터를 가리키나로 본다.",
+        "인덱스는 위치라서 삭제·정렬에 상태가 다른 행에 붙는다. 안정 id 를 쓰고, key 변경은 의도적 초기화 수단으로만."
+      ]
     },
     {
       "c": "react",
@@ -1621,7 +1704,11 @@
             "fetch 에 signal 을 넘겨 진행 중 요청을 중단"
           ]
         ]
-      }
+      },
+      "struct": [
+        "이펙트가 잡은 값이 최신인가, 이펙트가 남긴 것이 정리되는가로 나눈다.",
+        "의존성을 비우면 stale, 클린업이 없으면 누수·경합. 구독·타이머·요청은 클린업하고, 파생 값은 이펙트가 아니다."
+      ]
     },
     {
       "c": "react",
@@ -1679,7 +1766,11 @@
             "memo 된 자식이나 이펙트 의존성에 넘길 함수 참조를 유지"
           ]
         ]
-      }
+      },
+      "struct": [
+        "참조 동일성이 소비자에게 의미가 있는가와 계산이 실제로 비싼가로 나눈다.",
+        "둘 중 하나가 참일 때만 쓴다. 기본은 안 쓰고 프로파일러로 측정한 뒤 넣는다."
+      ]
     },
     {
       "c": "react",
@@ -1739,7 +1830,11 @@
             "외부 스토어 구독; 스냅샷이 바뀔 때만 리렌더"
           ]
         ]
-      }
+      },
+      "struct": [
+        "Context 가 부분 구독을 지원하는가(못 한다)로 출발한다.",
+        "value 메모 → Context 분할 → 부분 구독이 필요하면 selector 스토어. 새 참조 selector 는 다시 같은 문제를 만든다."
+      ]
     },
     {
       "c": "react",
@@ -1791,7 +1886,11 @@
             "상태를 어디에 둘지와 구조화 원칙"
           ]
         ]
-      }
+      },
+      "struct": [
+        "데이터의 원본이 어디 있는가(서버 사본 vs 화면 소유)로 나눈다.",
+        "서버 사본은 캐시 계층, UI 상태는 로컬, 공유·복원은 URL. 사본을 스토어에 복사하면 진실이 둘이 된다."
+      ]
     },
     {
       "c": "react",
@@ -1823,7 +1922,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "누가 읽고 얼마나 오래 살아야 하는가로 나눈다.",
+        "가장 좁은 범위에 두고 필요할 때만 올린다. 공유·복원은 URL, 서버 데이터는 캐시, 편의값은 로컬 스토리지."
+      ]
     },
     {
       "c": "react",
@@ -1859,7 +1962,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "서버와 클라이언트가 같은 값을 만들 수 있는가로 나눈다.",
+        "못 만드는 값(시간·랜덤·window)은 마운트 후 렌더로 분리한다. 경고 억제는 답이 아니다."
+      ]
     },
     {
       "c": "react",
@@ -1896,7 +2003,8 @@
           "// 나쁨: 멱등하지 않다 — 개발에서 이벤트가 두 번 간다\nuseEffect(() => { track(\"case_opened\", { caseId }); }, [caseId]);\n\n// 좋음: 전송 계층에서 중복 제거 키를 쓴다\nuseEffect(() => {\n  const key = \"case_opened:\" + caseId;\n  if (sentOnce.has(key)) return;\n  sentOnce.add(key);\n  track(\"case_opened\", { caseId });\n}, [caseId]);\n\n// 구독형은 클린업만 제대로 두면 이중 호출에 안전하다\nuseEffect(() => {\n  const sub = socket.subscribe(caseId, onMessage);\n  return () => sub.unsubscribe();\n}, [caseId]);"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "react",
@@ -1927,7 +2035,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "react",
@@ -1975,7 +2084,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "제출·낙관적 표시·실패 복구를 누가 관리하는가로 본다.",
+        "Actions·useActionState·useOptimistic 이 관리한다. 수동 isSubmitting 상태를 걷어내고 실패 재조정을 프레임워크에 맡긴다."
+      ]
     },
     {
       "c": "react",
@@ -2007,7 +2120,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "이 컴포넌트에 상태·이벤트·브라우저 API 가 필요한가로 나눈다.",
+        "기본은 서버, 필요한 잎만 클라이언트. 경계를 넘는 props 는 직렬화 가능해야 하고, 경계 자리가 적으면 도입 이득이 없다."
+      ]
     },
     {
       "c": "state",
@@ -2065,7 +2182,11 @@
             "재시도 중복 방지 키"
           ]
         ]
-      }
+      },
+      "struct": [
+        "실패·경합·재시도 세 경로가 각각 설계돼 있는가로 본다.",
+        "롤백 스냅샷·서버 재조정·멱등 키가 다 있을 때만 안전하다. 되돌릴 수 없는 작업엔 쓰지 않는다."
+      ]
     },
     {
       "c": "state",
@@ -2118,7 +2239,11 @@
             "계층 키 설계"
           ]
         ]
-      }
+      },
+      "struct": [
+        "캐시 키가 부분 무효화를 허용하는 구조인가로 출발한다.",
+        "엔티티+파라미터 계층 키를 두고, 응답으로 직접 갱신(write-through)하고 필요한 범위만 무효화한다. 전량 무효화는 비용이다."
+      ]
     },
     {
       "c": "state",
@@ -2166,7 +2291,11 @@
             "부분 무효화와 재페치"
           ]
         ]
-      }
+      },
+      "struct": [
+        "수정이 정렬 키를 바꾸는가와 캐시가 페이지 단위인가 정규화인가로 나눈다.",
+        "정렬이 안 바뀌면 해당 항목만 교체, 바뀌면 커서가 흔들리니 재동기 또는 리셋. 스크롤은 안정 key 로 유지한다."
+      ]
     },
     {
       "c": "ts",
@@ -2207,7 +2336,8 @@
           "function handle(input: unknown) {\n  // input.trim();            // 컴파일 에러 — 검사 없이는 아무 연산도 못 한다\n  if (typeof input === \"string\") input.trim();      // 여기서만 string\n}\n\nfunction isCase(v: unknown): v is { id: string; state: string } {\n  return typeof v === \"object\" && v !== null\n    && typeof (v as Record<string, unknown>).id === \"string\"\n    && typeof (v as Record<string, unknown>).state === \"string\";\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "ts",
@@ -2254,7 +2384,8 @@
           "const stub = Object.assign({}, base, { state: \"DESIGNED\" }) satisfies Partial<Case>;"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "ts",
@@ -2295,7 +2426,8 @@
           "type CaseId = string;\ntype UserId = string;\nfunction open(id: CaseId) {}\nopen(\"u_1\" as UserId);                      // 통과 — 모양이 같다\n\n// branded 타입으로 분리\ndeclare const brand: unique symbol;\ntype Branded<T, B> = T & { readonly [brand]: B };\ntype CaseId2 = Branded<string, \"CaseId\">;\n\nconst toCaseId = (s: string): CaseId2 => s as CaseId2;   // 변환 함수만 통과\nfunction open2(id: CaseId2) {}\n// open2(\"u_1\");                            // 컴파일 에러"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "ts",
@@ -2337,7 +2469,11 @@
           "import { z } from \"zod\";\n\nconst Case = z.object({\n  id: z.string(),\n  state: z.enum([\"IMPORTED\", \"DESIGNED\"]),\n  updatedAt: z.coerce.date(),\n});\ntype Case = z.infer<typeof Case>;           // 스키마가 단일 출처\n\nexport async function fetchCase(id: string): Promise<Case> {\n  const res = await fetch(\"/api/case/\" + id);\n  const parsed = Case.safeParse(await res.json());\n  if (!parsed.success) {\n    report(\"case_parse_failed\", parsed.error.issues);   // 조용히 넘기지 않는다\n    throw new Error(\"invalid case payload\");\n  }\n  return parsed.data;\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "신뢰 경계가 어디인가(경계 밖 입력은 전부 unknown)로 나눈다.",
+        "경계에서 한 번 파싱하고 내부는 파싱된 타입만 신뢰한다. 성능 이유로 검증을 빼면 누락 회귀가 온다."
+      ]
     },
     {
       "c": "perf",
@@ -2380,7 +2516,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "perf",
@@ -2457,7 +2594,11 @@
             "리소스 우선순위를 명시적으로 지정"
           ]
         ]
-      }
+      },
+      "struct": [
+        "LCP 를 네 구간(TTFB·로드 지연·로드 시간·렌더 지연)으로 쪼갠다.",
+        "지배 구간부터 고친다. 히어로 이미지 우선순위·지연 로딩 해제·렌더 블로킹 축소가 순서다."
+      ]
     },
     {
       "c": "perf",
@@ -2493,7 +2634,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "perf",
@@ -2555,7 +2697,11 @@
             "예산 설정과 회귀 감시"
           ]
         ]
-      }
+      },
+      "struct": [
+        "실험실 값인가 필드 분포인가, 평균인가 백분위인가로 나눈다.",
+        "필드 p75 와 세그먼트 분포로 전후를 비교하고 예산·CI 로 회귀를 감시한다. 평균 개선은 증명이 아니다."
+      ]
     },
     {
       "c": "perf",
@@ -2604,7 +2750,11 @@
             "화면 밖 요소의 렌더링을 건너뛰되 DOM 은 유지"
           ]
         ]
-      }
+      },
+      "struct": [
+        "DOM 노드 수를 상수로 만들어야 하는 규모인가와 잃는 것(검색·접근성)을 감수하는가로 나눈다.",
+        "수백 행을 넘으면 윈도잉. 그 전엔 content-visibility 나 페이징이 더 싸다."
+      ]
     },
     {
       "c": "perf",
@@ -2649,7 +2799,8 @@
           "<img\n  src=\"/case-800.avif\"\n  srcset=\"/case-400.avif 400w, /case-800.avif 800w, /case-1600.avif 1600w\"\n  sizes=\"(max-width: 600px) 100vw, 800px\"\n  width=\"800\" height=\"450\"\n  alt=\"상악 우측 제1대구치 크라운\"\n  loading=\"lazy\" decoding=\"async\">\n\n<picture>\n  <source type=\"image/avif\" srcset=\"/case.avif\">\n  <source type=\"image/webp\" srcset=\"/case.webp\">\n  <img src=\"/case.jpg\" width=\"800\" height=\"450\" alt=\"\">\n</picture>"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "perf",
@@ -2712,7 +2863,11 @@
             "preload·서브셋·폴백 메트릭 정렬"
           ]
         ]
-      }
+      },
+      "struct": [
+        "폰트 교체를 기다릴 것인가, 폴백을 먼저 보일 것인가, 교체를 포기할 것인가로 나눈다.",
+        "swap + 메트릭 정렬이 기본, CLS 가 기준을 넘으면 optional. preload·서브셋은 어느 쪽에나 붙인다."
+      ]
     },
     {
       "c": "test",
@@ -2747,7 +2902,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "test",
@@ -2782,7 +2938,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "test",
@@ -2814,7 +2971,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "실패가 코드 결함인가 환경 결함(시간·공유 상태·병렬 자원)인가로 나눈다.",
+        "환경 결함이 대부분이다. 조건 기반 대기·격리·자원 분리로 고치고 재시도는 계측과 함께만 쓴다."
+      ]
     },
     {
       "c": "test",
@@ -2845,7 +3006,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "build",
@@ -2877,7 +3039,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "build",
@@ -2908,7 +3071,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "build",
@@ -2940,7 +3104,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "규칙을 사람이 지키나 도구가 강제하나로 본다.",
+        "태그 기반 린트 규칙으로 허용 방향만 import 가능하게 강제한다. 리뷰 주의로는 유지되지 않는다."
+      ]
     },
     {
       "c": "build",
@@ -2971,7 +3139,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "a11y",
@@ -3028,7 +3197,11 @@
             "ARIA 첫 규칙: 네이티브 요소가 있으면 ARIA 대신 쓴다"
           ]
         ]
-      }
+      },
+      "struct": [
+        "기본 동작을 브라우저가 주는가, 내가 전부 다시 만드는가로 나눈다.",
+        "button 은 포커스·키보드·role·disabled 를 공짜로 준다. div 면 그 전부를 직접 붙여야 하니 태그 교체가 가장 싸다."
+      ]
     },
     {
       "c": "a11y",
@@ -3082,7 +3255,11 @@
             "서브트리를 포커스·보조기기에서 제외"
           ]
         ]
-      }
+      },
+      "struct": [
+        "포커스가 어디로 가고 어디로 돌아오는가, 배경이 정말 비활성인가로 본다.",
+        "네이티브 dialog.showModal 이 대부분을 처리한다. 직접 만들면 이동·트랩·복귀·Esc·inert 를 다 챙긴다."
+      ]
     },
     {
       "c": "a11y",
@@ -3140,7 +3317,11 @@
             "aria-hidden·aria-label 의미 정의"
           ]
         ]
-      }
+      },
+      "struct": [
+        "네이티브가 이미 제공하는 의미를 ARIA 가 덮어쓰고 있는가로 본다.",
+        "ARIA 첫 규칙: 가능하면 쓰지 않는다. 잘못된 role·라벨 불일치·포커스 가능한 aria-hidden 이 대표 사고다."
+      ]
     },
     {
       "c": "arch",
@@ -3172,7 +3353,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "구·신 버전이 동시에 살아 있는 구간이 있는가로 출발한다.",
+        "블루그린이면 반드시 있다. Expand→Migrate→Contract 로 나누고 각 단계가 단독 롤백 가능해야 한다."
+      ]
     },
     {
       "c": "arch",
@@ -3204,7 +3389,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "같이 바뀌는가(변경 이유)와 상태를 누가 소유하는가로 자른다.",
+        "변경 이유 단위로 묶고 세 번째 사례부터 공용화한다. props 폭발·불리언 난립은 분리 신호다."
+      ]
     },
     {
       "c": "arch",
@@ -3262,7 +3451,11 @@
             "응답 본문·타이밍 확인"
           ]
         ]
-      }
+      },
+      "struct": [
+        "장애가 나면 어떤 질문에 답해야 하는가에서 역산한다.",
+        "실패 경로 로그·릴리스 태깅·필드 지표·이벤트 명명 규칙. 성공 경로만 계측하면 장애가 안 보인다."
+      ]
     },
     {
       "c": "arch",
@@ -3306,7 +3499,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "전송 방식·렌더 빈도·유실 보정·취소 경로 네 가지를 먼저 정한다.",
+        "SSE 기본, 프레임당 1회 배치 렌더, 서버 시퀀스로 재개, 중단 시 서버 생성까지 취소."
+      ]
     },
     {
       "c": "arch",
@@ -3337,7 +3534,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "설득 근거가 수치인가 감상인가로 나눈다.",
+        "리드타임·결함률·p75 같은 수치로 제안하고 작게 쪼개 기능 작업에 얹는다. 끝난 뒤 같은 수치로 보고한다."
+      ]
     },
     {
       "c": "arch",
@@ -3369,7 +3570,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "틀리면 사용자·데이터에 피해가 나는가(차단) 아니면 취향·스타일인가(자동화)로 나눈다.",
+        "정확성·보안·계약 변경만 차단하고 스타일은 도구에 맡긴다. 대안은 근거와 비용을 붙여 낸다."
+      ]
     },
     {
       "c": "arch",
@@ -3400,7 +3605,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "arch",
@@ -3431,7 +3637,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "arch",
@@ -3462,7 +3669,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -3499,7 +3707,8 @@
           "let a = 1, b = a; b = 2;        // a === 1 (값 복사)\n\nconst o1 = { n: 1 };\nconst o2 = o1; o2.n = 2;        // o1.n === 2 (주소 복사)\n\nfunction mutate(obj) { obj.n = 99; }   // 인자 변경이 호출부에 보인다\nmutate(o1); o1.n;               // 99\n\n({ n: 1 }) === ({ n: 1 });      // false — 내용이 같아도 참조가 다르다"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -3530,7 +3739,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -3571,7 +3781,8 @@
           "const settings = { retries: 0, label: \"\" };\n\nsettings.retries || 3;   // 3   ← 0 이 falsy 라서 기본값이 끼어든다 (버그)\nsettings.retries ?? 3;   // 0   ← null/undefined 일 때만 기본값\nsettings.label   ?? \"무제\";  // \"\"\n\n// 옵셔널 체이닝은 \"없을 수 있는\" 값에만\nuser.profile?.avatar?.url         // 선택 필드\norder?.total.toFixed(2)           // 필수 값을 가리면 원인 추적이 늦어진다"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -3608,7 +3819,8 @@
           "// 나쁨: 매 회 새 객체를 만든다\nconst byId = items.reduce((acc, it) => ({ ...acc, [it.id]: it }), {});\n\n// 좋음: 누적 객체를 직접 채우거나 Map\nconst byId2 = items.reduce((acc, it) => { acc[it.id] = it; return acc; }, {});\nconst byId3 = new Map(items.map((it) => [it.id, it]));\n\n// 중간 탈출이 필요하면 for...of — reduce 로 억지로 만들지 않는다\nfor (const it of items) if (it.broken) { report(it); break; }"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "js",
@@ -3658,7 +3870,8 @@
           ".pan-area { touch-action: pan-y; }   /* 가로 제스처만 차단, JS 개입 없음 */"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "net",
@@ -3715,7 +3928,11 @@
             "도메인 이름을 IP 로 해석"
           ]
         ]
-      }
+      },
+      "struct": [
+        "네트워크 구간과 렌더 구간, 그리고 어디서 캐시가 끼는가로 나눈다.",
+        "DNS→연결→HTTP→파싱→렌더. 두 번째 방문이 빠른 건 캐시 때문이고, 첫 화면 개선은 지배 구간 측정부터다."
+      ]
     },
     {
       "c": "net",
@@ -3751,7 +3968,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "net",
@@ -3783,7 +4001,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "net",
@@ -3818,7 +4037,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "css",
@@ -3859,7 +4079,8 @@
           "#app .btn.primary { color: red; }    /* id 1, class 2 */\n.btn.primary      { color: blue; }   /* 짐 */\n\n/* :where() 안은 명시도 0 → 덮어쓰기 쉬운 기본값 */\n:where(.btn) { padding: 8px 12px; }\n\n/* 레이어로 출처 순서를 정하면 명시도 경쟁이 필요 없다 */\n@layer reset, base, components, overrides;\n@layer components { .btn { color: blue; } }\n@layer overrides  { .btn { color: red; } }   /* 명시도가 낮아도 이긴다 */"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "css",
@@ -3897,7 +4118,8 @@
           ".inline  { display: inline; width: 200px; height: 40px; }  /* width·height 무시 */\n.iblock  { display: inline-block; }                        /* 줄 안 + 크기 적용 */\n.block   { display: block; }\n.gone    { display: none; }        /* 접근성 트리에서도 사라진다 */\n\n/* 화면에서만 감추고 스크린리더에는 남긴다 */\n.visually-hidden {\n  position: absolute; width: 1px; height: 1px;\n  margin: -1px; padding: 0; overflow: hidden;\n  clip-path: inset(50%); white-space: nowrap;\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "css",
@@ -3939,7 +4161,8 @@
           "html { font-size: 100%; }              /* 사용자 설정 기준 = 16px 가정 금지 */\n\n.title  { font-size: 1.5rem; }          /* 루트 기준 — 타이포·간격 기본 */\n.icon   { width: 1em; height: 1em; }    /* 요소 폰트 비례 — 중첩되면 누적 */\n.col    { width: 50%; }                 /* 부모 기준 */\n.hero   { padding-block: clamp(24px, 5vw, 64px); }   /* 뷰포트 기준 + 상·하한 */\n.border { border-width: 1px; }          /* 확대와 무관해야 하는 곳은 px */\n\n/* 고정 높이 + px 폰트는 200% 확대에서 잘린다 */\n.chip { min-height: 2.5rem; height: auto; }"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "react",
@@ -3974,7 +4197,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "react",
@@ -4015,7 +4239,8 @@
           "// 나쁨: 렌더마다 새 컴포넌트 타입 → 서브트리 언마운트·재마운트, 상태 소실\nfunction Page() {\n  function Panel() { return <input />; }     // 매 렌더 새 함수 = 새 타입\n  return <Panel />;\n}\n\n// 좋음: 컴포넌트는 모듈 스코프에 정의\nfunction Panel() { return <input />; }\nfunction Page() { return <Panel />; }"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "react",
@@ -4065,7 +4290,8 @@
           "function onSubmit(e) {\n  e.preventDefault();\n  const data = Object.fromEntries(new FormData(e.currentTarget));\n  save(data);                    // 키 입력마다 리렌더하지 않는다\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "react",
@@ -4102,7 +4328,8 @@
           "// 나쁨: count 가 0 이면 && 가 0 을 반환하고 React 는 숫자 0 을 렌더한다\n{count && <Badge count={count} />}\n\n// 좋음: 명시적 비교\n{count > 0 && <Badge count={count} />}\n{count > 0 ? <Badge count={count} /> : null}\n\n// false·null·undefined 는 렌더되지 않지만 0·NaN 은 렌더된다"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "a11y",
@@ -4155,7 +4382,11 @@
             "alt 작성 규칙과 빈 alt 의 의미"
           ]
         ]
-      }
+      },
+      "struct": [
+        "이미지가 정보를 전달하는가, 장식인가, 컨트롤의 유일한 이름인가로 나눈다.",
+        "정보면 문장, 장식이면 alt=\"\", 컨트롤이면 동작 이름. 속성 누락은 파일명 낭독이다."
+      ]
     },
     {
       "c": "a11y",
@@ -4208,7 +4439,11 @@
             "HTML 요소의 암묵적 role 과 허용 ARIA"
           ]
         ]
-      }
+      },
+      "struct": [
+        "보조기기와 기계가 구조를 읽을 수 있는가로 본다.",
+        "시맨틱 요소가 role·이름·기본 동작을 준다. div 만 있으면 탐색할 지점이 없다."
+      ]
     },
     {
       "c": "build",
@@ -4243,7 +4478,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "perf",
@@ -4274,7 +4510,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "arch",
@@ -4306,7 +4543,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "콘텐츠가 공개·정적인가 사용자별·실시간인가, 첫 화면 지표가 사업에 중요한가로 나눈다.",
+        "정적이면 사전 렌더, 개인화면 서버 렌더 또는 클라이언트 페치. 화면 단위로 섞고 운영 비용을 함께 계산한다."
+      ]
     },
     {
       "c": "arch",
@@ -4342,7 +4583,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "조직 문제(독립 배포·다른 주기)가 있는가로 판단한다.",
+        "조직 문제가 없으면 도입하지 않는다. 있다면 도메인 단위 경계와 공유 계약을 명시하고 중복 번들 비용을 감수한다."
+      ]
     },
     {
       "c": "arch",
@@ -4378,7 +4623,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "되돌릴 수 있는 단위로 나눌 수 있는가와 전환 지표가 있는가로 본다.",
+        "Strangler Fig 로 라우트·기능 단위 이관, 신규는 새 규칙, 제거 시점을 미리 못 박는다. 전면 재작성은 기본 계획이 아니다."
+      ]
     },
     {
       "c": "arch",
@@ -4410,7 +4659,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "결정의 맥락·대안·폐기 조건이 남는가로 본다.",
+        "ADR 로 남기고 되돌릴 때는 새 ADR 로 supersede. 기록을 지우지 않는다."
+      ]
     },
     {
       "c": "arch",
@@ -4446,7 +4699,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "파괴적 변경을 어떻게 전파하고 채택을 어떻게 재는가로 나눈다.",
+        "버전 고정+가이드+코드모드로 전파, 토큰 계층으로 오버라이드를 막고, 채택률·오버라이드를 계측한다."
+      ]
     },
     {
       "c": "arch",
@@ -4482,7 +4739,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "문장을 조립하는가 Intl 에 맡기는가, 누락을 언제 잡는가로 나눈다.",
+        "복수형·어순·형식은 ICU/Intl 에 맡기고, 키 단일 출처·CI 누락 검출·언어별 번들 분할·RTL 논리 속성."
+      ]
     },
     {
       "c": "arch",
@@ -4518,7 +4779,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "복구가 먼저인가 원인이 먼저인가로 순서를 정한다.",
+        "복구(롤백·플래그)가 먼저다. 그 뒤 비난 없는 타임라인·재발 방지 항목·담당자·기한."
+      ]
     },
     {
       "c": "arch",
@@ -4554,7 +4819,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "지식이 사람에 고이는가 구조에 남는가로 본다.",
+        "CODEOWNERS 로 소유를 명시하고 ADR·순환 리뷰로 분산한다. 온보딩 지표는 첫 배포까지 걸린 시간."
+      ]
     },
     {
       "c": "sec",
@@ -4639,7 +4908,11 @@
             "implicit 흐름 비권고, PKCE·정확한 redirect_uri 비교 권고"
           ]
         ]
-      }
+      },
+      "struct": [
+        "브라우저가 비밀을 지킬 수 있는가(없다)에서 출발한다.",
+        "Authorization Code + PKCE, 짧은 액세스·회전 리프레시, 다중 탭 잠금. implicit 은 쓰지 않는다."
+      ]
     },
     {
       "c": "sec",
@@ -4680,7 +4953,11 @@
           "const ALLOWED = new Set([\"https://widget.example.com\"]);\n\naddEventListener(\"message\", (e) => {\n  if (!ALLOWED.has(e.origin)) return;              // ① 출처 확인\n  const msg = WidgetMessage.safeParse(e.data);     // ② 스키마 확인\n  if (!msg.success) return;\n  handle(msg.data);\n});\n\n// 송신: 대상 오리진을 정확히 지정한다(\"*\" 금지)\niframe.contentWindow.postMessage({ type: \"init\", locale }, \"https://widget.example.com\");"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "메시지의 출처와 형태를 둘 다 검증하는가로 본다.",
+        "origin 화이트리스트 + 스키마 검증, 송신은 정확한 오리진. \"*\" 는 침입 경로다."
+      ]
     },
     {
       "c": "perf",
@@ -4757,7 +5034,11 @@
             "입력 지연·처리 시간·표현 지연 구간별 처방"
           ]
         ]
-      }
+      },
+      "struct": [
+        "INP 를 입력 지연·처리·표현 세 구간으로 쪼갠다.",
+        "attribution 으로 지배 구간을 찾고 구간별 처방. 메모이제이션은 처리 구간 일부에만 효과가 있다."
+      ]
     },
     {
       "c": "perf",
@@ -4808,7 +5089,11 @@
           "const controller = new AbortController();\ncancelBtn.onclick = () => controller.abort();\n// 청크 완료마다 진행률 갱신(요청 단위 이벤트가 파일 단위보다 정확하다)"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "재개·멱등·동시성 셋이 설계돼 있는가로 본다.",
+        "청크 + 병렬 + 실패 청크만 재시도 + 세션 저장으로 재개. 완료는 서버 병합 검증까지다."
+      ]
     },
     {
       "c": "perf",
@@ -4844,7 +5129,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "요청 수 비용과 캐시 히트율 중 어느 쪽이 지배하는가로 나눈다.",
+        "다중화로 요청 수 비용은 줄었지만 과분할은 캐시 히트율을 죽인다. 변경 빈도로 청크 경계를 정하고 필드로 검증한다."
+      ]
     },
     {
       "c": "net",
@@ -4917,7 +5206,11 @@
             "캐시 우선·네트워크 우선·SWR 전략"
           ]
         ]
-      }
+      },
+      "struct": [
+        "새 버전이 사용자에게 언제 도달하는가를 먼저 설계한다.",
+        "활성화 정책 먼저, 자원별 캐시 전략 분리, 인증 응답은 캐시 금지. 오프라인 요구가 없으면 도입하지 않는다."
+      ]
     },
     {
       "c": "state",
@@ -4953,7 +5246,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "무엇을 잃어도 되는지(데이터 손실 허용선)를 먼저 정한다.",
+        "손실 불허면 감지+사용자 병합 또는 CRDT. 마지막 쓰기 승리는 조용한 손실이다."
+      ]
     },
     {
       "c": "react",
@@ -5012,7 +5309,11 @@
             "자식이 로드될 때까지 fallback 을 표시"
           ]
         ]
-      }
+      },
+      "struct": [
+        "긴급 업데이트와 비긴급 업데이트가 구분되는가로 본다.",
+        "입력 반영은 즉시, 무거운 갱신은 transition. Suspense 경계는 로딩 단위와 맞춘다. 총 작업량 자체는 줄지 않는다."
+      ]
     },
     {
       "c": "build",
@@ -5048,7 +5349,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "지원 범위를 감정으로 정하나 데이터로 정하나로 본다.",
+        "실사용 분포로 정하고 단일 출처(browserslist)에 적는다. Baseline 기능은 폴리필 없이, 나머지는 기능 탐지 후 필요한 사용자에게만."
+      ]
     },
     {
       "c": "build",
@@ -5084,7 +5389,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "플래그의 종류와 수명을 구분하는가로 본다.",
+        "릴리스·실험·킬스위치·권한을 나누고 단기 토글엔 제거 기한과 담당자를 붙인다. 첫 페인트 전에 값을 확정한다."
+      ]
     },
     {
       "c": "a11y",
@@ -5137,7 +5446,11 @@
             "자동 검사가 못 잡는 대표 요건"
           ]
         ]
-      }
+      },
+      "struct": [
+        "게이트가 있는가, 자동 검사가 못 잡는 것을 사람이 보는가로 나눈다.",
+        "기준(WCAG 2.2 AA) 명시 → 공용 컴포넌트부터 → 신규 게이트 → 보조기기 테스트·교육. 린트만으론 회귀한다."
+      ]
     },
     {
       "c": "test",
@@ -5173,7 +5486,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "실패가 사용자 피해로 이어지는가(차단) 아닌가(경고)로 나눈다.",
+        "핵심 흐름 e2e·타입·보안은 차단, 커버리지·예산 근접은 경고. 불안정 테스트는 차단에서 빼고 고친다."
+      ]
     },
     {
       "c": "live",
@@ -5219,7 +5536,8 @@
           "function throttle(fn, interval = 200) {\n  let last = 0, timer = null, lastArgs = null;\n  return function throttled(...args) {\n    const now = Date.now();\n    const remain = interval - (now - last);\n    lastArgs = args;\n    if (remain <= 0) {\n      last = now;\n      fn.apply(this, args);\n    } else if (!timer) {          // 마지막 입력을 버리지 않는다\n      timer = setTimeout(() => {\n        last = Date.now(); timer = null;\n        fn.apply(this, lastArgs);\n      }, remain);\n    }\n  };\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5265,7 +5583,8 @@
           "<ul id=\"list\">\n  <li data-id=\"42\">\n    <button type=\"button\" data-action=\"open\">보고서 열기</button>\n    <button type=\"button\" data-action=\"delete\" aria-label=\"보고서 42 삭제\">삭제</button>\n  </li>\n</ul>"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5341,7 +5660,11 @@
             "combobox·listbox·option 역할 정의"
           ]
         ]
-      }
+      },
+      "struct": [
+        "경합·취소·캐시 셋이 있는가, 접근성 패턴을 따르는가로 본다.",
+        "디바운스+AbortController+캐시가 기본, combobox 패턴과 live region 으로 마감한다."
+      ]
     },
     {
       "c": "live",
@@ -5413,7 +5736,11 @@
             "항목이 많아질 때의 DOM 제한"
           ]
         ]
-      }
+      },
+      "struct": [
+        "페이징 방식(커서 vs 오프셋)과 중복 로드 차단이 있는가로 본다.",
+        "IntersectionObserver 센티넬 + 커서 페이징 + 진행 플래그. 수백 행 넘으면 가상화, 키보드 폴백은 남긴다."
+      ]
     },
     {
       "c": "live",
@@ -5463,7 +5790,8 @@
           "<dialog id=\"confirm\" aria-labelledby=\"confirm-title\">\n  <h2 id=\"confirm-title\">케이스를 삭제할까요?</h2>\n  <form method=\"dialog\">\n    <button value=\"cancel\">취소</button>\n    <button value=\"delete\" autofocus>삭제</button>\n  </form>\n</dialog>"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5517,7 +5845,8 @@
           "nextBtn.addEventListener(\"click\", () => {\n  track.scrollBy({ left: track.clientWidth, behavior: prefersReduced ? \"auto\" : \"smooth\" });\n});\n\n// 현재 위치는 스크롤에서 읽는다(계산 중복 금지)\ntrack.addEventListener(\"scroll\", throttle(() => {\n  const index = Math.round(track.scrollLeft / track.clientWidth);\n  status.textContent = (index + 1) + \" / \" + total;   // aria-live 영역\n}, 100));"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5563,7 +5892,8 @@
           "<label for=\"email\">이메일</label>\n<input id=\"email\" name=\"email\" type=\"email\" required\n       aria-describedby=\"email-error\" aria-invalid=\"true\">\n<p id=\"email-error\" role=\"alert\">이메일 형식이 아닙니다.</p>"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5613,7 +5943,8 @@
           "function pLimit(concurrency) {\n  let active = 0;\n  const queue = [];\n  const next = () => {\n    if (active >= concurrency || queue.length === 0) return;\n    active++;\n    const { fn, resolve, reject } = queue.shift();\n    fn().then(resolve, reject).finally(() => {   // 실패에도 카운터를 되돌린다\n      active--;\n      next();\n    });\n  };\n  return (fn) => new Promise((resolve, reject) => {\n    queue.push({ fn, resolve, reject });\n    next();\n  });\n}\n\nconst limit = pLimit(4);\nawait Promise.all(urls.map((u) => limit(() => fetch(u))));"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5659,7 +5990,11 @@
           "/* 목록이 크지만 DOM 을 유지해야 한다면(검색·인쇄·스크린리더 탐색) */\n.row {\n  content-visibility: auto;\n  contain-intrinsic-size: auto 36px;   /* 추정 높이 → 스크롤바 안정 */\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "보이는 범위만 그릴 때 잃는 것을 감수하는가로 먼저 판단한다.",
+        "인덱스 계산으로 창만 렌더하고 스페이서로 스크롤바를 유지한다. 그 전에 content-visibility 가 되는지 본다."
+      ]
     },
     {
       "c": "live",
@@ -5713,7 +6048,8 @@
           "row.addEventListener(\"keydown\", (e) => {\n  if (!e.altKey) return;                       // Alt+↑/↓ 로 순서 변경\n  if (e.key === \"ArrowUp\")   { e.preventDefault(); moveBy(-1); }\n  if (e.key === \"ArrowDown\") { e.preventDefault(); moveBy(+1); }\n});"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5759,7 +6095,8 @@
           "<div role=\"tablist\" aria-label=\"케이스 상세\">\n  <button role=\"tab\" id=\"t1\" aria-controls=\"p1\" aria-selected=\"true\"  tabindex=\"0\">요약</button>\n  <button role=\"tab\" id=\"t2\" aria-controls=\"p2\" aria-selected=\"false\" tabindex=\"-1\">로그</button>\n</div>\n<div role=\"tabpanel\" id=\"p1\" aria-labelledby=\"t1\">…</div>\n<div role=\"tabpanel\" id=\"p2\" aria-labelledby=\"t2\" hidden>…</div>"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5801,7 +6138,11 @@
           "import { useSyncExternalStore } from \"react\";\n\nexport function useStore(selector) {\n  return useSyncExternalStore(\n    store.subscribe,\n    () => selector(store.getState()),      // 새 객체를 만들면 무한 리렌더\n    () => selector(serverSnapshot)         // SSR 스냅샷\n  );\n}\n\n// 좋음: 원시값 구독\nconst count = useStore((s) => s.items.length);\n// 나쁨: 매번 새 배열 → 렌더마다 변경으로 판정\n// const items = useStore((s) => s.items.filter((i) => i.open));"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "동시성 렌더에서 찢어짐(tearing)을 막을 수 있는가로 본다.",
+        "useSyncExternalStore 로 연결하고 selector 는 원시값·얕은 비교. SSR 스냅샷을 따로 준다."
+      ]
     },
     {
       "c": "live",
@@ -5847,7 +6188,8 @@
           "async function navigate(path) {\n  const view = await resolve(path);          // 코드 분할 로드\n  main.replaceChildren(view.node);\n  document.title = view.title;               // 제목 갱신\n  liveRegion.textContent = view.title + \" 페이지로 이동했습니다\";\n  main.focus();                              // main 에 tabindex=\"-1\"\n  scrollTo({ top: view.restoreScroll ?? 0 });\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5897,7 +6239,8 @@
           "const io = new IntersectionObserver((entries, observer) => {\n  for (const entry of entries) {\n    if (!entry.isIntersecting) continue;\n    const img = entry.target;\n    img.src = img.dataset.src;\n    observer.unobserve(img);        // 로드 후 해제 — 안 하면 관찰 대상이 쌓인다\n  }\n}, { rootMargin: \"300px\" });\n\ndocument.querySelectorAll(\"img[data-src]\").forEach((img) => io.observe(img));"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "live",
@@ -5947,7 +6290,8 @@
           "<table>\n  <thead>\n    <tr>\n      <th aria-sort=\"ascending\"><button type=\"button\">케이스명</button></th>\n      <th aria-sort=\"none\"><button type=\"button\">생성일</button></th>\n    </tr>\n  </thead>\n</table>\n<p aria-live=\"polite\">케이스명 오름차순, 42건</p>"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "sysdesign",
@@ -5999,7 +6343,11 @@
             "자주 나오는 프롬프트와 평가 축"
           ]
         ]
-      }
+      },
+      "struct": [
+        "요구를 좁히기 전에 그리기 시작하는가로 본다.",
+        "RADIO 순서(요구→구조→데이터→인터페이스→최적화)로 가고 트레이드오프를 말로 남긴다. 정답 아키텍처를 맞히는 라운드가 아니다."
+      ]
     },
     {
       "c": "sysdesign",
@@ -6076,7 +6424,11 @@
             "동적 삽입이 만드는 레이아웃 이동"
           ]
         ]
-      }
+      },
+      "struct": [
+        "목록 갱신이 사용자 위치를 흔드는가와 같은 글이 여러 화면에 있는가로 나눈다.",
+        "커서 페이징 + 정규화 엔티티 + 낙관적 업데이트 롤백. 새 글은 알림으로만, 강제 삽입은 하지 않는다."
+      ]
     },
     {
       "c": "sysdesign",
@@ -6131,7 +6483,11 @@
           "const controller = new AbortController();\nstopBtn.onclick = () => controller.abort();          // 비용이 계속 발생하지 않게\n\nawait fetch(\"/api/chat\", {\n  method: \"POST\",\n  signal: controller.signal,\n  headers: { \"Content-Type\": \"application/json\" },\n  body: JSON.stringify({ sessionId, prompt }),\n});"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "렌더 빈도·취소·출력 신뢰 셋을 먼저 정한다.",
+        "SSE + 프레임당 1회 배치 + 중단 시 서버 취소 + 출력 sanitize. 모델 출력은 사용자 입력과 동급이다."
+      ]
     },
     {
       "c": "sysdesign",
@@ -6166,7 +6522,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "sysdesign",
@@ -6206,7 +6563,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "문서 연산과 프레즌스를 같은 채널에 두는가로 본다.",
+        "분리한다. CRDT/OT 로 수렴, 재연결 시 누락 연산 재전송, 입력 지연을 최우선으로 보호한다."
+      ]
     },
     {
       "c": "sysdesign",
@@ -6245,7 +6606,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "sysdesign",
@@ -6280,7 +6642,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "sysdesign",
@@ -6331,7 +6694,11 @@
           "const NEXT = {\n  idle:       { submit: \"submitting\" },\n  submitting: { ok: \"done\", conflict: \"already_paid\", fail: \"failed\", timeout: \"unknown\" },\n  unknown:    { confirmed_paid: \"done\", confirmed_unpaid: \"failed\" },\n  done:       {},                       // 뒤로 가기로 재진입해도 재결제 불가\n};"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "중복 결제를 구조적으로 막고 있는가와 상태 전이가 명시적인가로 본다.",
+        "멱등 키 + 상태 기계 + 카드 데이터를 만지지 않는 구조. 낙관적 업데이트는 쓰지 않고 타임아웃은 '확인 중'이다."
+      ]
     },
     {
       "c": "sysdesign",
@@ -6370,7 +6737,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "공개 API 경계가 있는가와 파괴적 변경을 어떻게 전파하는가로 나눈다.",
+        "props·슬롯·토큰만 공개하고 ESM·세맨틱 버전·코드모드로 배포한다. 접근성은 계약에 넣는다."
+      ]
     },
     {
       "c": "sysdesign",
@@ -6409,7 +6780,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "원본이 어디인가(로컬 우선)와 충돌을 어떻게 다루는가로 나눈다.",
+        "IndexedDB 가 원본, 서버 동기화는 큐 + 충돌 감지. 마지막 쓰기 승리는 손실이다. 저장소 한계에 대비한다."
+      ]
     },
     {
       "c": "sysdesign",
@@ -6444,7 +6819,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "debug",
@@ -6524,7 +6900,11 @@
             "레이아웃 읽기·쓰기 교차가 강제 동기 레이아웃을 만든다"
           ]
         ]
-      }
+      },
+      "struct": [
+        "추측으로 코드를 읽나 측정으로 구간을 좁히나로 출발한다.",
+        "Performance 녹화 → Long Task 스택 → 핸들러/렌더/레이아웃 구간 분해. 처방은 원인별로 다르다."
+      ]
     },
     {
       "c": "debug",
@@ -6574,7 +6954,8 @@
           "// 나쁨: catch 가 비어 화면만 빈다\ntry { setRows(parse(await res.json())); } catch {}\n\n// 좋음: 보고 + 사용자에게 보이는 상태\ntry {\n  setRows(parse(await res.json()));\n} catch (err) {\n  report(\"list_parse_failed\", { err: String(err) });\n  setError(\"목록을 불러오지 못했습니다\");\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "debug",
@@ -6620,7 +7001,8 @@
           "// ① 렌더 중 setState — 조건 없이 호출하면 즉시 루프\nfunction Bad({ items }) {\n  setCount(items.length);              // 금지\n  return null;\n}\nconst count = items.length;            // 파생 계산으로 대체\n\n// ② 매 렌더 새 객체를 의존성에 넣는다\nuseEffect(() => { load(filter); }, [{ ...filter }]);   // 항상 새 참조 → 무한\nuseEffect(() => { load(filter); }, [filter.status, filter.page]);  // 원시값으로"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "debug",
@@ -6655,7 +7037,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "증가를 증명했는가(스냅샷 2회 비교)로 시작한다.",
+        "힙 스냅샷 비교와 반복 시나리오로 증가를 확정한 뒤 retainer 로 원인을 찾고 같은 시나리오로 재측정한다."
+      ]
     },
     {
       "c": "debug",
@@ -6705,7 +7091,8 @@
           ".panel { position: absolute; }              /* 폴백 먼저 */\n\n@supports (position-area: bottom span-right) {\n  .panel { position-area: bottom span-right; }   /* 지원하는 곳만 */\n}"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "debug",
@@ -6755,7 +7142,11 @@
           "# dev 서버가 아니라 프로덕션 빌드를 띄워 확인한다\nnpm run build && npx serve dist\n\n# 소스맵으로 스택 복원 (소스맵은 공개 배포하지 않는다)\nnpx source-map-cli resolve dist/assets/app-a1b2c3.js.map 1 45213"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "서빙되는 산출물이 로컬과 같은가부터 확인한다.",
+        "번들 해시·API 호스트·플래그·빌드 모드·캐시를 사슬로 실측한다. '같은 코드니 문제 없다'는 결론이 아니다."
+      ]
     },
     {
       "c": "debug",
@@ -6826,7 +7217,11 @@
             "크기 미지정 이미지·임베드·폰트·동적 삽입 대응"
           ]
         ]
-      }
+      },
+      "struct": [
+        "크기를 모르는 자원이 나중에 도착하는가로 본다.",
+        "자리 확보(aspect-ratio·최소 높이)·폰트 메트릭 정렬·삽입 영역 예약. 이동 요소는 attribution 으로 특정한다."
+      ]
     },
     {
       "c": "review",
@@ -6861,7 +7256,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "review",
@@ -6902,7 +7298,8 @@
           "// 받은 diff (차단)\n- <div dangerouslySetInnerHTML={{ __html: comment.body }} />\n\n// 제안 ①: 서식이 필요 없으면 텍스트\n+ <div className=\"comment-body\">{comment.body}</div>\n\n// 제안 ②: 서식이 필요하면 허용 목록 sanitizer (raw HTML 차단)\n+ import DOMPurify from \"dompurify\";\n+ const clean = DOMPurify.sanitize(comment.body, {\n+   ALLOWED_TAGS: [\"b\", \"i\", \"em\", \"strong\", \"a\", \"p\", \"br\", \"ul\", \"ol\", \"li\"],\n+   ALLOWED_ATTR: [\"href\"],\n+   ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,\n+ });\n+ <div dangerouslySetInnerHTML={{ __html: clean }} />"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "review",
@@ -6943,7 +7340,8 @@
           "// 받은 diff: 행마다 요청 (100행 = 100요청, 취소도 없다)\nfunction Row({ id }) {\n  const [detail, setDetail] = useState(null);\n  useEffect(() => { fetch(\"/api/case/\" + id).then(r => r.json()).then(setDetail); }, [id]);\n}\n\n// 제안 ①: 목록 응답에 필요한 필드를 포함 (서버와 계약 변경)\n// 제안 ②: 배치 엔드포인트\nconst details = useQuery({\n  queryKey: [\"cases\", \"detail\", ids],\n  queryFn: ({ signal }) => fetchDetails(ids, { signal }),   // 1요청\n});\n\n// 그대로 둘 수밖에 없다면: 동시성 제한 + 취소 + 캐시\nuseEffect(() => {\n  const c = new AbortController();\n  limit(() => fetchDetail(id, { signal: c.signal })).then(setDetail).catch(ignoreAbort);\n  return () => c.abort();\n}, [id]);"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "review",
@@ -6989,7 +7387,8 @@
           "<div\n  role=\"button\"\n  tabIndex={0}\n  aria-disabled={busy || undefined}\n  onClick={busy ? undefined : save}\n  onKeyDown={(e) => {\n    if (e.key === \"Enter\" || e.key === \" \") { e.preventDefault(); if (!busy) save(); }\n  }}\n>저장</div>"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "review",
@@ -7030,7 +7429,8 @@
           "// 받은 diff\n- const rows = (res.data as any).items;\n\n// ① 응답이 불확실하면 경계에서 파싱\n+ const { items } = ListResponse.parse(res.data);\n\n// ② 유니온 좁히기\n+ if (node.kind === \"case\") node.caseId;       // 판별 유니온\n\n// ③ 서드파티 타입이 틀렸다면 한 곳에 격리\n+ // ponytail: @vendor/sdk v3 의 listCases 반환 타입이 실제와 다르다(items 누락)\n+ function listCases(): Promise<CaseListResponse> {\n+   return sdk.listCases() as unknown as Promise<CaseListResponse>;\n+ }\n\n// ④ 정말 급하면 범위를 좁힌 단언 + 제거 조건이 적힌 이슈\n+ const items = (res.data as { items: unknown[] }).items;   // TODO(FE-1234)"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "take",
@@ -7065,7 +7465,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "take",
@@ -7096,7 +7497,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "take",
@@ -7127,7 +7529,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "take",
@@ -7162,7 +7565,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "take",
@@ -7197,7 +7601,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "'왜 이렇게 했나'와 '요구가 바뀌면 어디를 고치나'에 답할 수 있는가로 준비한다.",
+        "결정 지점과 약점을 먼저 정리하고, 규모 10배에서 먼저 깨질 곳을 지목할 수 있게 한다."
+      ]
     },
     {
       "c": "ai",
@@ -7232,7 +7640,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "ai",
@@ -7267,7 +7676,8 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "ai",
@@ -7317,7 +7727,8 @@
           "async function loadPage(page, signal) {\n  const res = await fetch(\"/api/items?page=\" + page, { signal });\n  if (!res.ok) throw new Error(\"items failed: \" + res.status);     // ⑤\n  const data = await res.json();                                    // ①\n  for (const item of data.items) render(item);                      // ②\n  setState((s) => ({ ...s, filters: { ...s.filters, status: \"open\" } }));  // ③\n  if (data.total === 0) showEmpty();                                // ④\n  return data.items;\n}\n\ntest(\"서버가 500이면 던지고 빈 상태를 그리지 않는다\", async () => {\n  server.use(http.get(\"/api/items\", () => new Response(null, { status: 500 })));\n  await expect(loadPage(1)).rejects.toThrow(/items failed: 500/);\n  expect(showEmpty).not.toHaveBeenCalled();\n});"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": null
     },
     {
       "c": "ai",
@@ -7352,7 +7763,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "데이터 경계와 검증 게이트가 있는가로 본다.",
+        "보낼 수 있는 데이터를 정하고 생성 코드도 같은 리뷰·테스트·스캔을 통과시킨다. 효과는 리드타임·결함률로 측정한다."
+      ]
     },
     {
       "c": "toss",
@@ -7395,7 +7810,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "파트별로 무엇을 평가하는지와 배점 대비 시간을 어떻게 쓰는지로 나눈다.",
+        "출제진 기준은 '입사 즉시 프로젝트 수행 역량'. 의도 파악·확장성·실무 경험 서술이 점수고, 확실한 문제부터 푼다."
+      ]
     },
     {
       "c": "toss",
@@ -7438,7 +7857,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "테스트를 명세로 읽는가와 시간 박스가 있는가로 본다.",
+        "실패 지도 → 우선순위 → 핵심 흐름 → 리팩터. 테스트 디버깅에 갇히지 않고 미완·가정을 제출물에 적는다."
+      ]
     },
     {
       "c": "toss",
@@ -7485,7 +7908,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "방어하나, 근거와 대안을 내나로 갈린다.",
+        "재진술 → 당시 근거 → 인정과 대안 → 트레이드오프. 모르는 건 모른다고 하고 아는 곳까지 말한다."
+      ]
     },
     {
       "c": "toss",
@@ -7524,7 +7951,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "의도를 확인하고 판단을 소리 내는가로 본다.",
+        "역질문 → 경계 조건 → 단순 버전 → 에러 처리. 못 끝내면 의사코드와 말로 마감한다. 조용한 타이핑은 감점이다."
+      ]
     },
     {
       "c": "toss",
@@ -7571,7 +8002,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "해결하려던 문제에서 출발하는가, 도구에서 출발하는가로 갈린다.",
+        "문제 → 대안 → 선택 이유 → 비용 → 측정. 인기·관성은 근거가 아니다. 토스뱅크는 측정 후 App Router 를 도입하지 않았다."
+      ]
     },
     {
       "c": "toss",
@@ -7622,7 +8057,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "이름을 나열하나 모델(스토어/원자/훅 selector/서버 캐시)로 분류하나로 갈린다.",
+        "모델로 나누고 선택 기준은 상태의 수명과 독자. 서버 사본은 전용 계층, atom 은 UI·파생 상태."
+      ]
     },
     {
       "c": "toss",
@@ -7669,7 +8108,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "프론트가 통제할 수 있는 축(캐시·요청량·플래그·저하)을 나누는가로 본다.",
+        "트래픽은 재시도 폭주 차단·비핵심 지연·플래그 차단, 부채는 측정→Strangler→기한. '서버가 알아서'는 답이 아니다."
+      ]
     },
     {
       "c": "toss",
@@ -7708,7 +8151,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "사람이 아니라 사실과 영향에 대해 말하는가로 본다.",
+        "상황 → 관찰한 사실 → 영향 → 제안 → 상대 반응. 저맥락자도 이해하는 리뷰 코멘트가 그 사례다."
+      ]
     },
     {
       "c": "toss",
@@ -7762,7 +8209,11 @@
           "https://toss.tech/article/firesidechat_frontend_12"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "'좋은 코드'를 변경 용이성으로 정의하고 기준 간 충돌을 인정하는가로 본다.",
+        "변경하기 쉬운 코드. 가독성 > 예측 가능성 > 응집도 > 결합도이고, 기준은 서로 충돌하므로 상황별로 판단한다."
+      ]
     },
     {
       "c": "toss",
@@ -7801,7 +8252,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "함께 바뀌는 단위로 묶는가, 종류로 묶는가로 갈린다.",
+        "함께 수정되는 파일을 같은 폴더에. 추상화는 변경을 예측해 미리 하지 않고 세 번째 반복에서, 그전엔 중복을 허용한다."
+      ]
     },
     {
       "c": "toss",
@@ -7858,7 +8313,11 @@
           "https://react.dev/reference/react/Component"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "성공 경로와 실패 처리가 한 컴포넌트에 섞여 있는가로 본다.",
+        "성공만 그리고 로딩·에러는 Suspense/Error Boundary 경계가 맡는다. 경계 위치와 reset 전략이 설계의 본체다."
+      ]
     },
     {
       "c": "toss",
@@ -7907,7 +8366,11 @@
           "https://www.typescriptlang.org/docs/handbook/2/narrowing.html"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "예상된 결과인가 예외적 실패인가로 나눈다.",
+        "유효성 실패는 값(유니온)으로, 네트워크·권한 실패는 throw 로. 두 채널을 섞으면 경계가 필드 메시지를 전체 에러로 바꾼다."
+      ]
     },
     {
       "c": "toss",
@@ -7956,7 +8419,11 @@
           "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "여는 곳과 닫는 곳이 한 자리에 있는가로 본다.",
+        "호출부에서 열고 Promise 로 결과를 받는다. 트리 밖 렌더라 포커스·접근성은 직접 책임진다."
+      ]
     },
     {
       "c": "toss",
@@ -8009,7 +8476,11 @@
           "https://developer.mozilla.org/en-US/docs/Web/API/History_API"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "단계 전이가 타입으로 강제되고 히스토리로 복원되는가로 본다.",
+        "단계별 필수 상태를 타입으로 좁히고 히스토리 기반으로 뒤로 가기를 처리한다. 거대한 optional 폼 state 는 안티패턴."
+      ]
     },
     {
       "c": "toss",
@@ -8060,7 +8531,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "작아지는 이유를 구조(ESM·함수 모듈·sideEffects)로 설명하는가로 본다.",
+        "트리 셰이킹이 가능한 구조라서 쓰는 함수만 남는다. 전후는 번들 분석과 필드 지표로 증명한다."
+      ]
     },
     {
       "c": "toss",
@@ -8113,7 +8588,11 @@
           "https://web.dev/articles/optimize-lcp"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "브릿지 실패가 드러나는가와 엔진별로 측정했는가로 본다.",
+        "id 기반 왕복 + 타임아웃 + 환경 판별로 조용한 실패를 없앤다. 웹뷰 성능은 WebKit/Chromium 각각 실측한다."
+      ]
     },
     {
       "c": "toss",
@@ -8152,7 +8631,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "배포 없이 바뀌어야 하는 화면인가, 상호작용이 복잡한가로 나눈다.",
+        "운영자가 조합하는 단순 화면은 SDUI, 복잡한 상호작용은 아니다. 스키마 버전·폴백·관측이 필수다."
+      ]
     },
     {
       "c": "toss",
@@ -8206,7 +8689,11 @@
           "https://nx.dev/features/enforce-module-boundaries"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "문제가 리포 크기인가 버전 파편화인가로 정확히 짚는가로 본다.",
+        "파편화다. 폴리리포는 해결이 아니고, 카탈로그로 표준 버전을 한 곳에 정의해 설치·테스트·업그레이드 경로를 통일한다."
+      ]
     },
     {
       "c": "toss",
@@ -8249,7 +8736,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "장점이 우리 화면에서도 유효한가와 전환·운영 비용을 감당하는가를 측정했는가로 본다.",
+        "직접 재본다(예: WebKit FCP 5,065ms). 이득이 없으면 도입하지 않는 것도 정당한 결론이고 ADR 로 남긴다."
+      ]
     },
     {
       "c": "toss",
@@ -8298,7 +8789,11 @@
           "https://developer.mozilla.org/en-US/docs/Web/API/PerformanceLongTaskTiming"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "데이터 상한을 숫자로 확정할 수 있는가로 갈린다.",
+        "확정되면 브라우저(워커+Transferable), 무한히 늘면 서버. '클라이언트 필터링이 좋은가'는 질문이 아니다."
+      ]
     },
     {
       "c": "toss",
@@ -8337,7 +8832,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "리뷰 부담을 다짐으로 줄이나 구조로 줄이나로 갈린다.",
+        "코멘트 형식(무엇·왜·대안·차단 여부) + 공용 기준(FF) + 워킹그룹·지표. 저맥락자가 이해하는 리뷰가 목표다."
+      ]
     },
     {
       "c": "toss",
@@ -8384,7 +8883,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "'테스트를 쓰는가'가 아니라 '무엇을 왜 막는가'로 본다.",
+        "실패가 사용자 피해가 되는 것부터: 금액·상태 전이·권한은 유닛, 핵심 흐름은 소수 e2e. 금융은 실패 경로 우선."
+      ]
     },
     {
       "c": "toss",
@@ -8427,7 +8930,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "패러다임이 아니라 어떤 문제를 줄이는가로 본다.",
+        "불변·순수 함수가 리렌더 판정·테스트·트리 셰이킹을 쉽게 한다. 가독성을 해치면 루프로 돌아간다."
+      ]
     },
     {
       "c": "toss",
@@ -8476,7 +8983,11 @@
           "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "계산 표현과 표시 표현을 분리하는가로 본다.",
+        "금액은 최소 단위 정수로 계산하고 표시 직전에만 Intl.NumberFormat. 부동소수 비교는 금지, 큰 값은 BigInt."
+      ]
     },
     {
       "c": "toss",
@@ -8519,7 +9030,11 @@
         ]
       ],
       "code": [],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "민감 값이 흐르는 경로를 전수로 나열했는가로 본다.",
+        "URL·로그·에러 트래킹·리플레이·분석 각 경로를 차단하고, 유틸·SDK 훅·린트로 구조적으로 강제한다."
+      ]
     },
     {
       "c": "toss",
@@ -8564,7 +9079,11 @@
           "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/normalize"
         ]
       ],
-      "deep": null
+      "deep": null,
+      "struct": [
+        "유니코드 배치 규칙으로 초성을 계산하는가로 본다.",
+        "음절 코드에서 초성 인덱스를 계산하고 자음·완성형 혼합 검색어를 처리한다. NFC 정규화를 먼저 한다."
+      ]
     }
   ],
   "tracks": [
