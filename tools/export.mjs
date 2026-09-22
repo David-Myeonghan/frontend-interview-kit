@@ -25,7 +25,7 @@ for (const [seq, fix] of [["</scr" + "ipt>", "<\\/script>"], ["<!" + "--", "<\\!
     );
   }
 }
-const { CATS, LV, Q, TRACKS, PROV } = new Function(dataPart + ";return {CATS,LV,Q,TRACKS,PROV};")();
+const { CATS, LV, Q, TRACKS, PROV, STRUCT_RUBRIC } = new Function(dataPart + ";return {CATS,LV,Q,TRACKS,PROV,STRUCT_RUBRIC};")();
 
 writeFileSync("questions.json", JSON.stringify({ categories: CATS, levels: LV, questions: Q, tracks: TRACKS }, null, 2) + "\n");
 
@@ -61,6 +61,14 @@ out.push("");
 out.push("**지원자**: 페이지에서 `셀프 퀴즈`를 켜면 답이 가려진다. 소리 내어 답한 뒤 열어서 핵심 항목을 몇 개 짚었는지 센다. 내 대답이 `약한 신호`에 들어가면 그 문항의 레퍼런스부터 읽는다.");
 out.push("");
 out.push("**면접관**: 레벨당 6~8문항이면 60분이 찬다. 영역을 3~4개로 좁히고 후속 질문으로 깊이를 잰다. 정답 여부보다 모르는 것을 어떻게 다루는지가 신호다.");
+out.push("");
+out.push("## 공통 채점 기준 — 답의 구조");
+out.push("");
+out.push("모든 문항에 같은 기준을 적용한다. 내용이 맞아도 나열이면 약한 답, 기준→결론→이유 순서면 강한 답이다.");
+out.push("");
+for (const [k, d] of STRUCT_RUBRIC.items) out.push("- **" + k + "** — " + d);
+out.push("");
+out.push("지원자가 나열로 답하면 되묻는 표준 힌트: \"" + STRUCT_RUBRIC.hint + "\"");
 out.push("");
 out.push("## 구성");
 out.push("");
@@ -143,6 +151,7 @@ for (const [key, label] of Object.entries(CATS)) {
     }
     out.push("- ✅ **좋은 신호** — " + md(it.good));
     out.push("- ⚠️ **약한 신호** — " + md(it.weak));
+    out.push("- 🧭 **구조 채점** — " + STRUCT_RUBRIC.items.map(([k]) => k).join(" · "));
     if (it.p && it.p.length) {
       out.push("- ↪️ **꼬리질문** — 면접관이 파고드는 순서");
       it.p.forEach(([pq, pe], i) => {

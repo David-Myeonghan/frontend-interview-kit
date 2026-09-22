@@ -93,6 +93,15 @@
   .sig-good .t{color:var(--good)}
   .sig-weak{background:var(--weak-soft);color:var(--ink)}
   .sig-weak .t{color:var(--weak)}
+  .rubric{margin:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+  .rubric b{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-right:4px}
+  .rubric span{padding:2px 8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:help}
+  .selfcheck{display:none;margin:0;padding:10px 12px;border:1px dashed var(--accent);background:var(--surface)}
+  .quiz .selfcheck{display:block}
+  .selfcheck legend{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);padding:0 6px}
+  .selfcheck label{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:3px 0;cursor:pointer}
+  .selfcheck label small{display:block;color:var(--muted);font-size:12px}
+  .selfcheck input{margin-top:3px}
   .next{font-size:13.5px;color:var(--muted);padding-left:12px;border-left:2px solid var(--line)}
   .prov{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;padding:2px 7px;border:1px solid transparent}
   .prov-reported{background:var(--good-soft);color:var(--good);border-color:var(--good)}
@@ -172,7 +181,7 @@
     </section>
     <section>
       <h2>면접관으로 쓸 때</h2>
-      <p>레벨당 6~8문항이면 60분이 찬다. 영역을 3~4개로 좁히고 후속 질문으로 깊이를 재라. 정답 여부보다 <b>모르는 것을 어떻게 다루는지</b>가 신호다.</p>
+      <p>레벨당 6~8문항이면 60분이 찬다. 영역을 3~4개로 좁히고 후속 질문으로 깊이를 재라. 정답 여부보다 <b>모르는 것을 어떻게 다루는지</b>가 신호다. 모든 문항에 공통 채점 기준 <b>「답의 구조」</b>가 붙어 있다 — 기준 먼저 · 결론 먼저 · 빠진 가지 · 안 맞는 경우 · 측정. 지원자가 나열로 답하면 "어떤 기준으로 나눌 수 있을까요?"로 되묻는다.</p>
     </section>
   </div>
 </div></header>
@@ -245,6 +254,17 @@ const CATS = {
   live:"라이브 코딩", sysdesign:"시스템 디자인", debug:"디버깅 라운드",
   review:"코드 리뷰 라운드", take:"과제·포트폴리오", ai:"AI 도구 활용",
   toss:"토스 예상 문항"
+};
+const STRUCT_RUBRIC = {
+  title:"답의 구조 — 공통 채점 기준",
+  items:[
+    ["기준 먼저","이 문제를 어떤 기준(축)으로 나눌지를 답의 첫 문장에서 말하는가"],
+    ["결론 먼저","기준 다음에 결론 한 줄이 나오고, 그 뒤에 이유가 붙는가(이유를 다 듣고 나서야 결론이 나오면 감점)"],
+    ["빠진 가지","자기 답에서 다루지 않은 경우를 스스로 짚는가(\"…인 경우는 다르다\")"],
+    ["안 맞는 경우","결론이 틀리는 조건(반례)을 말하는가"],
+    ["측정","주장을 어떻게 확인했는지(수치·도구·재현)를 붙이는가"]
+  ],
+  hint:"이 문제를 어떤 기준으로 나눌 수 있을까요? 기준을 먼저 하나 정하고 결론부터 말해 보세요."
 };
 const PROV = {
   reported:{label:"출제·평가 확인", cls:"prov-reported", desc:"토스 공식 채용 아티클·기술 블로그(면접관 발언) 또는 지원자 후기에서 실제 출제·평가 방식이 확인된 문항"},
@@ -3694,7 +3714,7 @@ function renderTracks(){
           </div>
           <div class="branches">
             <div class="br br-good"><span class="t">잘 답하면 →</span>${st.good}</div>
-            <div class="br br-weak"><span class="t">막히면 →</span><b>힌트</b> ${st.weak.hint}<br><b>우회</b> ${st.weak.detour}</div>
+            <div class="br br-weak"><span class="t">막히면 →</span><b>힌트</b> ${st.weak.hint}<br><b>우회</b> ${st.weak.detour}<br><b>구조 힌트</b> ${STRUCT_RUBRIC.hint}</div>
           </div>
           ${q ? `<p class="refs"><b>문항 레퍼런스</b>${q.r.map(([a,u])=>`<a href="${u}" target="_blank" rel="noreferrer">${a}</a>`).join(" · ")}</p>` : ""}
         </li>`;}).join("")}</ol>
@@ -3748,6 +3768,8 @@ function render(){
                 <div class="sig sig-good"><span class="t">좋은 신호</span>${it.good}</div>
                 <div class="sig sig-weak"><span class="t">약한 신호</span>${it.weak}</div>
               </div>
+              <p class="rubric"><b>구조</b>${STRUCT_RUBRIC.items.map(([k,d])=>`<span title="${esc(d)}">${k}</span>`).join("")}</p>
+              <fieldset class="selfcheck"><legend>내 답 점검</legend>${STRUCT_RUBRIC.items.map(([k,d],j)=>`<label><input type="checkbox" id="sc-${Q.indexOf(it)}-${j}"> ${k}<small>${d}</small></label>`).join("")}</fieldset>
               ${it.p && it.p.length ? `<div class="probes"><b>꼬리질문</b><ol>${it.p.map(([pq,pe])=>`<li><span class="pq">${pq}</span><span class="pe">${pe}</span></li>`).join("")}</ol></div>` : `<p class="next"><b>후속</b>${it.next}</p>`}
               <p class="refs"><b>레퍼런스</b>${it.r.map(([t,u])=>`<a href="${u}" target="_blank" rel="noreferrer">${t}</a>`).join(" · ")}</p>
             </div>
